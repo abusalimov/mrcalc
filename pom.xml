@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.abusalimov.mrcalc</groupId>
+    <artifactId>mrcalc</artifactId>
+    <version>0.1-SNAPSHOT</version>
+
+    <name>MrCalc</name>
+    <description>MapReduce Calculator</description>
+    <url>https://github.com/abusalimov/mrcalc</url>
+    <inceptionYear>2016</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/abusalimov/mrcalc</url>
+        <connection>scm:git:git://github.com/abusalimov/mrcalc.git</connection>
+        <developerConnection>scm:git:git@github.com:abusalimov/mrcalc.git</developerConnection>
+    </scm>
+
+    <issueManagement>
+        <url>https://github.com/abusalimov/mrcalc/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+</project>

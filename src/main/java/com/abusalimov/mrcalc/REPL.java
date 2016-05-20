@@ -31,8 +31,12 @@ public class REPL {
                 if (line.trim().length() == 0) {
                     continue;
                 }
-                String result = interpreter.eval(line);
-                System.out.println(result);
+                try {
+                    Number result = interpreter.eval(line);
+                    System.out.println(result);
+                } catch (SyntaxErrorException e) {
+                    System.err.println(e.getMessage());
+                }
             }
             System.out.println(GOODBYE);
         } catch (IOException e) {

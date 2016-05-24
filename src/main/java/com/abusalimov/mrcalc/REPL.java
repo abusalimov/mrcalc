@@ -1,5 +1,8 @@
 package com.abusalimov.mrcalc;
 
+import com.abusalimov.mrcalc.compile.Code;
+import com.abusalimov.mrcalc.compile.Compiler;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,9 +15,11 @@ public class REPL {
     public static final String GREETING = "Welcome to MrCalc and have a lot of fun!";
     public static final String GOODBYE = "Goodbye!";
 
+    private Compiler compiler;
     private Interpreter interpreter;
 
     public REPL() {
+        compiler = new Compiler();
         interpreter = new Interpreter();
     }
 
@@ -32,7 +37,8 @@ public class REPL {
                     continue;
                 }
                 try {
-                    Number result = interpreter.eval(line);
+                    Code code = compiler.compile(line);
+                    Number result = interpreter.eval(code);
                     System.out.println(result);
                 } catch (SyntaxErrorException e) {
                     System.err.println(e.getMessage());

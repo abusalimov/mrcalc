@@ -3,18 +3,21 @@ package com.abusalimov.mrcalc.ast;
 /**
  * @author Eldar Abusalimov
  */
-public class LiteralNode<T> implements ExprNode {
-    private T value;
+public abstract class LiteralNode<V> implements ExprNode {
+    private V value;
 
-    public LiteralNode(T value) {
+    public LiteralNode() {
+    }
+
+    public LiteralNode(V value) {
         this.value = value;
     }
 
-    public T getValue() {
+    public V getValue() {
         return value;
     }
 
-    public void setValue(T value) {
+    public void setValue(V value) {
         this.value = value;
     }
 

@@ -34,11 +34,23 @@ public interface NodeVisitor<T> {
         return null;
     }
 
-    default T doVisit(LiteralNode node) {
+    default T doVisit(Node node) {
         return defaultVisit(node);
     }
 
     default T doVisit(ExprNode node) {
-        return defaultVisit(node);
+        return doVisit((Node) node);
+    }
+
+    default T doVisit(LiteralNode node) {
+        return doVisit((ExprNode) node);
+    }
+
+    default T doVisit(BinaryOpNode node) {
+        return doVisit((ExprNode) node);
+    }
+
+    default T doVisit(UnaryOpNode node) {
+        return doVisit((ExprNode) node);
     }
 }

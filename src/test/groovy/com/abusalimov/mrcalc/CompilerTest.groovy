@@ -24,6 +24,13 @@ class CompilerTest extends GroovyTestCase {
         assert null != compile(" ( ( ( 3 ) ) ) ")
     }
 
+    void testParsesValidOpExpressions() {
+        assert null != compile("-1")
+        assert null != compile("+2")
+        assert null != compile("(0-1)")
+        assert null != compile("1+2-3*4/5^6")
+    }
+
     void testThrowsSyntaxErrors() {
         shouldFail SyntaxErrorException, { compile "(" }
         shouldFail SyntaxErrorException, { compile ")" }
@@ -33,5 +40,10 @@ class CompilerTest extends GroovyTestCase {
         shouldFail SyntaxErrorException, { compile "sdf" }
         shouldFail SyntaxErrorException, { compile "((13)" }
         shouldFail SyntaxErrorException, { compile "(13))" }
+
+        shouldFail SyntaxErrorException, { compile "(18+)" }
+        shouldFail SyntaxErrorException, { compile "+" }
+        shouldFail SyntaxErrorException, { compile "1++" }
+        shouldFail SyntaxErrorException, { compile "***" }
     }
 }

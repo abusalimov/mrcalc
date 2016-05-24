@@ -1,7 +1,6 @@
 package com.abusalimov.mrcalc;
 
-import com.abusalimov.mrcalc.ast.LiteralNode;
-import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.*;
 import com.abusalimov.mrcalc.grammar.CalcBaseVisitor;
 import com.abusalimov.mrcalc.grammar.CalcParser;
 
@@ -12,7 +11,23 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
 
     @Override
     public Node visitNumber(CalcParser.NumberContext ctx) {
-        return new LiteralNode<>(ctx.value);
+        if (ctx.value instanceof Long) {
+            return new LongLiteralNode((Long) ctx.value);
+        } else {
+            throw new RuntimeException("Not implemented yet");
+        }
+    }
+
+    @Override
+    public Node visitUnaryOpExpr(CalcParser.UnaryOpExprContext ctx) {
+        return new UnaryOpNode(UnaryOpNode.Op.valueOfSign(ctx.op.getText()),
+                (ExprNode) visit(ctx.expr()));
+    }
+
+    @Override
+    public Node visitBinaryOpExpr(CalcParser.BinaryOpExprContext ctx) {
+        return new BinaryOpNode(BinaryOpNode.Op.valueOfSign(ctx.op.getText()),
+                (ExprNode) visit(ctx.a), (ExprNode) visit(ctx.b));
     }
 
     @Override

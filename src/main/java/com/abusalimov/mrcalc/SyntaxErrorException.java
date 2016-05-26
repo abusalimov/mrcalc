@@ -1,24 +1,31 @@
 package com.abusalimov.mrcalc;
 
+import com.abusalimov.mrcalc.diagnostic.Diagnostic;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticException;
+
+import java.util.List;
+
 /**
- * A syntax error is thrown to indicate that parser failed to recognize the input.
- *
  * @author Eldar Abusalimov
  */
-public class SyntaxErrorException extends Exception {
-    public SyntaxErrorException() {
+public class SyntaxErrorException extends DiagnosticException {
+    public SyntaxErrorException(Diagnostic... diagnostic) {
+        super(diagnostic);
     }
 
-    public SyntaxErrorException(String message) {
-        super(message);
-    }
-
-    public SyntaxErrorException(String message, Throwable cause) {
-        super(message, cause);
+    public SyntaxErrorException(List<Diagnostic> diagnostics) {
+        super(diagnostics);
     }
 
     public SyntaxErrorException(Throwable cause) {
         super(cause);
     }
 
+    public SyntaxErrorException(Diagnostic diagnostic, Throwable cause) {
+        super(diagnostic, cause);
+    }
+
+    public SyntaxErrorException(List<Diagnostic> diagnostics, Throwable cause) {
+        super(diagnostics, cause);
+    }
 }

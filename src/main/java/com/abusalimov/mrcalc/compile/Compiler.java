@@ -3,20 +3,28 @@ package com.abusalimov.mrcalc.compile;
 import com.abusalimov.mrcalc.SyntaxErrorException;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
+import com.abusalimov.mrcalc.diagnostic.Diagnostic;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticCollector;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticListener;
 import com.abusalimov.mrcalc.grammar.CalcLexer;
 import com.abusalimov.mrcalc.grammar.CalcParser;
+import com.abusalimov.mrcalc.location.Location;
+import com.abusalimov.mrcalc.location.RawLocation;
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
  * @author Eldar Abusalimov
  */
 public class Compiler {
+    private final List<DiagnosticListener> diagnosticListeners = new ArrayList<>();
+
     public Code compile(String s) throws SyntaxErrorException {
         try {
             return compile(new StringReader(Objects.requireNonNull(s)));
@@ -27,34 +35,71 @@ public class Compiler {
     }
 
     public Code compile(Reader reader) throws IOException, SyntaxErrorException {
-        final int[] numberOfErrors = {0};
-        ANTLRErrorListener errorListener = new BaseErrorListener() {
-            @Override
-            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
-                                    int charPositionInLine, String msg, RecognitionException e) {
-                /*
-                 * Parser instances have a nice getNumberOfSyntaxErrors() method that could be
-                 * used to tell whether there were any syntax errors, but unfortunately Lexers
-                 * don't have such method. Hence this workaround...
-                 */
-                numberOfErrors[0]++;
-            }
-        };
+        CalcParser.ProgramContext programTree = parse(reader);
+        return compile(programTree);
+    }
 
-        Lexer lexer = createLexer(reader);
-        lexer.addErrorListener(errorListener);
-
-        CalcParser parser = createParser(lexer);
-        parser.addErrorListener(errorListener);
-
-        ParseTree programTree = parser.program();
-
-        if (numberOfErrors[0] > 0) {
-            throw new SyntaxErrorException(String.format("%d syntax error(s)", numberOfErrors[0]));
-        }
-
+    public Code compile(CalcParser.ProgramContext programTree) throws SyntaxErrorException {
         Node program = new ASTConstructor().visit(programTree);
         return new Code((ExprNode) program);  // FIXME cast
+    }
+
+    public CalcParser.ProgramContext parse(
+            Reader reader) throws IOException, SyntaxErrorException {
+        Lexer lexer = createLexer(reader);
+        CalcParser parser = createParser(lexer);
+
+        CalcParser.ProgramContext programContext;
+
+        DiagnosticCollector diagnosticCollector = new DiagnosticCollector();
+        addDiagnosticListener(diagnosticCollector);
+        try {
+            programContext = parser.program();
+        } catch (RecognitionException e) {
+            /* Should not happen, unless someone overrides the default error recovery strategy */
+            throw new SyntaxErrorException(e);
+        } finally {
+            removeDiagnosticListener(diagnosticCollector);
+        }
+        List<Diagnostic> collectedDiagnostics = diagnosticCollector.getDiagnostics();
+        if (collectedDiagnostics.size() > 0) {
+            throw new SyntaxErrorException(collectedDiagnostics);
+        }
+
+        return programContext;
+    }
+
+    protected <T extends Recognizer> T initRecognizer(T recognizer) {
+        recognizer.removeErrorListeners();
+        recognizer.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                    int line, int charPositionInLine, String msg,
+                                    RecognitionException e) {
+                if (diagnosticListeners.isEmpty()) {
+                    return;
+                }
+
+                Location location;
+                if (offendingSymbol instanceof Token) {
+                    Token token = (Token) offendingSymbol;
+                    location = new TokenLocation(token);
+                } else {
+                    IntStream stream = e.getInputStream();
+                    int offset = stream.index();
+                    int endOffset = Math.min(offset + 1, stream.size());
+                    location = new RawLocation(line, charPositionInLine, offset, offset,
+                            endOffset);
+                }
+                Diagnostic diagnostic = new Diagnostic(location, msg);
+
+                for (DiagnosticListener diagnosticListener : diagnosticListeners) {
+                    diagnosticListener.report(diagnostic);
+                }
+
+            }
+        });
+        return recognizer;
     }
 
     protected CalcParser createParser(Lexer lexer) {
@@ -63,7 +108,7 @@ public class Compiler {
     }
 
     protected CalcParser createParser(CommonTokenStream tokenStream) {
-        return new CalcParser(tokenStream);
+        return initRecognizer(new CalcParser(tokenStream));
     }
 
     protected Lexer createLexer(Reader reader) throws IOException {
@@ -72,7 +117,14 @@ public class Compiler {
     }
 
     protected Lexer createLexer(CharStream input) {
-        return new CalcLexer(input);
+        return initRecognizer(new CalcLexer(input));
     }
 
+    public void addDiagnosticListener(DiagnosticListener diagnosticListener) {
+        diagnosticListeners.add(diagnosticListener);
+    }
+
+    public void removeDiagnosticListener(DiagnosticListener diagnosticListener) {
+        diagnosticListeners.remove(diagnosticListener);
+    }
 }

@@ -2,10 +2,13 @@ package com.abusalimov.mrcalc;
 
 import com.abusalimov.mrcalc.compile.Code;
 import com.abusalimov.mrcalc.compile.Compiler;
+import com.abusalimov.mrcalc.diagnostic.Diagnostic;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticListener;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 /**
  * @author Eldar Abusalimov
@@ -25,28 +28,41 @@ public class REPL {
 
     public void loop() {
         BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-        try {
-            System.out.println(GREETING);
-            while (true) {
-                System.out.print(PROMPT);
-                String line = input.readLine();
-                if (line == null) {
-                    break;
-                }
-                if (line.trim().length() == 0) {
-                    continue;
-                }
-                try {
-                    Code code = compiler.compile(line);
-                    Number result = interpreter.eval(code);
-                    System.out.println(result);
-                } catch (SyntaxErrorException e) {
-                    System.err.println(e.getMessage());
-                }
+        System.out.println(GREETING);
+        while (true) {
+            System.out.print(PROMPT);
+            String line;
+            try {
+                line = input.readLine();
+            } catch (IOException e) {
+                line = null;
             }
-            System.out.println(GOODBYE);
-        } catch (IOException e) {
-            e.printStackTrace();
+            if (line == null) {
+                break;
+            }
+            if (line.trim().length() == 0) {
+                continue;
+            }
+            ArrayList<Diagnostic> diagnostics = new ArrayList<>();
+            DiagnosticListener diagnosticCollector = diagnostics::add;
+            compiler.addDiagnosticListener(diagnosticCollector);
+            try {
+                Code code = compiler.compile(line);
+                Number result = interpreter.eval(code);
+                System.out.println(result);
+            } catch (SyntaxErrorException e) {
+                for (int i = 0; i < diagnostics.size(); i++) {
+                    Diagnostic diagnostic = diagnostics.get(i);
+                    if (i == 0) {
+                        // Only the first error (if any at all) gets its caret printed.
+                        System.err.println(diagnostic.getCaretLine(PROMPT.length()));
+                    }
+                    System.err.println(diagnostic.toString());
+                }
+            } finally {
+                compiler.removeDiagnosticListener(diagnosticCollector);
+            }
         }
+        System.out.println(GOODBYE);
     }
 }

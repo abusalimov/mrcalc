@@ -1,4 +1,7 @@
-package com.abusalimov.mrcalc.ast;
+package com.abusalimov.mrcalc.ast.expr;
+
+import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.NodeVisitor;
 
 /**
  * Expressions yield some value that can be used within other expressions.

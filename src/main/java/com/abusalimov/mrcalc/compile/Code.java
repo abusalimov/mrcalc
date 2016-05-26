@@ -1,6 +1,6 @@
 package com.abusalimov.mrcalc.compile;
 
-import com.abusalimov.mrcalc.ast.ExprNode;
+import com.abusalimov.mrcalc.ast.expr.ExprNode;
 
 import java.util.Objects;
 

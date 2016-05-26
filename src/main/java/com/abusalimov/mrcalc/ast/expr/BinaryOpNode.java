@@ -1,4 +1,8 @@
-package com.abusalimov.mrcalc.ast;
+package com.abusalimov.mrcalc.ast.expr;
+
+import com.abusalimov.mrcalc.ast.AbstractNode;
+import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.NodeVisitor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,7 +10,7 @@ import java.util.List;
 /**
  * @author Eldar Abusalimov
  */
-public class BinaryOpNode implements ExprNode {
+public class BinaryOpNode extends AbstractNode implements ExprNode {
     private Op op;
     private ExprNode operandA;
     private ExprNode operandB;

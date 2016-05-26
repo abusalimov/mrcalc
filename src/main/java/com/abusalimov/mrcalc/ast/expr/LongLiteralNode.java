@@ -1,4 +1,4 @@
-package com.abusalimov.mrcalc.ast;
+package com.abusalimov.mrcalc.ast.expr;
 
 /**
  * @author Eldar Abusalimov

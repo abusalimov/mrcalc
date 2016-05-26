@@ -1,9 +1,9 @@
 package com.abusalimov.mrcalc;
 
-import com.abusalimov.mrcalc.ast.BinaryOpNode;
-import com.abusalimov.mrcalc.ast.LiteralNode;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
-import com.abusalimov.mrcalc.ast.UnaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.LiteralNode;
+import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
 import com.abusalimov.mrcalc.compile.Code;
 
 import java.math.BigInteger;

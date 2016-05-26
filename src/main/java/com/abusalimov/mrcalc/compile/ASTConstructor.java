@@ -1,13 +1,23 @@
-package com.abusalimov.mrcalc;
+package com.abusalimov.mrcalc.compile;
 
-import com.abusalimov.mrcalc.ast.*;
+import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.ExprNode;
+import com.abusalimov.mrcalc.ast.expr.LongLiteralNode;
+import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
 import com.abusalimov.mrcalc.grammar.CalcBaseVisitor;
 import com.abusalimov.mrcalc.grammar.CalcParser;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
  * @author Eldar Abusalimov
  */
 public class ASTConstructor extends CalcBaseVisitor<Node> {
+
+    protected static Node initLocation(ParserRuleContext ruleContext, Node node) {
+        node.setLocation(new RuleLocation(ruleContext));
+        return node;
+    }
 
     @Override
     public Node visitNumber(CalcParser.NumberContext ctx) {
@@ -20,19 +30,18 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
 
     @Override
     public Node visitUnaryOpExpr(CalcParser.UnaryOpExprContext ctx) {
-        return new UnaryOpNode(UnaryOpNode.Op.valueOfSign(ctx.op.getText()),
-                (ExprNode) visit(ctx.expr()));
+        return initLocation(ctx, new UnaryOpNode(UnaryOpNode.Op.valueOfSign(ctx.op.getText()),
+                (ExprNode) visit(ctx.expr())));
     }
 
     @Override
     public Node visitBinaryOpExpr(CalcParser.BinaryOpExprContext ctx) {
-        return new BinaryOpNode(BinaryOpNode.Op.valueOfSign(ctx.op.getText()),
-                (ExprNode) visit(ctx.a), (ExprNode) visit(ctx.b));
+        return initLocation(ctx, new BinaryOpNode(BinaryOpNode.Op.valueOfSign(ctx.op.getText()),
+                (ExprNode) visit(ctx.a), (ExprNode) visit(ctx.b)));
     }
 
     @Override
     protected Node aggregateResult(Node aggregate, Node nextResult) {
         return nextResult != null ? nextResult : aggregate;
     }
-
 }

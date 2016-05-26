@@ -1,9 +1,12 @@
-package com.abusalimov.mrcalc.ast;
+package com.abusalimov.mrcalc.ast.expr;
+
+import com.abusalimov.mrcalc.ast.AbstractNode;
+import com.abusalimov.mrcalc.ast.NodeVisitor;
 
 /**
  * @author Eldar Abusalimov
  */
-public abstract class LiteralNode<V> implements ExprNode {
+public abstract class LiteralNode<V> extends AbstractNode implements ExprNode {
     private V value;
 
     public LiteralNode() {

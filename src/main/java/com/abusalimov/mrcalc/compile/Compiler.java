@@ -1,9 +1,8 @@
 package com.abusalimov.mrcalc.compile;
 
-import com.abusalimov.mrcalc.ASTConstructor;
 import com.abusalimov.mrcalc.SyntaxErrorException;
-import com.abusalimov.mrcalc.ast.ExprNode;
 import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.expr.ExprNode;
 import com.abusalimov.mrcalc.grammar.CalcLexer;
 import com.abusalimov.mrcalc.grammar.CalcParser;
 import org.antlr.v4.runtime.*;

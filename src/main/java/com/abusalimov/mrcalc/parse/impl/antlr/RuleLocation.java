@@ -1,4 +1,4 @@
-package com.abusalimov.mrcalc.compile;
+package com.abusalimov.mrcalc.parse.impl.antlr;
 
 import com.abusalimov.mrcalc.location.Location;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -11,7 +11,7 @@ import java.util.Objects;
  *
  * @author Eldar Abusalimov
  */
-public class RuleLocation extends AbstractANTLRLocation {
+public class RuleLocation extends AbstractLocation {
     private final ParserRuleContext ruleContext;
 
     public RuleLocation(ParserRuleContext ruleContext) {

@@ -1,49 +1,31 @@
 package com.abusalimov.mrcalc
 
 import com.abusalimov.mrcalc.compile.Compiler
+import com.abusalimov.mrcalc.parse.Parser
+import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
 
 /**
  * @author Eldar Abusalimov
  */
 class CompilerTest extends GroovyTestCase {
+    private Parser parser
     private Compiler compiler
 
     void setUp() {
         super.setUp()
+        parser = new ANTLRParserImpl()
         compiler = new Compiler()
     }
 
     def compile(String s) {
-        compiler.compile s
+        def node = parser.parse s
+        compiler.compile node
     }
 
-    void testParsesValidInput() {
+    void testCompilesExpressions() {
         assert null != compile("0")
         assert null != compile("(1)")
-        assert null != compile("(  (2 ))")
-        assert null != compile(" ( ( ( 3 ) ) ) ")
-    }
-
-    void testParsesValidOpExpressions() {
-        assert null != compile("-1")
-        assert null != compile("+2")
-        assert null != compile("(0-1)")
+        assert null != compile("(1+2)")
         assert null != compile("1+2-3*4/5^6")
-    }
-
-    void testThrowsSyntaxErrors() {
-        shouldFail SyntaxErrorException, { compile "(" }
-        shouldFail SyntaxErrorException, { compile ")" }
-        shouldFail SyntaxErrorException, { compile "()" }
-        shouldFail SyntaxErrorException, { compile "(-)" }
-        shouldFail SyntaxErrorException, { compile "\$" }
-        shouldFail SyntaxErrorException, { compile "sdf" }
-        shouldFail SyntaxErrorException, { compile "((13)" }
-        shouldFail SyntaxErrorException, { compile "(13))" }
-
-        shouldFail SyntaxErrorException, { compile "(18+)" }
-        shouldFail SyntaxErrorException, { compile "+" }
-        shouldFail SyntaxErrorException, { compile "1++" }
-        shouldFail SyntaxErrorException, { compile "***" }
     }
 }

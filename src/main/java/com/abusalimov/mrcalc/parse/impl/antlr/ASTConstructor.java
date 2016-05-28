@@ -1,12 +1,10 @@
-package com.abusalimov.mrcalc.compile;
+package com.abusalimov.mrcalc.parse.impl.antlr;
 
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 import com.abusalimov.mrcalc.ast.expr.LongLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
-import com.abusalimov.mrcalc.grammar.CalcBaseVisitor;
-import com.abusalimov.mrcalc.grammar.CalcParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**

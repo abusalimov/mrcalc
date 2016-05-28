@@ -1,14 +1,18 @@
 package com.abusalimov.mrcalc;
 
+import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.compile.Code;
+import com.abusalimov.mrcalc.compile.CompileErrorException;
 import com.abusalimov.mrcalc.compile.Compiler;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
-import com.abusalimov.mrcalc.diagnostic.DiagnosticListener;
+import com.abusalimov.mrcalc.parse.Parser;
+import com.abusalimov.mrcalc.parse.SyntaxErrorException;
+import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eldar Abusalimov
@@ -18,10 +22,12 @@ public class REPL {
     public static final String GREETING = "Welcome to MrCalc and have a lot of fun!";
     public static final String GOODBYE = "Goodbye!";
 
+    private Parser parser;
     private Compiler compiler;
     private Interpreter interpreter;
 
     public REPL() {
+        parser = new ANTLRParserImpl();
         compiler = new Compiler();
         interpreter = new Interpreter();
     }
@@ -43,14 +49,13 @@ public class REPL {
             if (line.trim().length() == 0) {
                 continue;
             }
-            ArrayList<Diagnostic> diagnostics = new ArrayList<>();
-            DiagnosticListener diagnosticCollector = diagnostics::add;
-            compiler.addDiagnosticListener(diagnosticCollector);
             try {
-                Code code = compiler.compile(line);
+                Node node = parser.parse(line);
+                Code code = compiler.compile(node);
                 Number result = interpreter.eval(code);
                 System.out.println(result);
-            } catch (SyntaxErrorException e) {
+            } catch (SyntaxErrorException | CompileErrorException e) {
+                List<Diagnostic> diagnostics = e.getDiagnostics();
                 for (int i = 0; i < diagnostics.size(); i++) {
                     Diagnostic diagnostic = diagnostics.get(i);
                     if (i == 0) {
@@ -59,8 +64,6 @@ public class REPL {
                     }
                     System.err.println(diagnostic.toString());
                 }
-            } finally {
-                compiler.removeDiagnosticListener(diagnosticCollector);
             }
         }
         System.out.println(GOODBYE);

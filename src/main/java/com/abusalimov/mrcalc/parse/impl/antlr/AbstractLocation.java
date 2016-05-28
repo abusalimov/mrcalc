@@ -1,4 +1,4 @@
-package com.abusalimov.mrcalc.compile;
+package com.abusalimov.mrcalc.parse.impl.antlr;
 
 import com.abusalimov.mrcalc.location.Location;
 import org.antlr.v4.runtime.Token;
@@ -17,7 +17,7 @@ import org.antlr.v4.runtime.Token;
  *
  * @author Eldar Abusalimov
  */
-public abstract class AbstractANTLRLocation implements Location {
+public abstract class AbstractLocation implements Location {
     @Override
     public int getLineNumber() {
         return getStartToken().getLine();

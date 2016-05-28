@@ -1,4 +1,4 @@
-package com.abusalimov.mrcalc;
+package com.abusalimov.mrcalc.parse;
 
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 import com.abusalimov.mrcalc.diagnostic.DiagnosticException;

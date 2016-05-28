@@ -1,4 +1,4 @@
-package com.abusalimov.mrcalc.compile;
+package com.abusalimov.mrcalc.parse.impl.antlr;
 
 import com.abusalimov.mrcalc.location.Location;
 import org.antlr.v4.runtime.Token;
@@ -10,7 +10,7 @@ import java.util.Objects;
  *
  * @author Eldar Abusalimov
  */
-public class TokenLocation extends AbstractANTLRLocation implements Location {
+public class TokenLocation extends AbstractLocation implements Location {
     private final Token token;
 
     public TokenLocation(Token token) {

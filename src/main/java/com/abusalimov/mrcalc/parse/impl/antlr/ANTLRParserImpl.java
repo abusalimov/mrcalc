@@ -1,9 +1,9 @@
 package com.abusalimov.mrcalc.parse.impl.antlr;
 
 import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.diagnostic.AbstractDiagnosticEmitter;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 import com.abusalimov.mrcalc.diagnostic.DiagnosticCollector;
-import com.abusalimov.mrcalc.diagnostic.DiagnosticListener;
 import com.abusalimov.mrcalc.location.Location;
 import com.abusalimov.mrcalc.location.RawLocation;
 import com.abusalimov.mrcalc.parse.Parser;
@@ -12,14 +12,12 @@ import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Eldar Abusalimov
  */
-public class ANTLRParserImpl implements Parser {
-    private final List<DiagnosticListener> diagnosticListeners = new ArrayList<>();
+public class ANTLRParserImpl extends AbstractDiagnosticEmitter implements Parser {
 
     private ASTConstructor astConstructor;
 
@@ -69,10 +67,6 @@ public class ANTLRParserImpl implements Parser {
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
                                     int line, int charPositionInLine, String msg,
                                     RecognitionException e) {
-                if (diagnosticListeners.isEmpty()) {
-                    return;
-                }
-
                 Location location;
                 if (offendingSymbol instanceof Token) {
                     Token token = (Token) offendingSymbol;
@@ -84,12 +78,7 @@ public class ANTLRParserImpl implements Parser {
                     location = new RawLocation(line, charPositionInLine, offset, offset,
                             endOffset);
                 }
-                Diagnostic diagnostic = new Diagnostic(location, msg);
-
-                for (DiagnosticListener diagnosticListener : diagnosticListeners) {
-                    diagnosticListener.report(diagnostic);
-                }
-
+                emitDiagnostic(new Diagnostic(location, msg));
             }
         });
         return recognizer;
@@ -113,11 +102,4 @@ public class ANTLRParserImpl implements Parser {
         return initRecognizer(new CalcLexer(input));
     }
 
-    public void addDiagnosticListener(DiagnosticListener diagnosticListener) {
-        diagnosticListeners.add(diagnosticListener);
-    }
-
-    public void removeDiagnosticListener(DiagnosticListener diagnosticListener) {
-        diagnosticListeners.remove(diagnosticListener);
-    }
 }

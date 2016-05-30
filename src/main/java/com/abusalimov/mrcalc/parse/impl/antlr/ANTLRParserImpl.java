@@ -1,6 +1,6 @@
 package com.abusalimov.mrcalc.parse.impl.antlr;
 
-import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.diagnostic.AbstractDiagnosticEmitter;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 import com.abusalimov.mrcalc.location.Location;
@@ -24,13 +24,13 @@ public class ANTLRParserImpl extends AbstractDiagnosticEmitter implements Parser
     }
 
     @Override
-    public Node parse(Reader reader) throws IOException, SyntaxErrorException {
+    public ProgramNode parse(Reader reader) throws IOException, SyntaxErrorException {
         CalcParser.ProgramContext programTree = parseTree(reader);
         return constructAST(programTree);
     }
 
-    protected Node constructAST(CalcParser.ProgramContext programTree) {
-        return astConstructor.visit(programTree);
+    protected ProgramNode constructAST(CalcParser.ProgramContext programTree) {
+        return (ProgramNode) astConstructor.visit(programTree);
     }
 
     protected CalcParser.ProgramContext parseTree(

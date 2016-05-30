@@ -1,6 +1,6 @@
 package com.abusalimov.mrcalc;
 
-import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.compile.Code;
 import com.abusalimov.mrcalc.compile.CompileErrorException;
 import com.abusalimov.mrcalc.compile.Compiler;
@@ -50,10 +50,12 @@ public class REPL {
                 continue;
             }
             try {
-                Node node = parser.parse(line);
+                ProgramNode node = parser.parse(line);
                 Code code = compiler.compile(node);
-                Number result = interpreter.eval(code);
-                System.out.println(result);
+                if (code.getExprNode() != null) {
+                    Number result = interpreter.eval(code);
+                    System.out.println(result);
+                }
             } catch (SyntaxErrorException | CompileErrorException e) {
                 List<Diagnostic> diagnostics = e.getDiagnostics();
                 for (int i = 0; i < diagnostics.size(); i++) {

@@ -38,4 +38,13 @@ class InterpreterTest extends GroovyTestCase {
         assert 54L == eval("(1+5) * (8+1)")
         shouldFail ArithmeticException, { eval "1/0" }
     }
+
+    void testEvalCalculatesWithVariables() {
+        assert 1L == eval("var x = 1; x")
+        assert 54L == eval("var six = 1 + 5; var nine = 8 + 1; six * nine")
+    }
+
+    void testEvalCalculatesVariablesLazily() {
+        assert 42L == eval("var fuuu = 1/0; 42")
+    }
 }

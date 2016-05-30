@@ -3,6 +3,7 @@ package com.abusalimov.mrcalc.compile;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
+import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
@@ -23,7 +24,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
     public Code compile(ProgramNode node) throws CompileErrorException {
         try (ListenerClosable<CompileErrorException> ignored =
                      collectDiagnosticsToThrow(CompileErrorException::new)) {
-            collectVarDefs(node);
+            collectVariables(node);
 
             List<StmtNode> stmts = node.getStmts();
 
@@ -43,7 +44,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
         return new Code(node);
     }
 
-    protected void collectVarDefs(ProgramNode node) {
+    protected void collectVariables(ProgramNode node) {
         new NodeVisitor<Void>() {
             @Override
             public Void doVisit(VarDefStmtNode node) {
@@ -51,11 +52,18 @@ public class Compiler extends AbstractDiagnosticEmitter {
                     emitDiagnostic(new Diagnostic(node.getLocation(),
                             String.format("Variable '%s' is already defined", node.getName())));
                 }
-                return null;
+                return visit(node.getValue());
             }
 
             @Override
-            public Void doVisit(StmtNode node) {
+            public Void doVisit(VarRefNode node) {
+                VarDefStmtNode varDef = varDefMap.get(node.getName());
+                if (varDef != null) {
+                    node.setLinkedDef(varDef);
+                } else {
+                    emitDiagnostic(new Diagnostic(node.getLocation(),
+                            String.format("Undefined variable '%s'", node.getName())));
+                }
                 return null;
             }
         }.visit(node);

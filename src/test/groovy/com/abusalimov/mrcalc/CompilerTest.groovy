@@ -35,7 +35,17 @@ class CompilerTest extends GroovyTestCase {
         assert null != compile("var x = 0; var y = 1; var z = 3")
     }
 
+    void testCompilesValidVarRefs() {
+        assert null != compile("var answer = 42; answer")
+        assert null != compile("var x = 0; var y = 1; var z = 3; var foo = x+y+z")
+    }
+
     void testThrowsErrorOnDuplicateVariable() {
         shouldFail CompileErrorException, { compile("var answer = 42; var answer = -1") }
+    }
+
+    void testThrowsErrorOnUndefinedVariable() {
+        shouldFail CompileErrorException, { compile("unknown") }
+        shouldFail CompileErrorException, { compile("var x = y + z") }
     }
 }

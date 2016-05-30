@@ -45,6 +45,13 @@ class ParserTest extends GroovyTestCase {
         assert null != parse("print foo/bar")
     }
 
+    void testParsesRanges() {
+        assert null != parse("{1, 2}")
+        assert null != parse("({(0),(0)})")
+        assert null != parse("{1-2, 3+4}")
+        assert null != parse("{foo, bar}")
+    }
+
     void testThrowsSyntaxErrors() {
         shouldFail SyntaxErrorException, { parse "(" }
         shouldFail SyntaxErrorException, { parse ")" }

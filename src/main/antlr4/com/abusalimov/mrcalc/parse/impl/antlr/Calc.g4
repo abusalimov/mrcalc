@@ -8,13 +8,14 @@ stmt
     ;
 
 expr
-    : number                      # numberExpr
-    | name=ID                     # varRefExpr
-    | op=('+'|'-') expr           # unaryOpExpr
-    | a=expr op='^'       b=expr  # binaryOpExpr
-    | a=expr op=('*'|'/') b=expr  # binaryOpExpr
-    | a=expr op=('+'|'-') b=expr  # binaryOpExpr
-    | '(' expr ')'                # parensExpr
+    : number                          # numberExpr
+    | '{' start=expr ',' end=expr '}' # rangeExpr
+    | name=ID                         # varRefExpr
+    | op=('+'|'-') expr               # unaryOpExpr
+    | a=expr op='^'       b=expr      # binaryOpExpr
+    | a=expr op=('*'|'/') b=expr      # binaryOpExpr
+    | a=expr op=('+'|'-') b=expr      # binaryOpExpr
+    | '(' expr ')'                    # parensExpr
     ;
 
 number returns [Number value]
@@ -42,3 +43,8 @@ FLOAT : ([0-9]+ '.' [0-9]* | '.' [0-9]+);
 
 L_PAREN : '(' ;
 R_PAREN : ')' ;
+
+L_BRACE : '{' ;
+R_BRACE : '}' ;
+
+COMMA : ',' ;

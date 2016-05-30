@@ -48,11 +48,19 @@ public class Compiler extends AbstractDiagnosticEmitter {
         new NodeVisitor<Void>() {
             @Override
             public Void doVisit(VarDefStmtNode node) {
+                /*
+                 * Need to visit the value prior to defining a variable in the scope in order
+                 * to forbid self-recursive variable references from within the definition:
+                 *
+                 *   var r = r  # error
+                 */
+                visit(node.getValue());
+
                 if (varDefMap.putIfAbsent(node.getName(), node) != null) {
                     emitDiagnostic(new Diagnostic(node.getLocation(),
                             String.format("Variable '%s' is already defined", node.getName())));
                 }
-                return visit(node.getValue());
+                return null;
             }
 
             @Override

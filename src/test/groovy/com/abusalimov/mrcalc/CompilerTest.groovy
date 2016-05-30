@@ -47,5 +47,7 @@ class CompilerTest extends GroovyTestCase {
     void testThrowsErrorOnUndefinedVariable() {
         shouldFail CompileErrorException, { compile("unknown") }
         shouldFail CompileErrorException, { compile("var x = y + z") }
+        shouldFail CompileErrorException, { compile("var foo = bar; var bar = foo") }
+        shouldFail CompileErrorException, { compile("var r = r") }
     }
 }

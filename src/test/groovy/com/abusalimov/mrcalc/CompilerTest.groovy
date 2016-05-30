@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc
 
+import com.abusalimov.mrcalc.compile.CompileErrorException
 import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
@@ -32,5 +33,9 @@ class CompilerTest extends GroovyTestCase {
     void testCompilesValidVarDefs() {
         assert null != compile("var answer = 42")
         assert null != compile("var x = 0; var y = 1; var z = 3")
+    }
+
+    void testThrowsErrorOnDuplicateVariable() {
+        shouldFail CompileErrorException, { compile("var answer = 42; var answer = -1") }
     }
 }

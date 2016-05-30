@@ -2,10 +2,7 @@ package com.abusalimov.mrcalc.parse.impl.antlr;
 
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.ProgramNode;
-import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.ExprNode;
-import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.VarRefNode;
+import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
@@ -59,6 +56,12 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
         } else {
             throw new RuntimeException("Unknown literal type");
         }
+    }
+
+    @Override
+    public Node visitRangeExpr(CalcParser.RangeExprContext ctx) {
+        return initLocation(ctx,
+                new RangeNode((ExprNode) visit(ctx.start), (ExprNode) visit(ctx.end)));
     }
 
     @Override

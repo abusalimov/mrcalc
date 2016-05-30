@@ -2,10 +2,7 @@ package com.abusalimov.mrcalc.parse.impl.antlr;
 
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.ProgramNode;
-import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.ExprNode;
-import com.abusalimov.mrcalc.ast.expr.LongLiteralNode;
-import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
@@ -55,6 +52,11 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
         } else {
             throw new RuntimeException("Not implemented yet");
         }
+    }
+
+    @Override
+    public Node visitVarRefExpr(CalcParser.VarRefExprContext ctx) {
+        return initLocation(ctx, new VarRefNode(ctx.name.getText()));
     }
 
     @Override

@@ -1,9 +1,6 @@
 package com.abusalimov.mrcalc.ast;
 
-import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.ExprNode;
-import com.abusalimov.mrcalc.ast.expr.LiteralNode;
-import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
@@ -64,6 +61,10 @@ public interface NodeVisitor<T> {
 
     default T doVisit(ExprNode node) {
         return doVisit((Node) node);
+    }
+
+    default T doVisit(VarRefNode node) {
+        return doVisit((ExprNode) node);
     }
 
     default T doVisit(LiteralNode node) {

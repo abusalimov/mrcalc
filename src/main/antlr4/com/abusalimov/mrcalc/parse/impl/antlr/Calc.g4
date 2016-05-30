@@ -9,6 +9,7 @@ stmt
 
 expr
     : number                      # numberExpr
+    | name=ID                     # varRefExpr
     | op=('+'|'-') expr           # unaryOpExpr
     | a=expr op='^'       b=expr  # binaryOpExpr
     | a=expr op=('*'|'/') b=expr  # binaryOpExpr

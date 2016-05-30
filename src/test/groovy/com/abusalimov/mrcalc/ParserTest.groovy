@@ -33,13 +33,18 @@ class ParserTest extends GroovyTestCase {
         assert null != parse("1+2-3*4/5^6")
     }
 
+    void testParsesVariableReferences() {
+        assert null != parse("foo")
+        assert null != parse("foo-bar")
+        assert null != parse("(foo)+1")
+    }
+
     void testThrowsSyntaxErrors() {
         shouldFail SyntaxErrorException, { parse "(" }
         shouldFail SyntaxErrorException, { parse ")" }
         shouldFail SyntaxErrorException, { parse "()" }
         shouldFail SyntaxErrorException, { parse "(-)" }
         shouldFail SyntaxErrorException, { parse "\$" }
-        shouldFail SyntaxErrorException, { parse "sdf" }
         shouldFail SyntaxErrorException, { parse "((13)" }
         shouldFail SyntaxErrorException, { parse "(13))" }
 

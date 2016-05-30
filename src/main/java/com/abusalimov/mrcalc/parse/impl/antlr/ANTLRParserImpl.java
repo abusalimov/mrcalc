@@ -3,7 +3,6 @@ package com.abusalimov.mrcalc.parse.impl.antlr;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.diagnostic.AbstractDiagnosticEmitter;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
-import com.abusalimov.mrcalc.diagnostic.DiagnosticCollector;
 import com.abusalimov.mrcalc.location.Location;
 import com.abusalimov.mrcalc.location.RawLocation;
 import com.abusalimov.mrcalc.parse.Parser;
@@ -12,7 +11,6 @@ import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.List;
 
 /**
  * @author Eldar Abusalimov
@@ -37,27 +35,17 @@ public class ANTLRParserImpl extends AbstractDiagnosticEmitter implements Parser
 
     protected CalcParser.ProgramContext parseTree(
             Reader reader) throws IOException, SyntaxErrorException {
-        Lexer lexer = createLexer(reader);
-        CalcParser parser = createParser(lexer);
+        try (ListenerClosable<SyntaxErrorException> ignored =
+                     collectDiagnosticsToThrow(SyntaxErrorException::new)) {
+            Lexer lexer = createLexer(reader);
+            CalcParser parser = createParser(lexer);
 
-        CalcParser.ProgramContext programContext;
+            return parser.program();
 
-        DiagnosticCollector diagnosticCollector = new DiagnosticCollector();
-        addDiagnosticListener(diagnosticCollector);
-        try {
-            programContext = parser.program();
         } catch (RecognitionException e) {
             /* Should not happen, unless someone overrides the default error recovery strategy */
             throw new SyntaxErrorException(e);
-        } finally {
-            removeDiagnosticListener(diagnosticCollector);
         }
-        List<Diagnostic> collectedDiagnostics = diagnosticCollector.getDiagnostics();
-        if (collectedDiagnostics.size() > 0) {
-            throw new SyntaxErrorException(collectedDiagnostics);
-        }
-
-        return programContext;
     }
 
     protected <T extends Recognizer> T initRecognizer(T recognizer) {

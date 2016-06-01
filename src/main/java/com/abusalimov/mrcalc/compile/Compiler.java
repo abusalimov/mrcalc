@@ -17,11 +17,15 @@ import com.abusalimov.mrcalc.compile.exprtree.ExprBuilderFactory;
 import com.abusalimov.mrcalc.compile.exprtree.PrimitiveCastBuilder;
 import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
+import com.abusalimov.mrcalc.compile.type.Primitive;
+import com.abusalimov.mrcalc.compile.type.Type;
+import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
 
 /**
  * @author Eldar Abusalimov
@@ -121,7 +125,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
                 if (variable == null) {
                     emitNodeDiagnostic(node,
                             String.format("Undefined variable '%s'", node.getName()));
-                    return Type.UNKNOWN;
+                    return Primitive.UNKNOWN;
                 }
 
                 variableSet.add(variable);
@@ -130,19 +134,27 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
 
             @Override
             public Type doVisit(IntegerLiteralNode node) {
-                return Type.INTEGER;
+                return Primitive.INTEGER;
             }
 
             @Override
             public Type doVisit(FloatLiteralNode node) {
-                return Type.FLOAT;
+                return Primitive.FLOAT;
             }
 
             @Override
             public Type doVisit(BinaryOpNode node) {
                 Type leftType = visit(node.getOperandA());
                 Type rightType = visit(node.getOperandB());
-                return Type.promote(leftType, rightType);
+
+                if (!(leftType instanceof Primitive && rightType instanceof Primitive)) {
+                    emitDiagnostic(new Diagnostic(node.getLocation(),
+                            String.format("Operator '%s' cannot be applied to '%s' and '%s'",
+                                    node.getOp().getSign(), leftType, rightType)));
+                    return Primitive.UNKNOWN;
+                }
+
+                return Primitive.promote((Primitive) leftType, (Primitive) rightType);
             }
 
             @Override
@@ -171,22 +183,29 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
         Function<Node, I> visitInteger = integerExprVisitor::visit;
         Function<Node, F> visitFloat = floatExprVisitor::visit;
 
-        Map<Type, Function<Node, I>> visitIntegerMap = new EnumMap<Type, Function<Node, I>>(
-                Type.class) {{
-            put(Type.INTEGER, visitInteger);
-            put(Type.FLOAT, visitFloat.andThen(primitiveCastBuilder::toInteger));
+        Map<Primitive, Function<Node, I>> visitIntegerMap = new EnumMap<Primitive, Function<Node, I>>(
+                Primitive.class) {{
+            put(Primitive.INTEGER, visitInteger);
+            put(Primitive.FLOAT, visitFloat.andThen(primitiveCastBuilder::toInteger));
         }};
 
-        Map<Type, Function<Node, F>> visitFloatMap = new EnumMap<Type, Function<Node, F>>(
-                Type.class) {{
-            put(Type.INTEGER, visitInteger.andThen(primitiveCastBuilder::toFloat));
-            put(Type.FLOAT, visitFloat);
+        Map<Primitive, Function<Node, F>> visitFloatMap = new EnumMap<Primitive, Function<Node, F>>(
+                Primitive.class) {{
+            put(Primitive.INTEGER, visitInteger.andThen(primitiveCastBuilder::toFloat));
+            put(Primitive.FLOAT, visitFloat);
         }};
 
         integerExprVisitor.setDelegate(node -> visitIntegerMap.get(getNodeType(node)).apply(node));
         floatExprVisitor.setDelegate(node -> visitFloatMap.get(getNodeType(node)).apply(node));
 
-        switch (getNodeType(rootNode)) {
+        Type rootType = getNodeType(rootNode);
+        if (!(rootType instanceof Primitive)) {
+            return args -> {
+                throw new UnsupportedOperationException("NIY");
+            };
+        }
+
+        switch ((Primitive) rootType) {
             case INTEGER:
                 return integerExprVisitor.buildFunction(rootNode);
             case FLOAT:
@@ -205,7 +224,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     }
 
     private Type getNodeType(ExprNode node) {
-        return typeMap.getOrDefault(node, Type.UNKNOWN);
+        return typeMap.getOrDefault(node, Primitive.UNKNOWN);
     }
 
 }

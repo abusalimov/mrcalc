@@ -67,7 +67,8 @@ public class Diagnostic {
             return "";
         }
         int column = columnOffset + columnNumber;
-        return StringUtils.repeat(' ', column) + "^";
+        int length = Math.max(1, location.getEndOffset() - location.getStartOffset());
+        return StringUtils.repeat(' ', column) + StringUtils.repeat('^', length);
     }
 
     /**

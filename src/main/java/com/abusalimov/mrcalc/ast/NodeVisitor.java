@@ -5,6 +5,9 @@ import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Basic AST visitor using a double-dispatch pattern. Subclasses of {@link Node} should overload the
  * {@link Node#accept(NodeVisitor)} method to the appropriate {@link #doVisit(Node)} method of the
@@ -26,12 +29,23 @@ public interface NodeVisitor<T> {
     }
 
     /**
-     * Visit the children of a node, and return a user-defined result of the operation.
+     * Visit the children of a node.
      *
      * @param node The subtree whose children should be visited.
      */
     default void visitChildren(Node node) {
         node.getChildren().forEach(this::visit);
+    }
+
+    /**
+     * Visit the children of a node, and return a user-defined result of the operation.
+     *
+     * @param node The subtree whose children should be visited.
+     */
+    default List<? extends T> visitChildrenWithResult(Node node) {
+        return node.getChildren().stream()
+                .map(this::visit)
+                .collect(Collectors.toList());
     }
 
     default T defaultVisit(Node node) {

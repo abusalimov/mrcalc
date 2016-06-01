@@ -1,6 +1,7 @@
 package com.abusalimov.mrcalc.compile;
 
 import com.abusalimov.mrcalc.ast.ExprHolderNode;
+import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
@@ -28,11 +29,13 @@ import java.util.Map;
 public class Compiler extends AbstractDiagnosticEmitter {
 
     private Map<String, VarDefStmtNode> varDefMap = new HashMap<>();
+    private Map<Node, Type> typeMap = new HashMap<>();
 
     public Code compile(ProgramNode node) throws CompileErrorException {
         try (ListenerClosable<CompileErrorException> ignored =
                      collectDiagnosticsToThrow(CompileErrorException::new)) {
             collectVariables(node);
+            inferTypes(node);
 
             List<StmtNode> stmts = node.getStmts();
 
@@ -56,7 +59,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
         return new Code(buildExpr(node));
     }
 
-    protected void collectVariables(ProgramNode node) {
+    protected void collectVariables(ProgramNode rootNode) {
         new NodeVisitor<Void>() {
             @Override
             public Void doVisit(VarDefStmtNode node) {
@@ -86,7 +89,49 @@ public class Compiler extends AbstractDiagnosticEmitter {
                 }
                 return null;
             }
-        }.visit(node);
+        }.visit(rootNode);
+    }
+
+    protected void inferTypes(ProgramNode rootNode) {
+        new NodeVisitor<Type>() {
+            @Override
+            public Type visit(Node node) {
+                Type type = NodeVisitor.super.visit(node);
+                typeMap.put(node, type);
+                return type;
+            }
+
+            @Override
+            public Type doVisit(VarRefNode node) {
+                VarDefStmtNode linkedDef = node.getLinkedDef();
+                if (linkedDef != null) {
+                    return getNodeType(linkedDef.getExpr());
+                }
+                return Type.UNKNOWN;
+            }
+
+            @Override
+            public Type doVisit(IntegerLiteralNode node) {
+                return Type.INTEGER;
+            }
+
+            @Override
+            public Type doVisit(FloatLiteralNode node) {
+                return Type.FLOAT;
+            }
+
+            @Override
+            public Type doVisit(BinaryOpNode node) {
+                Type leftType = visit(node.getOperandA());
+                Type rightType = visit(node.getOperandB());
+                return Type.promote(leftType, rightType);
+            }
+
+            @Override
+            public Type doVisit(UnaryOpNode node) {
+                return visit(node.getOperand());
+            }
+        }.visit(rootNode);
     }
 
     protected Expr buildExpr(ExprNode node) {
@@ -191,6 +236,10 @@ public class Compiler extends AbstractDiagnosticEmitter {
             }
 
         }.visit(node);
+    }
+
+    private Type getNodeType(Node node) {
+        return typeMap.getOrDefault(node, Type.UNKNOWN);
     }
 
 }

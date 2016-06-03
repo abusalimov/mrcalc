@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.compile;
 
+import com.abusalimov.mrcalc.ast.ExprHolderNode;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
@@ -8,7 +9,6 @@ import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
-import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.compile.exprtree.Expr;
@@ -39,17 +39,21 @@ public class Compiler extends AbstractDiagnosticEmitter {
             ExprNode exprNode = null;
             if (!stmts.isEmpty()) {
                 StmtNode lastStmt = stmts.get(stmts.size() - 1);
-                if (lastStmt instanceof PrintStmtNode) {
-                    exprNode = ((PrintStmtNode) lastStmt).getExpr();
+                if (lastStmt instanceof ExprHolderNode) {
+                    exprNode = ((ExprHolderNode) lastStmt).getExpr();
                 }
             }
 
-            return new Code(exprNode);
+            if (exprNode != null) {
+                return compileExpr(exprNode);
+            } else {
+                return new Code(null);
+            }
         }
     }
 
     public Code compileExpr(ExprNode node) throws CompileErrorException {
-        return new Code(node);
+        return new Code(buildExpr(node));
     }
 
     protected void collectVariables(ProgramNode node) {
@@ -85,7 +89,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
         }.visit(node);
     }
 
-    protected Expr buildExprTree(ProgramNode node) {
+    protected Expr buildExpr(ExprNode node) {
         return new NodeVisitor<Expr>() {
             @Override
             public Expr doVisit(VarRefNode node) {

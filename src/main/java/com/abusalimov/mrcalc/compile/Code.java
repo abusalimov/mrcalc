@@ -1,6 +1,6 @@
 package com.abusalimov.mrcalc.compile;
 
-import com.abusalimov.mrcalc.ast.expr.ExprNode;
+import com.abusalimov.mrcalc.compile.exprtree.Expr;
 
 /**
  * TODO stub implementation
@@ -8,13 +8,13 @@ import com.abusalimov.mrcalc.ast.expr.ExprNode;
  * @author Eldar Abusalimov
  */
 public class Code {
-    private final ExprNode exprNode;
+    private final Expr expr;
 
-    public Code(ExprNode exprNode) {
-        this.exprNode = exprNode;
+    public Code(Expr expr) {
+        this.expr = expr;
     }
 
-    public ExprNode getExprNode() {
-        return exprNode;
+    public Expr getExpr() {
+        return expr;
     }
 }

@@ -52,7 +52,7 @@ public class REPL {
             try {
                 ProgramNode node = parser.parse(line);
                 Code code = compiler.compile(node);
-                if (code.getExprNode() != null) {
+                if (code.getExpr() != null) {
                     Number result = interpreter.eval(code);
                     System.out.println(result);
                 }

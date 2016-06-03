@@ -134,7 +134,10 @@ public class Compiler extends AbstractDiagnosticEmitter {
         }.visit(rootNode);
     }
 
+    @SuppressWarnings("unchecked")
     protected Expr buildExpr(ExprNode node) {
+        ExprBuilder builder = new FuncExprBuilder();
+
         return new NodeVisitor<Expr>() {
             @Override
             public Expr doVisit(VarRefNode node) {
@@ -147,14 +150,28 @@ public class Compiler extends AbstractDiagnosticEmitter {
 
             @Override
             public Expr doVisit(IntegerLiteralNode node) {
-                Long l = node.getValue();
-                return (IntegerExpr) () -> l;
+                return builder.integerConst(node.getValue());
             }
 
             @Override
             public Expr doVisit(FloatLiteralNode node) {
-                Double d = node.getValue();
-                return (FloatExpr) () -> d;
+                return builder.floatConst(node.getValue());
+            }
+
+            private Expr castExpr(Expr expr, Type toType) {
+                if (expr.getType() == toType) {
+                    return expr;
+                }
+
+                switch (toType) {
+                    case INTEGER:
+                        return builder.integerFromFloat((FloatExpr) expr);
+                    case FLOAT:
+                        return builder.floatFromInteger((IntegerExpr) expr);
+                    case UNKNOWN:
+                    default:
+                        return builder.invalid();
+                }
             }
 
             @Override
@@ -164,8 +181,8 @@ public class Compiler extends AbstractDiagnosticEmitter {
 
                 Type retType = Type.promote(leftOperand.getType(), rightOperand.getType());
 
-                leftOperand = leftOperand.cast(retType);
-                rightOperand = rightOperand.cast(retType);
+                leftOperand = castExpr(leftOperand, retType);
+                rightOperand = castExpr(rightOperand, retType);
 
                 switch (retType) {
                     case INTEGER: {
@@ -174,16 +191,15 @@ public class Compiler extends AbstractDiagnosticEmitter {
 
                         switch (node.getOp()) {
                             case ADD:
-                                return (IntegerExpr) () -> left.getAsLong() + right.getAsLong();
+                                return builder.integerAdd(left, right);
                             case SUB:
-                                return (IntegerExpr) () -> left.getAsLong() - right.getAsLong();
+                                return builder.integerSub(left, right);
                             case MUL:
-                                return (IntegerExpr) () -> left.getAsLong() * right.getAsLong();
+                                return builder.integerMul(left, right);
                             case DIV:
-                                return (IntegerExpr) () -> left.getAsLong() / right.getAsLong();
+                                return builder.integerDiv(left, right);
                             case POW:
-                                return (IntegerExpr) () ->
-                                        (long) Math.pow(left.getAsLong(), right.getAsLong());
+                                return builder.integerPow(left, right);
                         }
                     }
                     case FLOAT: {
@@ -192,16 +208,15 @@ public class Compiler extends AbstractDiagnosticEmitter {
 
                         switch (node.getOp()) {
                             case ADD:
-                                return (FloatExpr) () -> left.getAsDouble() + right.getAsDouble();
+                                return builder.floatAdd(left, right);
                             case SUB:
-                                return (FloatExpr) () -> left.getAsDouble() - right.getAsDouble();
+                                return builder.floatSub(left, right);
                             case MUL:
-                                return (FloatExpr) () -> left.getAsDouble() * right.getAsDouble();
+                                return builder.floatMul(left, right);
                             case DIV:
-                                return (FloatExpr) () -> left.getAsDouble() / right.getAsDouble();
+                                return builder.floatDiv(left, right);
                             case POW:
-                                return (FloatExpr) () ->
-                                        Math.pow(left.getAsDouble(), right.getAsDouble());
+                                return builder.floatPow(left, right);
                         }
                     }
                     case UNKNOWN:
@@ -212,27 +227,18 @@ public class Compiler extends AbstractDiagnosticEmitter {
 
             @Override
             public Expr doVisit(UnaryOpNode node) {
-                Expr operandExpr = visit(node.getOperand());
+                Expr expr = visit(node.getOperand());
 
-                Type retType = operandExpr.getType();
-
-                switch (node.getOp()) {
-                    case MINUS:
-                        switch (retType) {
-                            case INTEGER:
-                                IntegerExpr integerExpr = (IntegerExpr) operandExpr;
-                                return (IntegerExpr) () -> -integerExpr.getAsLong();
-                            case FLOAT:
-                                FloatExpr floatExpr = (FloatExpr) operandExpr;
-                                return (FloatExpr) () -> -floatExpr.getAsDouble();
-                            default:
-                            case UNKNOWN:
-                                return Expr.INVALID;
-                        }
-                    default:
-                    case PLUS:
-                        return operandExpr;
+                if (node.getOp() == UnaryOpNode.Op.MINUS) {
+                    switch (expr.getType()) {
+                        case INTEGER:
+                            return builder.integerNeg((IntegerExpr) expr);
+                        case FLOAT:
+                            return builder.floatNeg((FloatExpr) expr);
+                    }
                 }
+
+                return expr;
             }
 
         }.visit(node);

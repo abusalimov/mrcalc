@@ -12,16 +12,16 @@ import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
-import com.abusalimov.mrcalc.compile.exprtree.Expr;
-import com.abusalimov.mrcalc.compile.exprtree.FloatExpr;
-import com.abusalimov.mrcalc.compile.exprtree.IntegerExpr;
-import com.abusalimov.mrcalc.compile.exprtree.Type;
+import com.abusalimov.mrcalc.compile.exprtree.*;
+import com.abusalimov.mrcalc.compile.impl.function.FunctionBuilderFactoryImpl;
 import com.abusalimov.mrcalc.diagnostic.AbstractDiagnosticEmitter;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Eldar Abusalimov
@@ -30,6 +30,16 @@ public class Compiler extends AbstractDiagnosticEmitter {
 
     private Map<String, VarDefStmtNode> varDefMap = new HashMap<>();
     private Map<Node, Type> typeMap = new HashMap<>();
+
+    private BuilderFactory<?, ?> builderFactory;
+
+    public Compiler() {
+        this(new FunctionBuilderFactoryImpl());
+    }
+
+    public Compiler(BuilderFactory<?, ?> builderFactory) {
+        this.builderFactory = builderFactory;
+    }
 
     public Code compile(ProgramNode node) throws CompileErrorException {
         try (ListenerClosable<CompileErrorException> ignored =
@@ -134,117 +144,53 @@ public class Compiler extends AbstractDiagnosticEmitter {
         }.visit(rootNode);
     }
 
-    @SuppressWarnings("unchecked")
-    protected Expr buildExpr(ExprNode node) {
-        ExprBuilder builder = new FuncExprBuilder();
+    protected <I extends Expr<Long, I>, F extends Expr<Double, F>> Expr buildExpr(ExprNode rootNode) {
+        BuilderFactory<I, F> factory = getBuilderFactory();
 
-        return new NodeVisitor<Expr>() {
-            @Override
-            public Expr doVisit(VarRefNode node) {
-                VarDefStmtNode linkedDef = node.getLinkedDef();
-                if (linkedDef == null) {
-                    return Expr.INVALID;
-                }
-                return visit(linkedDef.getExpr());
-            }
+        ExprBuilder<Long, I> integerExprBuilder = factory.createIntegerExprBuilder();
+        ExprBuilder<Double, F> floatExprBuilder = factory.createFloatExprBuilder();
+        TypeCastBuilder<I, F> typeCastBuilder = factory.createTypeCastBuilder();
 
-            @Override
-            public Expr doVisit(IntegerLiteralNode node) {
-                return builder.integerConst(node.getValue());
-            }
+        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerExprBuilder);
+        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatExprBuilder);
 
-            @Override
-            public Expr doVisit(FloatLiteralNode node) {
-                return builder.floatConst(node.getValue());
-            }
+        Function<Node, I> visitInteger = integerExprVisitor::visit;
+        Function<Node, F> visitFloat = floatExprVisitor::visit;
 
-            private Expr castExpr(Expr expr, Type toType) {
-                if (expr.getType() == toType) {
-                    return expr;
-                }
+        Map<Type, Function<Node, I>> visitIntegerMap = new EnumMap<Type, Function<Node, I>>(
+                Type.class) {{
+            put(Type.INTEGER, visitInteger);
+            put(Type.FLOAT, visitFloat.andThen(typeCastBuilder::toInteger));
+            put(Type.UNKNOWN, node -> null);
+        }};
 
-                switch (toType) {
-                    case INTEGER:
-                        return builder.integerFromFloat((FloatExpr) expr);
-                    case FLOAT:
-                        return builder.floatFromInteger((IntegerExpr) expr);
-                    case UNKNOWN:
-                    default:
-                        return builder.invalid();
-                }
-            }
+        Map<Type, Function<Node, F>> visitFloatMap = new EnumMap<Type, Function<Node, F>>(
+                Type.class) {{
+            put(Type.INTEGER, visitInteger.andThen(typeCastBuilder::toFloat));
+            put(Type.FLOAT, visitFloat);
+            put(Type.UNKNOWN, node -> null);
+        }};
 
-            @Override
-            public Expr doVisit(BinaryOpNode node) {
-                Expr leftOperand = visit(node.getOperandA());
-                Expr rightOperand = visit(node.getOperandB());
+        integerExprVisitor.setDelegate(node -> visitIntegerMap.get(getNodeType(node)).apply(node));
+        floatExprVisitor.setDelegate(node -> visitFloatMap.get(getNodeType(node)).apply(node));
 
-                Type retType = Type.promote(leftOperand.getType(), rightOperand.getType());
-
-                leftOperand = castExpr(leftOperand, retType);
-                rightOperand = castExpr(rightOperand, retType);
-
-                switch (retType) {
-                    case INTEGER: {
-                        IntegerExpr left = (IntegerExpr) leftOperand;
-                        IntegerExpr right = (IntegerExpr) rightOperand;
-
-                        switch (node.getOp()) {
-                            case ADD:
-                                return builder.integerAdd(left, right);
-                            case SUB:
-                                return builder.integerSub(left, right);
-                            case MUL:
-                                return builder.integerMul(left, right);
-                            case DIV:
-                                return builder.integerDiv(left, right);
-                            case POW:
-                                return builder.integerPow(left, right);
-                        }
-                    }
-                    case FLOAT: {
-                        FloatExpr left = (FloatExpr) leftOperand;
-                        FloatExpr right = (FloatExpr) rightOperand;
-
-                        switch (node.getOp()) {
-                            case ADD:
-                                return builder.floatAdd(left, right);
-                            case SUB:
-                                return builder.floatSub(left, right);
-                            case MUL:
-                                return builder.floatMul(left, right);
-                            case DIV:
-                                return builder.floatDiv(left, right);
-                            case POW:
-                                return builder.floatPow(left, right);
-                        }
-                    }
-                    case UNKNOWN:
-                    default:
-                        return Expr.INVALID;
-                }
-            }
-
-            @Override
-            public Expr doVisit(UnaryOpNode node) {
-                Expr expr = visit(node.getOperand());
-
-                if (node.getOp() == UnaryOpNode.Op.MINUS) {
-                    switch (expr.getType()) {
-                        case INTEGER:
-                            return builder.integerNeg((IntegerExpr) expr);
-                        case FLOAT:
-                            return builder.floatNeg((FloatExpr) expr);
-                    }
-                }
-
-                return expr;
-            }
-
-        }.visit(node);
+        switch (getNodeType(rootNode)) {
+            case INTEGER:
+                return integerExprVisitor.visit(rootNode);
+            case FLOAT:
+                return floatExprVisitor.visit(rootNode);
+            case UNKNOWN:
+            default:
+                return null;
+        }
     }
 
-    private Type getNodeType(Node node) {
+    @SuppressWarnings("unchecked")
+    private <I extends Expr<Long, I>, F extends Expr<Double, F>> BuilderFactory<I, F> getBuilderFactory() {
+        return (BuilderFactory<I, F>) this.builderFactory;
+    }
+
+    private Type getNodeType(ExprNode node) {
         return typeMap.getOrDefault(node, Type.UNKNOWN);
     }
 

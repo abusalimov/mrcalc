@@ -17,10 +17,7 @@ import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.diagnostic.AbstractDiagnosticEmitter;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -29,7 +26,7 @@ import java.util.function.Function;
 public class Compiler extends AbstractDiagnosticEmitter {
 
     private Map<String, VarDefStmtNode> varDefMap = new HashMap<>();
-    private Map<Node, Type> typeMap = new HashMap<>();
+    private Map<ExprNode, Type> typeMap = new HashMap<>();
 
     private ExprBuilderFactory<?, ?> exprBuilderFactory;
 
@@ -44,8 +41,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
     public Code compile(ProgramNode node) throws CompileErrorException {
         try (ListenerClosable<CompileErrorException> ignored =
                      collectDiagnosticsToThrow(CompileErrorException::new)) {
-            collectVariables(node);
-            inferTypes(node);
+            inferVariableTypes(node);
 
             List<StmtNode> stmts = node.getStmts();
 
@@ -69,10 +65,20 @@ public class Compiler extends AbstractDiagnosticEmitter {
         return new Code(buildExpr(node));
     }
 
-    protected void collectVariables(ProgramNode rootNode) {
-        new NodeVisitor<Void>() {
+    protected void inferVariableTypes(ProgramNode rootNode) {
+        new NodeVisitor<Type>() {
             @Override
-            public Void doVisit(VarDefStmtNode node) {
+            public Type visit(Node node) {
+                Type type = NodeVisitor.super.visit(node);
+                if (node instanceof ExprNode) {
+                    ExprNode exprNode = (ExprNode) node;
+                    typeMap.put(exprNode, Objects.requireNonNull(type));
+                }
+                return type;
+            }
+
+            @Override
+            public Type doVisit(VarDefStmtNode node) {
                 /*
                  * Need to visit the value prior to defining a variable in the scope in order
                  * to forbid self-recursive variable references from within the definition:
@@ -89,33 +95,13 @@ public class Compiler extends AbstractDiagnosticEmitter {
             }
 
             @Override
-            public Void doVisit(VarRefNode node) {
+            public Type doVisit(VarRefNode node) {
                 VarDefStmtNode varDef = varDefMap.get(node.getName());
                 if (varDef != null) {
-                    node.setLinkedDef(varDef);
+                    return getNodeType(varDef.getExpr());
                 } else {
                     emitDiagnostic(new Diagnostic(node.getLocation(),
                             String.format("Undefined variable '%s'", node.getName())));
-                }
-                return null;
-            }
-        }.visit(rootNode);
-    }
-
-    protected void inferTypes(ProgramNode rootNode) {
-        new NodeVisitor<Type>() {
-            @Override
-            public Type visit(Node node) {
-                Type type = NodeVisitor.super.visit(node);
-                typeMap.put(node, type);
-                return type;
-            }
-
-            @Override
-            public Type doVisit(VarRefNode node) {
-                VarDefStmtNode linkedDef = node.getLinkedDef();
-                if (linkedDef != null) {
-                    return getNodeType(linkedDef.getExpr());
                 }
                 return Type.UNKNOWN;
             }

@@ -2,7 +2,12 @@ package com.abusalimov.mrcalc.parse.impl.antlr;
 
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.ProgramNode;
-import com.abusalimov.mrcalc.ast.expr.*;
+import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.ExprNode;
+import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.VarRefNode;
+import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
+import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
@@ -48,9 +53,11 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
     @Override
     public Node visitNumber(CalcParser.NumberContext ctx) {
         if (ctx.value instanceof Long) {
-            return new LongLiteralNode((Long) ctx.value);
+            return initLocation(ctx, new IntegerLiteralNode((Long) ctx.value));
+        } else if (ctx.value instanceof Double) {
+            return initLocation(ctx, new FloatLiteralNode((Double) ctx.value));
         } else {
-            throw new RuntimeException("Not implemented yet");
+            throw new RuntimeException("Unknown literal type");
         }
     }
 

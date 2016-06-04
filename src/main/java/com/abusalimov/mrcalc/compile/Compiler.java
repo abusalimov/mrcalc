@@ -144,7 +144,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
         }.visit(rootNode);
     }
 
-    protected <I extends Expr<Long, I>, F extends Expr<Double, F>> Expr buildExpr(ExprNode rootNode) {
+    protected <I extends Expr<Long>, F extends Expr<Double>> Expr buildExpr(ExprNode rootNode) {
         ExprBuilderFactory<I, F> factory = getExprBuilderFactory();
 
         PrimitiveOpBuilder<Long, I> integerOpBuilder = factory.createIntegerOpBuilder();
@@ -186,7 +186,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
     }
 
     @SuppressWarnings("unchecked")
-    private <I extends Expr<Long, I>, F extends Expr<Double, F>> ExprBuilderFactory<I, F> getExprBuilderFactory() {
+    private <I extends Expr<Long>, F extends Expr<Double>> ExprBuilderFactory<I, F> getExprBuilderFactory() {
         return (ExprBuilderFactory<I, F>) this.exprBuilderFactory;
     }
 

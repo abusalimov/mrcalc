@@ -15,7 +15,7 @@ import java.util.function.Function;
 /**
  * @author Eldar Abusalimov
  */
-public class ExprVisitor<T extends Number, E extends Expr<T, E>> implements NodeVisitor<E> {
+public class ExprVisitor<T extends Number, E extends Expr<T>> implements NodeVisitor<E> {
     private final PrimitiveOpBuilder<T, E> builder;
     private Function<ExprNode, E> delegate;
 

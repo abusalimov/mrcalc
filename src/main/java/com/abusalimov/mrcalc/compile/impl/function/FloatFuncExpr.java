@@ -7,7 +7,7 @@ import java.util.function.ToDoubleFunction;
 /**
  * @author Eldar Abusalimov
  */
-interface FloatFuncExpr extends FuncExpr<Double, FloatFuncExpr>, ToDoubleFunction<Object[]> {
+interface FloatFuncExpr extends FuncExpr<Double>, ToDoubleFunction<Object[]> {
     @Override
     default Type getType() {
         return Type.FLOAT;

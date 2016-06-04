@@ -1,4 +1,4 @@
-package com.abusalimov.mrcalc.compile.exprtree;
+package com.abusalimov.mrcalc.compile;
 
 import java.util.Arrays;
 import java.util.Collections;

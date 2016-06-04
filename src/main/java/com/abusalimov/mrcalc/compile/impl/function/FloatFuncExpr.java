@@ -1,15 +1,11 @@
 package com.abusalimov.mrcalc.compile.impl.function;
 
-import com.abusalimov.mrcalc.compile.exprtree.Type;
+import com.abusalimov.mrcalc.compile.exprtree.Expr;
 
 import java.util.function.ToDoubleFunction;
 
 /**
  * @author Eldar Abusalimov
  */
-interface FloatFuncExpr extends FuncExpr<Double>, ToDoubleFunction<Object[]> {
-    @Override
-    default Type getType() {
-        return Type.FLOAT;
-    }
+interface FloatFuncExpr extends ToDoubleFunction<Object[]>, Expr<Double> {
 }

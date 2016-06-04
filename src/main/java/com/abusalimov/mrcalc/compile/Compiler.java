@@ -13,7 +13,7 @@ import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.compile.exprtree.*;
-import com.abusalimov.mrcalc.compile.impl.function.FunctionBuilderFactoryImpl;
+import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.diagnostic.AbstractDiagnosticEmitter;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
@@ -31,14 +31,14 @@ public class Compiler extends AbstractDiagnosticEmitter {
     private Map<String, VarDefStmtNode> varDefMap = new HashMap<>();
     private Map<Node, Type> typeMap = new HashMap<>();
 
-    private BuilderFactory<?, ?> builderFactory;
+    private ExprBuilderFactory<?, ?> exprBuilderFactory;
 
     public Compiler() {
-        this(new FunctionBuilderFactoryImpl());
+        this(new FuncExprBuilderFactoryImpl());
     }
 
-    public Compiler(BuilderFactory<?, ?> builderFactory) {
-        this.builderFactory = builderFactory;
+    public Compiler(ExprBuilderFactory<?, ?> exprBuilderFactory) {
+        this.exprBuilderFactory = exprBuilderFactory;
     }
 
     public Code compile(ProgramNode node) throws CompileErrorException {
@@ -145,14 +145,14 @@ public class Compiler extends AbstractDiagnosticEmitter {
     }
 
     protected <I extends Expr<Long, I>, F extends Expr<Double, F>> Expr buildExpr(ExprNode rootNode) {
-        BuilderFactory<I, F> factory = getBuilderFactory();
+        ExprBuilderFactory<I, F> factory = getExprBuilderFactory();
 
-        ExprBuilder<Long, I> integerExprBuilder = factory.createIntegerExprBuilder();
-        ExprBuilder<Double, F> floatExprBuilder = factory.createFloatExprBuilder();
-        TypeCastBuilder<I, F> typeCastBuilder = factory.createTypeCastBuilder();
+        PrimitiveOpBuilder<Long, I> integerOpBuilder = factory.createIntegerOpBuilder();
+        PrimitiveOpBuilder<Double, F> floatOpBuilder = factory.createFloatOpBuilder();
+        PrimitiveCastBuilder<I, F> primitiveCastBuilder = factory.createPrimitiveCastBuilder();
 
-        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerExprBuilder);
-        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatExprBuilder);
+        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder);
+        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder);
 
         Function<Node, I> visitInteger = integerExprVisitor::visit;
         Function<Node, F> visitFloat = floatExprVisitor::visit;
@@ -160,13 +160,13 @@ public class Compiler extends AbstractDiagnosticEmitter {
         Map<Type, Function<Node, I>> visitIntegerMap = new EnumMap<Type, Function<Node, I>>(
                 Type.class) {{
             put(Type.INTEGER, visitInteger);
-            put(Type.FLOAT, visitFloat.andThen(typeCastBuilder::toInteger));
+            put(Type.FLOAT, visitFloat.andThen(primitiveCastBuilder::toInteger));
             put(Type.UNKNOWN, node -> null);
         }};
 
         Map<Type, Function<Node, F>> visitFloatMap = new EnumMap<Type, Function<Node, F>>(
                 Type.class) {{
-            put(Type.INTEGER, visitInteger.andThen(typeCastBuilder::toFloat));
+            put(Type.INTEGER, visitInteger.andThen(primitiveCastBuilder::toFloat));
             put(Type.FLOAT, visitFloat);
             put(Type.UNKNOWN, node -> null);
         }};
@@ -186,8 +186,8 @@ public class Compiler extends AbstractDiagnosticEmitter {
     }
 
     @SuppressWarnings("unchecked")
-    private <I extends Expr<Long, I>, F extends Expr<Double, F>> BuilderFactory<I, F> getBuilderFactory() {
-        return (BuilderFactory<I, F>) this.builderFactory;
+    private <I extends Expr<Long, I>, F extends Expr<Double, F>> ExprBuilderFactory<I, F> getExprBuilderFactory() {
+        return (ExprBuilderFactory<I, F>) this.exprBuilderFactory;
     }
 
     private Type getNodeType(ExprNode node) {

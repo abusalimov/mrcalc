@@ -4,8 +4,8 @@ import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.compile.Code;
 import com.abusalimov.mrcalc.compile.CompileErrorException;
 import com.abusalimov.mrcalc.compile.Compiler;
-import com.abusalimov.mrcalc.compile.exprtree.BuilderFactory;
-import com.abusalimov.mrcalc.compile.impl.function.FunctionBuilderFactoryImpl;
+import com.abusalimov.mrcalc.compile.exprtree.ExprBuilderFactory;
+import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 import com.abusalimov.mrcalc.parse.Parser;
 import com.abusalimov.mrcalc.parse.SyntaxErrorException;
@@ -30,8 +30,8 @@ public class REPL {
 
     public REPL() {
         parser = new ANTLRParserImpl();
-        BuilderFactory<?, ?> builderFactory = new FunctionBuilderFactoryImpl();
-        compiler = new Compiler(builderFactory);
+        ExprBuilderFactory<?, ?> exprBuilderFactory = new FuncExprBuilderFactoryImpl();
+        compiler = new Compiler(exprBuilderFactory);
         interpreter = new Interpreter();
     }
 

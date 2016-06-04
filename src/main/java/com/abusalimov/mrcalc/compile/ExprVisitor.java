@@ -8,7 +8,7 @@ import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.compile.exprtree.Expr;
-import com.abusalimov.mrcalc.compile.exprtree.ExprBuilder;
+import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 
 import java.util.function.Function;
 
@@ -16,10 +16,10 @@ import java.util.function.Function;
  * @author Eldar Abusalimov
  */
 public class ExprVisitor<T extends Number, E extends Expr<T, E>> implements NodeVisitor<E> {
-    private final ExprBuilder<T, E> builder;
+    private final PrimitiveOpBuilder<T, E> builder;
     private Function<ExprNode, E> delegate;
 
-    public ExprVisitor(ExprBuilder<T, E> builder) {
+    public ExprVisitor(PrimitiveOpBuilder<T, E> builder) {
         this.builder = builder;
     }
 

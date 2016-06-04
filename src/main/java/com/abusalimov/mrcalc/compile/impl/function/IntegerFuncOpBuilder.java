@@ -1,12 +1,12 @@
 package com.abusalimov.mrcalc.compile.impl.function;
 
-import com.abusalimov.mrcalc.compile.exprtree.ExprBuilder;
+import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 
 /**
  * @author Eldar Abusalimov
  */
-public class IntegerFuncExprBuilder
-        implements ExprBuilder<Long, IntegerFuncExpr> {
+public class IntegerFuncOpBuilder
+        implements PrimitiveOpBuilder<Long, IntegerFuncExpr> {
 
     @Override
     public IntegerFuncExpr load(String name, int slot) {

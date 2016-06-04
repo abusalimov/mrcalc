@@ -1,6 +1,12 @@
 package com.abusalimov.mrcalc.ast;
 
-import com.abusalimov.mrcalc.ast.expr.*;
+import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.ExprNode;
+import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.VarRefNode;
+import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
+import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
+import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
@@ -81,15 +87,23 @@ public interface NodeVisitor<T> {
         return doVisit((ExprNode) node);
     }
 
-    default T doVisit(LiteralNode node) {
-        return doVisit((ExprNode) node);
-    }
-
     default T doVisit(BinaryOpNode node) {
         return doVisit((ExprNode) node);
     }
 
     default T doVisit(UnaryOpNode node) {
         return doVisit((ExprNode) node);
+    }
+
+    default T doVisit(LiteralNode<?> node) {
+        return doVisit((ExprNode) node);
+    }
+
+    default T doVisit(IntegerLiteralNode node) {
+        return doVisit((LiteralNode<?>) node);
+    }
+
+    default T doVisit(FloatLiteralNode node) {
+        return doVisit((LiteralNode<?>) node);
     }
 }

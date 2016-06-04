@@ -3,7 +3,7 @@ package com.abusalimov.mrcalc.compile.exprtree;
 /**
  * @author Eldar Abusalimov
  */
-public interface ExprBuilder<T extends Number, E extends Expr<T, E>> {
+public interface PrimitiveOpBuilder<T extends Number, E extends Expr<T, E>> {
     E load(String name, int slot);
     E constant(T literal);
     E add(E leftOperand, E rightOperand);

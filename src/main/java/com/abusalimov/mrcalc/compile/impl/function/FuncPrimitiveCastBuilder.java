@@ -1,11 +1,11 @@
 package com.abusalimov.mrcalc.compile.impl.function;
 
-import com.abusalimov.mrcalc.compile.exprtree.TypeCastBuilder;
+import com.abusalimov.mrcalc.compile.exprtree.PrimitiveCastBuilder;
 
 /**
  * @author Eldar Abusalimov
  */
-public class FunctionTypeCastBuilder implements TypeCastBuilder<IntegerFuncExpr, FloatFuncExpr> {
+public class FuncPrimitiveCastBuilder implements PrimitiveCastBuilder<IntegerFuncExpr, FloatFuncExpr> {
 
     @Override
     public IntegerFuncExpr toInteger(FloatFuncExpr expr) {

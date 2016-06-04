@@ -7,7 +7,7 @@ import java.util.function.ToLongFunction;
 /**
  * @author Eldar Abusalimov
  */
-interface IntegerFuncExpr extends FuncExpr<Long, IntegerFuncExpr>, ToLongFunction<Object[]> {
+interface IntegerFuncExpr extends FuncExpr<Long>, ToLongFunction<Object[]> {
     @Override
     default Type getType() {
         return Type.INTEGER;

@@ -5,5 +5,5 @@ import com.abusalimov.mrcalc.compile.exprtree.Expr;
 /**
  * @author Eldar Abusalimov
  */
-interface FuncExpr<T extends Number, E extends FuncExpr<T, E>> extends Expr<T, E> {
+interface FuncExpr<T extends Number> extends Expr<T> {
 }

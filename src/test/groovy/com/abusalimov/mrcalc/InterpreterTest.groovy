@@ -46,14 +46,14 @@ class InterpreterTest {
         shouldFail ArithmeticException, { eval "1/0" }
     }
 
-    @Ignore("ExprVisitor stub")
+    @Ignore("Interpreter stub")
     @Test
     void "can use variables"() {
         assert 1L == eval("var x = 1; x")
         assert 54L == eval("var six = 1 + 5; var nine = 8 + 1; six * nine")
     }
 
-    @Ignore("ExprVisitor stub")
+    @Ignore("NIY")
     @Test
     void "calculates variables lazily"() {
         assert 42L == eval("var fuuu = 1/0; 42")

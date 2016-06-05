@@ -1,6 +1,6 @@
 package com.abusalimov.mrcalc.compile;
 
-import com.abusalimov.mrcalc.compile.exprtree.Expr;
+import java.util.function.Function;
 
 /**
  * TODO stub implementation
@@ -8,13 +8,13 @@ import com.abusalimov.mrcalc.compile.exprtree.Expr;
  * @author Eldar Abusalimov
  */
 public class Code {
-    private final Expr expr;
+    private final Function<Object[], ?> exprFunction;
 
-    public Code(Expr expr) {
-        this.expr = expr;
+    public Code(Function<Object[], ?> exprFunction) {
+        this.exprFunction = exprFunction;
     }
 
-    public Expr getExpr() {
-        return expr;
+    public Function<Object[], ?> getExprFunction() {
+        return exprFunction;
     }
 }

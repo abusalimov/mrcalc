@@ -27,6 +27,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
 
     private Map<String, VarDefStmtNode> varDefMap = new HashMap<>();
     private Map<ExprNode, Type> typeMap = new HashMap<>();
+    private Map<String, Integer> varIndices = new LinkedHashMap<>();
 
     private ExprBuilderFactory<?, ?> exprBuilderFactory;
 
@@ -62,7 +63,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
     }
 
     public Code compileExpr(ExprNode node) throws CompileErrorException {
-        return new Code(buildExpr(node));
+        return new Code(buildExprFunction(node));
     }
 
     protected void inferVariableTypes(ProgramNode rootNode) {
@@ -98,6 +99,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
             public Type doVisit(VarRefNode node) {
                 VarDefStmtNode varDef = varDefMap.get(node.getName());
                 if (varDef != null) {
+                    varIndices.putIfAbsent(node.getName(), varIndices.size());
                     return getNodeType(varDef.getExpr());
                 } else {
                     emitDiagnostic(new Diagnostic(node.getLocation(),
@@ -130,15 +132,16 @@ public class Compiler extends AbstractDiagnosticEmitter {
         }.visit(rootNode);
     }
 
-    protected <I extends Expr<Long>, F extends Expr<Double>> Expr buildExpr(ExprNode rootNode) {
+    protected <I extends Expr<Long>, F extends Expr<Double>> Function<Object[], ?> buildExprFunction(
+            ExprNode rootNode) {
         ExprBuilderFactory<I, F> factory = getExprBuilderFactory();
 
         PrimitiveOpBuilder<Long, I> integerOpBuilder = factory.createIntegerOpBuilder();
         PrimitiveOpBuilder<Double, F> floatOpBuilder = factory.createFloatOpBuilder();
         PrimitiveCastBuilder<I, F> primitiveCastBuilder = factory.createPrimitiveCastBuilder();
 
-        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder);
-        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder);
+        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder, varIndices);
+        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder, varIndices);
 
         Function<Node, I> visitInteger = integerExprVisitor::visit;
         Function<Node, F> visitFloat = floatExprVisitor::visit;
@@ -162,9 +165,9 @@ public class Compiler extends AbstractDiagnosticEmitter {
 
         switch (getNodeType(rootNode)) {
             case INTEGER:
-                return integerExprVisitor.visit(rootNode);
+                return integerExprVisitor.buildFunction(rootNode);
             case FLOAT:
-                return floatExprVisitor.visit(rootNode);
+                return floatExprVisitor.buildFunction(rootNode);
             case UNKNOWN:
             default:
                 return null;

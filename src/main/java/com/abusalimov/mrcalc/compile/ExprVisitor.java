@@ -6,10 +6,11 @@ import com.abusalimov.mrcalc.ast.expr.ExprNode;
 import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
-import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
+import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.compile.exprtree.Expr;
 import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -17,23 +18,21 @@ import java.util.function.Function;
  */
 public class ExprVisitor<T extends Number, E extends Expr<T>> implements NodeVisitor<E> {
     private final PrimitiveOpBuilder<T, E> builder;
+    private final Map<String, Integer> varIndices;
     private Function<ExprNode, E> delegate;
 
-    public ExprVisitor(PrimitiveOpBuilder<T, E> builder) {
+    public ExprVisitor(PrimitiveOpBuilder<T, E> builder, Map<String, Integer> varIndices) {
         this.builder = builder;
+        this.varIndices = varIndices;
     }
 
-    protected E delegateVisit(ExprNode node) {
-        return delegate.apply(node);
+    public Function<Object[], T> buildFunction(ExprNode node) {
+        return builder.toFunction(visit(node));
     }
 
     @Override
     public E doVisit(VarRefNode node) {
-        VarDefStmtNode linkedDef = node.getLinkedDef();
-        if (linkedDef == null) {
-            return null;
-        }
-        return delegateVisit(linkedDef.getExpr());
+        return builder.load(node.getName(), varIndices.get(node.getName()));
     }
 
     @Override
@@ -70,6 +69,15 @@ public class ExprVisitor<T extends Number, E extends Expr<T>> implements NodeVis
         }
 
         return expr;
+    }
+
+    @Override
+    public E doVisit(StmtNode node) {
+        throw new UnsupportedOperationException("Expressions only");
+    }
+
+    protected E delegateVisit(ExprNode node) {
+        return delegate.apply(node);
     }
 
     public Function<ExprNode, E> getDelegate() {

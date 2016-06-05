@@ -2,6 +2,8 @@ package com.abusalimov.mrcalc.compile.impl.function;
 
 import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 
+import java.util.function.Function;
+
 /**
  * @author Eldar Abusalimov
  */
@@ -9,13 +11,19 @@ public class IntegerFuncOpBuilder
         implements PrimitiveOpBuilder<Long, IntegerFuncExpr> {
 
     @Override
+    public Function<Object[], Long> toFunction(IntegerFuncExpr expr) {
+        return expr::applyAsLong;
+    }
+
+    @Override
     public IntegerFuncExpr load(String name, int slot) {
-        return args -> (Long) args[slot];
+        return args -> (long) args[slot];
     }
 
     @Override
     public IntegerFuncExpr constant(Long literal) {
-        return args -> literal;
+        long primitive = literal;
+        return args -> primitive;
     }
 
     @Override

@@ -2,6 +2,8 @@ package com.abusalimov.mrcalc.compile.impl.function;
 
 import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 
+import java.util.function.Function;
+
 /**
  * @author Eldar Abusalimov
  */
@@ -9,13 +11,19 @@ public class FloatFuncOpBuilder
         implements PrimitiveOpBuilder<Double, FloatFuncExpr> {
 
     @Override
+    public Function<Object[], Double> toFunction(FloatFuncExpr expr) {
+        return expr::applyAsDouble;
+    }
+
+    @Override
     public FloatFuncExpr load(String name, int slot) {
-        return args -> (Double) args[slot];
+        return args -> (double) args[slot];
     }
 
     @Override
     public FloatFuncExpr constant(Double literal) {
-        return args -> literal;
+        double primitive = literal;
+        return args -> primitive;
     }
 
     @Override

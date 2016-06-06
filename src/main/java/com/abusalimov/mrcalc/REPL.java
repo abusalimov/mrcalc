@@ -1,9 +1,9 @@
 package com.abusalimov.mrcalc;
 
 import com.abusalimov.mrcalc.ast.ProgramNode;
-import com.abusalimov.mrcalc.compile.Code;
 import com.abusalimov.mrcalc.compile.CompileErrorException;
 import com.abusalimov.mrcalc.compile.Compiler;
+import com.abusalimov.mrcalc.compile.Stmt;
 import com.abusalimov.mrcalc.compile.exprtree.ExprBuilderFactory;
 import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
@@ -32,7 +32,7 @@ public class REPL {
         parser = new ANTLRParserImpl();
         ExprBuilderFactory<?, ?> exprBuilderFactory = new FuncExprBuilderFactoryImpl();
         compiler = new Compiler(exprBuilderFactory);
-        interpreter = new Interpreter();
+        interpreter = new Interpreter(System.out);
     }
 
     public void loop() {
@@ -54,11 +54,8 @@ public class REPL {
             }
             try {
                 ProgramNode node = parser.parse(line);
-                Code code = compiler.compile(node);
-                if (code.getExprFunction() != null) {
-                    Object result = interpreter.eval(code);
-                    System.out.println(result);
-                }
+                List<Stmt> stmts = compiler.compile(node);
+                interpreter.exec(stmts);
             } catch (SyntaxErrorException | CompileErrorException e) {
                 List<Diagnostic> diagnostics = e.getDiagnostics();
                 for (int i = 0; i < diagnostics.size(); i++) {

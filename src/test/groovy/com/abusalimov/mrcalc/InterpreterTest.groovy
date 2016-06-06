@@ -26,8 +26,8 @@ class InterpreterTest {
 
     long eval(String s) {
         def node = parser.parse s
-        def code = compiler.compile node
-        interpreter.eval code
+        def stmts = compiler.compile node
+        interpreter.exec stmts
     }
 
     @Test
@@ -46,7 +46,6 @@ class InterpreterTest {
         shouldFail ArithmeticException, { eval "1/0" }
     }
 
-    @Ignore("Interpreter stub")
     @Test
     void "can use variables"() {
         assert 1L == eval("var x = 1; x")

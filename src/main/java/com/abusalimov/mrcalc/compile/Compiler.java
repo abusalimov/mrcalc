@@ -1,6 +1,5 @@
 package com.abusalimov.mrcalc.compile;
 
-import com.abusalimov.mrcalc.ast.ExprHolderNode;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
@@ -10,6 +9,7 @@ import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
+import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.compile.exprtree.*;
@@ -19,15 +19,17 @@ import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * @author Eldar Abusalimov
  */
 public class Compiler extends AbstractDiagnosticEmitter {
 
-    private Map<String, VarDefStmtNode> varDefMap = new HashMap<>();
+    private Map<String, Variable> variableMap = new HashMap<>();
     private Map<ExprNode, Type> typeMap = new HashMap<>();
-    private Map<String, Integer> varIndices = new LinkedHashMap<>();
+    private int syntheticVariableCounter;
 
     private ExprBuilderFactory<?, ?> exprBuilderFactory;
 
@@ -39,68 +41,83 @@ public class Compiler extends AbstractDiagnosticEmitter {
         this.exprBuilderFactory = exprBuilderFactory;
     }
 
-    public Code compile(ProgramNode node) throws CompileErrorException {
+    public List<Stmt> compile(ProgramNode node) throws CompileErrorException {
+        return compileOrThrow(() -> compileProgram(node));
+    }
+
+    public Stmt compile(StmtNode node) throws CompileErrorException {
+        return compileOrThrow(() -> compileStmt(node));
+    }
+
+    private <R> R compileOrThrow(Supplier<R> function) throws CompileErrorException {
         try (ListenerClosable<CompileErrorException> ignored =
                      collectDiagnosticsToThrow(CompileErrorException::new)) {
-            inferVariableTypes(node);
-
-            List<StmtNode> stmts = node.getStmts();
-
-            ExprNode exprNode = null;
-            if (!stmts.isEmpty()) {
-                StmtNode lastStmt = stmts.get(stmts.size() - 1);
-                if (lastStmt instanceof ExprHolderNode) {
-                    exprNode = ((ExprHolderNode) lastStmt).getExpr();
-                }
-            }
-
-            if (exprNode != null) {
-                return compileExpr(exprNode);
-            } else {
-                return new Code(null);
-            }
+            return function.get();
         }
     }
 
-    public Code compileExpr(ExprNode node) throws CompileErrorException {
-        return new Code(buildExprFunction(node));
+    protected List<Stmt> compileProgram(ProgramNode node) {
+        return node.getStmts().stream()
+                .map(this::compileStmt)
+                .collect(Collectors.toList());
     }
 
-    protected void inferVariableTypes(ProgramNode rootNode) {
-        new NodeVisitor<Type>() {
+    protected Stmt compileStmt(StmtNode node) {
+        return new NodeVisitor<Stmt>() {
             @Override
-            public Type visit(Node node) {
-                Type type = NodeVisitor.super.visit(node);
-                if (node instanceof ExprNode) {
-                    ExprNode exprNode = (ExprNode) node;
-                    typeMap.put(exprNode, Objects.requireNonNull(type));
-                }
-                return type;
-            }
-
-            @Override
-            public Type doVisit(VarDefStmtNode node) {
+            public Stmt doVisit(VarDefStmtNode node) {
+                String name = node.getName();
+                ExprNode expr = node.getExpr();
                 /*
                  * Need to visit the value prior to defining a variable in the scope in order
                  * to forbid self-recursive variable references from within the definition:
                  *
                  *   var r = r  # error
                  */
-                visit(node.getExpr());
+                Stmt stmt = compileInternal(expr, name);
 
-                if (varDefMap.putIfAbsent(node.getName(), node) != null) {
+                if (!variableMap.containsKey(name)) {
+                    variableMap.put(name, stmt.getOutputVariable());
+                } else {
                     emitDiagnostic(new Diagnostic(node.getLocation(),
-                            String.format("Variable '%s' is already defined", node.getName())));
+                            String.format("Variable '%s' is already defined", name)));
                 }
-                return null;
+                return stmt;
+            }
+
+            @Override
+            public Stmt doVisit(PrintStmtNode node) {
+                return compileInternal(node.getExpr(), nextSyntheticVariableName());
+            }
+
+            @Override
+            public Stmt doVisit(Node node) {
+                throw new UnsupportedOperationException();
+            }
+        }.visit(node);
+    }
+
+    private String nextSyntheticVariableName() {
+        return "$print" + (++syntheticVariableCounter);
+    }
+
+    protected Stmt compileInternal(ExprNode rootNode, String outputVariableName) {
+        Set<Variable> variableSet = new LinkedHashSet<>();
+
+        Type type = new NodeVisitor<Type>() {
+            @Override
+            public Type visit(Node node) {
+                Type type = NodeVisitor.super.visit(node);
+                typeMap.put((ExprNode) node, Objects.requireNonNull(type));
+                return type;
             }
 
             @Override
             public Type doVisit(VarRefNode node) {
-                VarDefStmtNode varDef = varDefMap.get(node.getName());
-                if (varDef != null) {
-                    varIndices.putIfAbsent(node.getName(), varIndices.size());
-                    return getNodeType(varDef.getExpr());
+                Variable variable = variableMap.get(node.getName());
+                if (variable != null) {
+                    variableSet.add(variable);
+                    return variable.getType();
                 } else {
                     emitDiagnostic(new Diagnostic(node.getLocation(),
                             String.format("Undefined variable '%s'", node.getName())));
@@ -130,18 +147,23 @@ public class Compiler extends AbstractDiagnosticEmitter {
                 return visit(node.getOperand());
             }
         }.visit(rootNode);
+
+        List<Variable> variables = new ArrayList<>(variableSet);
+        Function<Object[], ?> exprFunction = buildExprFunction(rootNode, variables);
+        Variable outputVariable = new Variable(outputVariableName, type);
+        return new Stmt(exprFunction, variables, outputVariable);
     }
 
     protected <I extends Expr<Long>, F extends Expr<Double>> Function<Object[], ?> buildExprFunction(
-            ExprNode rootNode) {
+            ExprNode rootNode, List<Variable> variables) {
         ExprBuilderFactory<I, F> factory = getExprBuilderFactory();
 
         PrimitiveOpBuilder<Long, I> integerOpBuilder = factory.createIntegerOpBuilder();
         PrimitiveOpBuilder<Double, F> floatOpBuilder = factory.createFloatOpBuilder();
         PrimitiveCastBuilder<I, F> primitiveCastBuilder = factory.createPrimitiveCastBuilder();
 
-        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder, varIndices);
-        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder, varIndices);
+        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder, variables);
+        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder, variables);
 
         Function<Node, I> visitInteger = integerExprVisitor::visit;
         Function<Node, F> visitFloat = floatExprVisitor::visit;

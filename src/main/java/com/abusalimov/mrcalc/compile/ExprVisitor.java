@@ -10,6 +10,8 @@ import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.compile.exprtree.Expr;
 import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -21,9 +23,20 @@ public class ExprVisitor<T extends Number, E extends Expr<T>> implements NodeVis
     private final Map<String, Integer> varIndices;
     private Function<ExprNode, E> delegate;
 
-    public ExprVisitor(PrimitiveOpBuilder<T, E> builder, Map<String, Integer> varIndices) {
+    public ExprVisitor(PrimitiveOpBuilder<T, E> builder, List<Variable> variables) {
         this.builder = builder;
-        this.varIndices = varIndices;
+        this.varIndices = varListToIndices(variables);
+    }
+
+    protected Map<String, Integer> varListToIndices(List<Variable> variables) {
+        Map<String, Integer> ret = new HashMap<>();
+
+        int i = 0;
+        for (Variable variable : variables) {
+            ret.put(variable.getName(), i++);
+        }
+
+        return ret;
     }
 
     public Function<Object[], T> buildFunction(ExprNode node) {

@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.compile;
 
+import com.abusalimov.mrcalc.ast.LambdaNode;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
@@ -175,6 +176,21 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
                 }
 
                 return Sequence.of(elementType);
+            }
+
+            @Override
+            public Type doVisit(MapNode node) {
+                throw new UnsupportedOperationException("NIY");
+            }
+
+            @Override
+            public Type doVisit(ReduceNode node) {
+                throw new UnsupportedOperationException("NIY");
+            }
+
+            @Override
+            public Type doVisit(LambdaNode node) {
+                throw new UnsupportedOperationException("NIY");
             }
         }.visit(rootNode);
 

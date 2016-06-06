@@ -150,14 +150,12 @@ public class Compiler extends AbstractDiagnosticEmitter {
                 Type.class) {{
             put(Type.INTEGER, visitInteger);
             put(Type.FLOAT, visitFloat.andThen(primitiveCastBuilder::toInteger));
-            put(Type.UNKNOWN, node -> null);
         }};
 
         Map<Type, Function<Node, F>> visitFloatMap = new EnumMap<Type, Function<Node, F>>(
                 Type.class) {{
             put(Type.INTEGER, visitInteger.andThen(primitiveCastBuilder::toFloat));
             put(Type.FLOAT, visitFloat);
-            put(Type.UNKNOWN, node -> null);
         }};
 
         integerExprVisitor.setDelegate(node -> visitIntegerMap.get(getNodeType(node)).apply(node));
@@ -170,7 +168,9 @@ public class Compiler extends AbstractDiagnosticEmitter {
                 return floatExprVisitor.buildFunction(rootNode);
             case UNKNOWN:
             default:
-                return null;
+                return args -> {
+                    throw new UnsupportedOperationException("Incomplete type");
+                };
         }
     }
 

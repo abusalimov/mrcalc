@@ -7,7 +7,7 @@ import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
-import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
+import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 
@@ -71,11 +71,11 @@ public interface NodeVisitor<T> {
         return doVisit((Node) node);
     }
 
-    default T doVisit(ExprStmtNode node) {
+    default T doVisit(VarDefStmtNode node) {
         return doVisit((StmtNode) node);
     }
 
-    default T doVisit(VarDefStmtNode node) {
+    default T doVisit(PrintStmtNode node) {
         return doVisit((StmtNode) node);
     }
 

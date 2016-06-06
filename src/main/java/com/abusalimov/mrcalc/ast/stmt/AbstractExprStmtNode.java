@@ -8,17 +8,19 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Expression statement is a special case mainly required by the REPL.
+ * Thought no statement is technically an "expression" statement, most of them have an intrinsic
+ * notion of an expression: variable definitions have an initialization expression, and "print"
+ * obviously has an expression to print.
  *
  * @author Eldar Abusalimov
  */
-public class ExprStmtNode extends AbstractNode implements StmtNode {
+public abstract class AbstractExprStmtNode extends AbstractNode implements StmtNode {
     private ExprNode expr;
 
-    public ExprStmtNode() {
+    public AbstractExprStmtNode() {
     }
 
-    public ExprStmtNode(ExprNode expr) {
+    public AbstractExprStmtNode(ExprNode expr) {
         this.expr = expr;
     }
 

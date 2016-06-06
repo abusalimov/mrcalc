@@ -4,7 +4,7 @@ import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
-import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
+import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.diagnostic.AbstractDiagnosticEmitter;
@@ -31,8 +31,8 @@ public class Compiler extends AbstractDiagnosticEmitter {
             ExprNode exprNode = null;
             if (!stmts.isEmpty()) {
                 StmtNode lastStmt = stmts.get(stmts.size() - 1);
-                if (lastStmt instanceof ExprStmtNode) {
-                    exprNode = ((ExprStmtNode) lastStmt).getExpr();
+                if (lastStmt instanceof PrintStmtNode) {
+                    exprNode = ((PrintStmtNode) lastStmt).getExpr();
                 }
             }
 
@@ -54,7 +54,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
                  *
                  *   var r = r  # error
                  */
-                visit(node.getValue());
+                visit(node.getExpr());
 
                 if (varDefMap.putIfAbsent(node.getName(), node) != null) {
                     emitDiagnostic(new Diagnostic(node.getLocation(),

@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.parse.impl.antlr;
 
+import com.abusalimov.mrcalc.ast.LambdaNode;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.ast.expr.*;
@@ -79,6 +80,27 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
     public Node visitBinaryOpExpr(CalcParser.BinaryOpExprContext ctx) {
         return initLocation(ctx, new BinaryOpNode(BinaryOpNode.Op.valueOfSign(ctx.op.getText()),
                 (ExprNode) visit(ctx.a), (ExprNode) visit(ctx.b)));
+    }
+
+    @Override
+    public Node visitMapExpr(CalcParser.MapExprContext ctx) {
+        return initLocation(ctx,
+                new MapNode((ExprNode) visit(ctx.expr()), (LambdaNode) visit(ctx.lambda())));
+    }
+
+    @Override
+    public Node visitReduceExpr(CalcParser.ReduceExprContext ctx) {
+        return initLocation(ctx,
+                new ReduceNode((ExprNode) visit(ctx.expr(0)), (ExprNode) visit(ctx.expr(1)),
+                        (LambdaNode) visit(ctx.lambda())));
+    }
+
+    @Override
+    public Node visitLambda(CalcParser.LambdaContext ctx) {
+        List<String> argNames = ctx.ID().stream()
+                .map(terminalNode -> terminalNode.getSymbol().getText())
+                .collect(Collectors.toList());
+        return initLocation(ctx, new LambdaNode(argNames, (ExprNode) visit(ctx.expr())));
     }
 
     @Override

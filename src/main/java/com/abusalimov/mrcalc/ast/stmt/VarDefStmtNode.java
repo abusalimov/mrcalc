@@ -1,11 +1,7 @@
 package com.abusalimov.mrcalc.ast.stmt;
 
-import com.abusalimov.mrcalc.ast.AbstractNode;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * A variable defines an expression identified using a unique name, there must not be more than one
@@ -13,16 +9,15 @@ import java.util.List;
  *
  * @author Eldar Abusalimov
  */
-public class VarDefStmtNode extends AbstractNode implements StmtNode {
+public class VarDefStmtNode extends AbstractExprStmtNode implements StmtNode {
     private String name;
-    private ExprNode value;
 
     public VarDefStmtNode() {
     }
 
-    public VarDefStmtNode(String name, ExprNode value) {
+    public VarDefStmtNode(String name, ExprNode expr) {
+        super(expr);
         this.name = name;
-        this.value = value;
     }
 
     public String getName() {
@@ -31,19 +26,6 @@ public class VarDefStmtNode extends AbstractNode implements StmtNode {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public ExprNode getValue() {
-        return value;
-    }
-
-    public void setValue(ExprNode value) {
-        this.value = value;
-    }
-
-    @Override
-    public List<? extends ExprNode> getChildren() {
-        return Collections.singletonList(value);
     }
 
     @Override

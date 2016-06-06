@@ -22,7 +22,7 @@ public class Interpreter implements NodeVisitor<Long> {
         String name = node.getName();
         Long value = memory.get(name);
         if (value == null) {
-            value = visit(node.getLinkedDef().getValue());
+            value = visit(node.getLinkedDef().getExpr());
             memory.put(name, value);
         }
         return value;

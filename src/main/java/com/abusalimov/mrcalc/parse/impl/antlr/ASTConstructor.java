@@ -8,7 +8,7 @@ import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
-import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
+import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -40,8 +40,8 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitExprStmt(CalcParser.ExprStmtContext ctx) {
-        return initLocation(ctx, new ExprStmtNode((ExprNode) visit(ctx.expr())));
+    public Node visitPrintStmt(CalcParser.PrintStmtContext ctx) {
+        return initLocation(ctx, new PrintStmtNode((ExprNode) visit(ctx.expr())));
     }
 
     @Override

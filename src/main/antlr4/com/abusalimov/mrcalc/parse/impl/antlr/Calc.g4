@@ -3,8 +3,8 @@ grammar Calc;
 program: STMT_DELIM? stmt (STMT_DELIM stmt)* STMT_DELIM? EOF ;
 
 stmt
-    : expr                        # exprStmt
-    | 'var' name=ID '=' expr      # varDefStmt
+    : 'var' name=ID '=' expr      # varDefStmt
+    | ('print')? expr             # printStmt
     ;
 
 expr
@@ -32,7 +32,8 @@ MUL_OP : '*' ;
 DIV_OP : '/' ;
 POW_OP : '^' ;
 
-VAR_KW : 'var' ;
+VAR_KW    : 'var' ;
+PRINT_KW  : 'print' ;
 
 ID : [A-Za-z_][A-Za-z_0-9]* ;
 

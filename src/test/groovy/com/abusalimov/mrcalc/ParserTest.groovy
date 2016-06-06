@@ -52,6 +52,12 @@ class ParserTest extends GroovyTestCase {
         assert null != parse("{foo, bar}")
     }
 
+    void testParsesMapReduce() {
+        assert null != parse("map({1,2}, a -> a^2)")
+        assert null != parse("reduce({0,9}, 0, a b -> a+b)")
+        assert null != parse("map({0,9}, x -> reduce({1,x}, 1, a b -> a * b))")
+    }
+
     void testThrowsSyntaxErrors() {
         shouldFail SyntaxErrorException, { parse "(" }
         shouldFail SyntaxErrorException, { parse ")" }

@@ -107,4 +107,16 @@ public interface NodeVisitor<T> {
     default T doVisit(RangeNode node) {
         return doVisit((ExprNode) node);
     }
+
+    default T doVisit(MapNode node) {
+        return doVisit((ExprNode) node);
+    }
+
+    default T doVisit(ReduceNode node) {
+        return doVisit((ExprNode) node);
+    }
+
+    default T doVisit(LambdaNode node) {
+        return doVisit((Node) node);
+    }
 }

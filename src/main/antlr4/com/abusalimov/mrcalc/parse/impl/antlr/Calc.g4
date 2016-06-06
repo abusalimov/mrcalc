@@ -16,7 +16,13 @@ expr
     | a=expr op=('*'|'/') b=expr      # binaryOpExpr
     | a=expr op=('+'|'-') b=expr      # binaryOpExpr
     | '(' expr ')'                    # parensExpr
+    | 'map' '(' expr ',' lambda ')'   # mapExpr
+    | 'reduce' '(' expr ','
+            expr ',' lambda ')'       # reduceExpr
     ;
+
+lambda
+    : ID* '->' expr ;
 
 number returns [Number value]
     : token=INT   {$value = Long.decode($token.text);}
@@ -35,6 +41,8 @@ POW_OP : '^' ;
 
 VAR_KW    : 'var' ;
 PRINT_KW  : 'print' ;
+MAP_KW    : 'map' ;
+REDUCE_KW : 'reduce' ;
 
 ID : [A-Za-z_][A-Za-z_0-9]* ;
 
@@ -48,3 +56,4 @@ L_BRACE : '{' ;
 R_BRACE : '}' ;
 
 COMMA : ',' ;
+ARROW : '->' ;

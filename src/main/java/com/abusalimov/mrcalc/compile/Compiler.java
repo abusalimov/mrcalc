@@ -9,10 +9,7 @@ import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
-import com.abusalimov.mrcalc.compile.exprtree.Expr;
-import com.abusalimov.mrcalc.compile.exprtree.ExprBuilderFactory;
-import com.abusalimov.mrcalc.compile.exprtree.PrimitiveCastBuilder;
-import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
+import com.abusalimov.mrcalc.compile.exprtree.*;
 import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.compile.type.Primitive;
 import com.abusalimov.mrcalc.compile.type.Sequence;
@@ -191,9 +188,15 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
             ExprNode rootNode, List<Variable> variables) {
         ExprBuilderFactory<I, F> factory = getExprBuilderFactory();
 
+        ObjectOpBuilder<Object, ? extends Expr<Object>, I> objectOpBuilder = factory
+                .createObjectOpBuilder();
+
         PrimitiveOpBuilder<Long, I> integerOpBuilder = factory.createIntegerOpBuilder();
         PrimitiveOpBuilder<Double, F> floatOpBuilder = factory.createFloatOpBuilder();
         PrimitiveCastBuilder<I, F> primitiveCastBuilder = factory.createPrimitiveCastBuilder();
+
+        ObjectExprVisitor<Object, ? extends Expr<Object>, I> objectExprVisitor =
+                new ObjectExprVisitor<>(objectOpBuilder, variables);
 
         ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder, variables);
         ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder, variables);
@@ -213,14 +216,13 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
             put(Primitive.FLOAT, visitFloat);
         }};
 
+        objectExprVisitor.setDelegate(node -> visitIntegerMap.get(getNodeType(node)).apply(node));
         integerExprVisitor.setDelegate(node -> visitIntegerMap.get(getNodeType(node)).apply(node));
         floatExprVisitor.setDelegate(node -> visitFloatMap.get(getNodeType(node)).apply(node));
 
         Type rootType = getNodeType(rootNode);
         if (!(rootType instanceof Primitive)) {
-            return args -> {
-                throw new UnsupportedOperationException("NIY");
-            };
+            return objectExprVisitor.buildFunction(rootNode);
         }
 
         switch ((Primitive) rootType) {

@@ -76,12 +76,13 @@ public class Compiler extends AbstractDiagnosticEmitter {
                  */
                 Stmt stmt = compileInternal(expr, name);
 
-                if (!variableMap.containsKey(name)) {
-                    variableMap.put(name, stmt.getOutputVariable());
+                if (variableMap.containsKey(name)) {
+                    emitNodeDiagnostic(node,
+                            String.format("Variable '%s' is already defined", name));
                 } else {
-                    emitDiagnostic(new Diagnostic(node.getLocation(),
-                            String.format("Variable '%s' is already defined", name)));
+                    variableMap.put(name, stmt.getOutputVariable());
                 }
+
                 return stmt;
             }
 
@@ -115,14 +116,15 @@ public class Compiler extends AbstractDiagnosticEmitter {
             @Override
             public Type doVisit(VarRefNode node) {
                 Variable variable = variableMap.get(node.getName());
-                if (variable != null) {
-                    variableSet.add(variable);
-                    return variable.getType();
-                } else {
-                    emitDiagnostic(new Diagnostic(node.getLocation(),
-                            String.format("Undefined variable '%s'", node.getName())));
+
+                if (variable == null) {
+                    emitNodeDiagnostic(node,
+                            String.format("Undefined variable '%s'", node.getName()));
+                    return Type.UNKNOWN;
                 }
-                return Type.UNKNOWN;
+
+                variableSet.add(variable);
+                return variable.getType();
             }
 
             @Override
@@ -205,4 +207,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
         return typeMap.getOrDefault(node, Type.UNKNOWN);
     }
 
+    protected void emitNodeDiagnostic(Node node, String message) {
+        emitDiagnostic(new Diagnostic(node.getLocation(), message));
+    }
 }

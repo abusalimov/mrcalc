@@ -3,10 +3,7 @@ package com.abusalimov.mrcalc.compile;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
-import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.ExprNode;
-import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.VarRefNode;
+import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
@@ -18,6 +15,7 @@ import com.abusalimov.mrcalc.compile.exprtree.PrimitiveCastBuilder;
 import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.compile.type.Primitive;
+import com.abusalimov.mrcalc.compile.type.Sequence;
 import com.abusalimov.mrcalc.compile.type.Type;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
@@ -160,6 +158,26 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
             @Override
             public Type doVisit(UnaryOpNode node) {
                 return visit(node.getOperand());
+            }
+
+            @Override
+            public Type doVisit(RangeNode node) {
+                Type elementType = Primitive.INTEGER;
+
+                for (Node child : node.getChildren()) {
+                    Type childType = visit(child);
+                    if (childType != Primitive.INTEGER) {
+                        /* Avoid cascade reporting in case of inner expression errors. */
+                        if (childType != Primitive.UNKNOWN) {
+                            emitNodeDiagnostic(child,
+                                    String.format("Range cannot have '%s' as its boundary",
+                                            childType));
+                        }
+                        elementType = Primitive.UNKNOWN;
+                    }
+                }
+
+                return Sequence.of(elementType);
             }
         }.visit(rootNode);
 

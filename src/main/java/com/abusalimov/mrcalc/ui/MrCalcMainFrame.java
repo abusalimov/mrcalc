@@ -1,7 +1,5 @@
 package com.abusalimov.mrcalc.ui;
 
-import com.abusalimov.mrcalc.diagnostic.Diagnostic;
-
 import javax.swing.*;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.StyleConstants;
@@ -16,7 +14,7 @@ public class MrCalcMainFrame extends JFrame {
 
     private CodeTextPane codeTextPane;
     private JTextArea outputTextArea;
-    private JList<Diagnostic> messageList;
+    private MessageList messageList;
 
     public MrCalcMainFrame() {
         super("MrCalc");
@@ -24,7 +22,8 @@ public class MrCalcMainFrame extends JFrame {
         codeTextPane = new CodeTextPane();
         outputTextArea = new JTextArea();
         outputTextArea.setEditable(false);
-        messageList = new JList<>();
+        messageList = new MessageList(codeTextPane);
+        codeTextPane.setErrorListener(errors -> messageList.setMessages(errors));
 
         StyleContext style = StyleContext.getDefaultStyleContext();
 

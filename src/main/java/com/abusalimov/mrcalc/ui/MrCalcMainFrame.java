@@ -41,6 +41,8 @@ public class MrCalcMainFrame extends JFrame {
     private void initLayout() {
         JScrollPane codeScrollPane = new JScrollPane(codeTextPane);
 
+        TextLineNumber tln = new TextLineNumber(codeTextPane);
+        codeScrollPane.setRowHeaderView(tln);
         codeScrollPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, 400));
 
         JPanel outputPanel = new JPanel();

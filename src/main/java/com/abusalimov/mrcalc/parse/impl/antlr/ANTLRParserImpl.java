@@ -35,7 +35,7 @@ public class ANTLRParserImpl extends AbstractDiagnosticEmitter implements Parser
 
     protected CalcParser.ProgramContext parseTree(
             Reader reader) throws IOException, SyntaxErrorException {
-        try (ListenerClosable<SyntaxErrorException> ignored =
+        try (DiagnosticCollectorCloseable<SyntaxErrorException> ignored =
                      collectDiagnosticsToThrow(SyntaxErrorException::new)) {
             Lexer lexer = createLexer(reader);
             CalcParser parser = createParser(lexer);

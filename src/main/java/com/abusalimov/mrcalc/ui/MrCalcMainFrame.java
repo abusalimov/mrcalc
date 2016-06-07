@@ -14,14 +14,14 @@ import java.awt.*;
 public class MrCalcMainFrame extends JFrame {
     public static final int PREFERRED_WIDTH = 800;
 
-    private JTextPane codeTextPane;
+    private CodeTextPane codeTextPane;
     private JTextArea outputTextArea;
     private JList<Diagnostic> messageList;
 
     public MrCalcMainFrame() {
         super("MrCalc");
 
-        codeTextPane = new JTextPane();
+        codeTextPane = new CodeTextPane();
         outputTextArea = new JTextArea();
         outputTextArea.setEditable(false);
         messageList = new JList<>();

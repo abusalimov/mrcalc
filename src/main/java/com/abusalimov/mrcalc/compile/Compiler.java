@@ -50,7 +50,7 @@ public class Compiler extends AbstractDiagnosticEmitter {
     }
 
     private <R> R compileOrThrow(Supplier<R> function) throws CompileErrorException {
-        try (ListenerClosable<CompileErrorException> ignored =
+        try (DiagnosticCollectorCloseable<CompileErrorException> ignored =
                      collectDiagnosticsToThrow(CompileErrorException::new)) {
             return function.get();
         }

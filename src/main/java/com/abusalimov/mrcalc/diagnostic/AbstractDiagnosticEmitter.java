@@ -19,39 +19,84 @@ public class AbstractDiagnosticEmitter implements DiagnosticEmitter {
         diagnosticListeners.remove(Objects.requireNonNull(diagnosticListener));
     }
 
+    public SilentListenerCloseable withDiagnosticListener(DiagnosticListener diagnosticListener) {
+        return new DefaultListenerCloseable(this, diagnosticListener);
+    }
+
     protected void emitDiagnostic(Diagnostic diagnostic) {
         for (DiagnosticListener listener : diagnosticListeners) {
             listener.report(diagnostic);
         }
     }
 
-    protected <E extends DiagnosticException> ListenerClosable<E> collectDiagnosticsToThrow(
-            Function<List<Diagnostic>, E> e) {
-        DiagnosticCollector diagnosticCollector = new DiagnosticCollector();
-        addDiagnosticListener(diagnosticCollector);
-        return () -> {
-            removeDiagnosticListener(diagnosticCollector);
-
-            List<Diagnostic> collectedDiagnostics = diagnosticCollector.getDiagnostics();
-            if (collectedDiagnostics.size() > 0) {
-                throw e.apply(collectedDiagnostics);
-            }
-        };
+    protected <E extends DiagnosticException> DiagnosticCollectorCloseable<E> collectDiagnosticsToThrow(
+            Function<List<Diagnostic>, E> exceptionConstructor) {
+        return new DiagnosticCollectorCloseable<>(this, exceptionConstructor);
     }
 
-    protected SilentListenerClosable collectDiagnostics(List<Diagnostic> diagnostics) {
+    protected AutoCloseable collectDiagnostics(List<Diagnostic> diagnostics) {
         DiagnosticCollector diagnosticCollector = new DiagnosticCollector(diagnostics);
-        addDiagnosticListener(diagnosticCollector);
-        return () -> removeDiagnosticListener(diagnosticCollector);
+        return withDiagnosticListener(diagnosticCollector);
     }
 
-    public interface ListenerClosable<E extends DiagnosticException> extends AutoCloseable {
+    public abstract class AbstractListenerCloseable<L extends DiagnosticListener>
+            implements ListenerCloseable {
+        private final DiagnosticEmitter emitter;
+        private final L listener;
+
+        public AbstractListenerCloseable(DiagnosticEmitter emitter, L listener) {
+            this.emitter = emitter;
+            this.listener = listener;
+
+            emitter.addDiagnosticListener(listener);
+        }
+
+        protected void safeClose() {
+            emitter.removeDiagnosticListener(listener);
+        }
+
         @Override
-        void close() throws E;
+        public DiagnosticEmitter getDiagnosticEmitter() {
+            return emitter;
+        }
+
+        @Override
+        public L getDiagnosticListener() {
+            return listener;
+        }
     }
 
-    public interface SilentListenerClosable extends ListenerClosable {
+    public class DiagnosticCollectorCloseable<E extends DiagnosticException>
+            extends AbstractListenerCloseable<DiagnosticCollector>
+            implements DiagnosticListenerCloseable<E> {
+        private final Function<List<Diagnostic>, E> exceptionConstructor;
+
+        public DiagnosticCollectorCloseable(DiagnosticEmitter emitter,
+                                            Function<List<Diagnostic>, E> exceptionConstructor) {
+            super(emitter, new DiagnosticCollector());
+            this.exceptionConstructor = exceptionConstructor;
+        }
+
         @Override
-        void close();
+        public void close() throws E {
+            safeClose();
+
+            List<Diagnostic> collectedDiagnostics = getDiagnosticListener().getDiagnostics();
+            if (collectedDiagnostics.size() > 0) {
+                throw exceptionConstructor.apply(collectedDiagnostics);
+            }
+        }
+    }
+
+    public class DefaultListenerCloseable extends AbstractListenerCloseable<DiagnosticListener>
+            implements SilentListenerCloseable {
+        public DefaultListenerCloseable(DiagnosticEmitter emitter, DiagnosticListener listener) {
+            super(emitter, listener);
+        }
+
+        @Override
+        public void close() {
+            safeClose();
+        }
     }
 }

@@ -9,7 +9,7 @@ public interface DiagnosticEmitter {
     /**
      * Adds a new diagnostic listener.
      *
-     * @param diagnosticListener a non-{@code null} listener instance
+     * @param diagnosticListener a non-{@code null} listener instance to add
      */
     void addDiagnosticListener(DiagnosticListener diagnosticListener);
 
@@ -18,7 +18,33 @@ public interface DiagnosticEmitter {
      * the specified listener was not previously {@link #addDiagnosticListener (DiagnosticListener)
      * added}.
      *
-     * @param diagnosticListener
+     * @param diagnosticListener a non-{@code null} listener instance to remove, if any
      */
     void removeDiagnosticListener(DiagnosticListener diagnosticListener);
+
+    /**
+     * Adds a new diagnostic listener and returns an {@link AutoCloseable} that will remove that
+     * listener upon cleanup.
+     *
+     * @param diagnosticListener a non-{@code null} listener instance to attach
+     * @return a resource object to use within try-with-resources statement
+     */
+    SilentListenerCloseable withDiagnosticListener(DiagnosticListener diagnosticListener);
+
+    interface ListenerCloseable extends AutoCloseable {
+        DiagnosticEmitter getDiagnosticEmitter();
+
+        DiagnosticListener getDiagnosticListener();
+    }
+
+    interface DiagnosticListenerCloseable<E extends DiagnosticException> extends ListenerCloseable {
+        @Override
+        void close() throws E;
+    }
+
+    interface SilentListenerCloseable extends ListenerCloseable {
+        @Override
+        void close();
+    }
+
 }

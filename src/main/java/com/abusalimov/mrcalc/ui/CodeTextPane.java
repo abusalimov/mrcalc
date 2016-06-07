@@ -14,6 +14,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -27,6 +28,30 @@ public class CodeTextPane extends JTextPane {
 
     public CodeTextPane() {
         getStyledDocument().addDocumentListener(new HighlightListener());
+        ToolTipManager.sharedInstance().registerComponent(this);
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+        int offset = viewToModel(event.getPoint());
+        for (Diagnostic diagnostic : diagnostics) {
+            int startOffset = diagnostic.getLocation().getStartOffset();
+            int endOffset = diagnostic.getLocation().getEndOffset();
+
+            try {
+                if ((startOffset == endOffset || !onSameLine(startOffset, endOffset)) &&
+                    offset == startOffset &&
+                    modelToView(offset).x + 8 > event.getPoint().x)
+                    return diagnostic.getMessage();
+
+                if (offset >= startOffset && offset < endOffset)
+                    return diagnostic.getMessage();
+
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
+        }
+        return super.getToolTipText(event);
     }
 
     public void setErrorListener(Consumer<List<Diagnostic>> errorListener) {

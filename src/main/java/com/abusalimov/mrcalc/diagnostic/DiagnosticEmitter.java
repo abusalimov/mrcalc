@@ -1,5 +1,7 @@
 package com.abusalimov.mrcalc.diagnostic;
 
+import java.util.function.Supplier;
+
 /**
  * Emits {@link Diagnostic}s to attached {@link DiagnosticListener}s.
  *
@@ -30,6 +32,14 @@ public interface DiagnosticEmitter {
      * @return a resource object to use within try-with-resources statement
      */
     SilentListenerCloseable withDiagnosticListener(DiagnosticListener diagnosticListener);
+
+    default <R> R runWithDiagnosticListener(Supplier<R> function,
+                                            DiagnosticListener diagnosticListener) {
+        try (SilentListenerCloseable ignored =
+                     withDiagnosticListener(diagnosticListener)) {
+            return function.get();
+        }
+    }
 
     interface ListenerCloseable extends AutoCloseable {
         DiagnosticEmitter getDiagnosticEmitter();

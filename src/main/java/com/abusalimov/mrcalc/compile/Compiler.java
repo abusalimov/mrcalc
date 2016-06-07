@@ -4,16 +4,14 @@ import com.abusalimov.mrcalc.ast.LambdaNode;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
-import com.abusalimov.mrcalc.ast.expr.*;
-import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
-import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
+import com.abusalimov.mrcalc.ast.expr.ExprNode;
+import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.compile.exprtree.*;
 import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.compile.type.Primitive;
-import com.abusalimov.mrcalc.compile.type.Sequence;
 import com.abusalimov.mrcalc.compile.type.Type;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
@@ -29,7 +27,7 @@ import java.util.stream.Collectors;
 public class Compiler extends AbstractNodeDiagnosticEmitter {
 
     private Map<String, Variable> variableMap = new HashMap<>();
-    private Map<ExprNode, Type> typeMap = new HashMap<>();
+    private Map<ExprNode, Type> exprTypeMap = new HashMap<>();
     private int syntheticVariableCounter;
 
     private ExprBuilderFactory<?, ?> exprBuilderFactory;
@@ -104,101 +102,60 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     }
 
     protected Stmt compileInternal(ExprNode rootNode, String outputVariableName) {
-        Set<Variable> variableSet = new LinkedHashSet<>();
+        Type type = inferType(rootNode);
 
-        Type type = new NodeVisitor<Type>() {
-            @Override
-            public Type visit(Node node) {
-                Type type = NodeVisitor.super.visit(node);
-                typeMap.put((ExprNode) node, Objects.requireNonNull(type));
-                return type;
-            }
-
-            @Override
-            public Type doVisit(VarRefNode node) {
-                Variable variable = variableMap.get(node.getName());
-
-                if (variable == null) {
-                    emitNodeDiagnostic(node,
-                            String.format("Undefined variable '%s'", node.getName()));
-                    return Primitive.UNKNOWN;
-                }
-
-                variableSet.add(variable);
-                return variable.getType();
-            }
-
-            @Override
-            public Type doVisit(IntegerLiteralNode node) {
-                return Primitive.INTEGER;
-            }
-
-            @Override
-            public Type doVisit(FloatLiteralNode node) {
-                return Primitive.FLOAT;
-            }
-
-            @Override
-            public Type doVisit(BinaryOpNode node) {
-                Type leftType = visit(node.getOperandA());
-                Type rightType = visit(node.getOperandB());
-
-                if (!(leftType instanceof Primitive && rightType instanceof Primitive)) {
-                    emitDiagnostic(new Diagnostic(node.getLocation(),
-                            String.format("Operator '%s' cannot be applied to '%s' and '%s'",
-                                    node.getOp().getSign(), leftType, rightType)));
-                    return Primitive.UNKNOWN;
-                }
-
-                return Primitive.promote((Primitive) leftType, (Primitive) rightType);
-            }
-
-            @Override
-            public Type doVisit(UnaryOpNode node) {
-                return visit(node.getOperand());
-            }
-
-            @Override
-            public Type doVisit(RangeNode node) {
-                Type elementType = Primitive.INTEGER;
-
-                for (Node child : node.getChildren()) {
-                    Type childType = visit(child);
-                    if (childType != Primitive.INTEGER) {
-                        /* Avoid cascade reporting in case of inner expression errors. */
-                        if (childType != Primitive.UNKNOWN) {
-                            emitNodeDiagnostic(child,
-                                    String.format("Range cannot have '%s' as its boundary",
-                                            childType));
-                        }
-                        elementType = Primitive.UNKNOWN;
-                    }
-                }
-
-                return Sequence.of(elementType);
-            }
-
-            @Override
-            public Type doVisit(MapNode node) {
-                throw new UnsupportedOperationException("NIY");
-            }
-
-            @Override
-            public Type doVisit(ReduceNode node) {
-                throw new UnsupportedOperationException("NIY");
-            }
-
-            @Override
-            public Type doVisit(LambdaNode node) {
-                throw new UnsupportedOperationException("NIY");
-            }
-        }.visit(rootNode);
-
-        List<Variable> variables = new ArrayList<>(variableSet);
+        List<Variable> variables = getReferencedVariables(rootNode);
         Function<Object[], ?> exprFunction = buildExprFunction(rootNode, variables);
         Variable outputVariable = new Variable(outputVariableName, type);
         return new Stmt(exprFunction, variables, outputVariable);
     }
+
+    private Type inferType(ExprNode node) {
+        return inferType(node, variableMap, exprTypeMap);
+    }
+
+    private Type inferType(ExprNode node,
+                           Map<String, Variable> variableMap,
+                           Map<ExprNode, Type> exprTypeMap) {
+        TypeInferrer typeInferrer = new TypeInferrer(variableMap) {
+            @Override
+            public Type visit(Node node) {
+                Type type = super.visit(node);
+                exprTypeMap.put((ExprNode) node, Objects.requireNonNull(type));
+                return type;
+            }
+        };
+        return typeInferrer.runWithDiagnosticListener(() -> typeInferrer.visit(node),
+                this::emitDiagnostic);
+    }
+
+    private List<Variable> getReferencedVariables(ExprNode node) {
+        return getReferencedVariables(node, variableMap);
+    }
+
+    private List<Variable> getReferencedVariables(ExprNode node, Map<String, Variable> variableMap) {
+        Set<Variable> variableSet = new LinkedHashSet<>();
+
+        new NodeVisitor<Void>() {
+            @Override
+            public Void doVisit(VarRefNode node) {
+                Variable variable = variableMap.get(node.getName());
+                if (variable != null) {
+                    variableSet.add(variable);
+                }
+                return null;
+            }
+
+            @Override
+            public Void doVisit(LambdaNode node) {
+                /* Do not visit children of lambda since it introduces a new scope. */
+                return null;
+            }
+        }.visit(node);
+
+        return new ArrayList<>(variableSet);
+    }
+
 
     protected <I extends Expr<Long>, F extends Expr<Double>> Function<Object[], ?> buildExprFunction(
             ExprNode rootNode, List<Variable> variables) {
@@ -260,7 +217,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     }
 
     private Type getNodeType(ExprNode node) {
-        return typeMap.getOrDefault(node, Primitive.UNKNOWN);
+        return exprTypeMap.getOrDefault(node, Primitive.UNKNOWN);
     }
 
 }

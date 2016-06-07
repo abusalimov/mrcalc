@@ -3,7 +3,6 @@ package com.abusalimov.mrcalc.ast;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,17 +14,16 @@ import java.util.List;
  *
  * @author Eldar Abusalimov
  */
-public class LambdaNode extends AbstractNode {
+public class LambdaNode extends ExprHolderNode {
     private List<String> argNames;
-    private ExprNode expr;
 
     public LambdaNode() {
         this.argNames = new ArrayList<>();
     }
 
     public LambdaNode(List<String> argNames, ExprNode expr) {
+        super(expr);
         this.argNames = argNames;
-        this.expr = expr;
     }
 
     public List<String> getArgNames() {
@@ -34,19 +32,6 @@ public class LambdaNode extends AbstractNode {
 
     public void setArgNames(List<String> argNames) {
         this.argNames = argNames;
-    }
-
-    public ExprNode getExpr() {
-        return expr;
-    }
-
-    public void setExpr(ExprNode expr) {
-        this.expr = expr;
-    }
-
-    @Override
-    public List<? extends ExprNode> getChildren() {
-        return Collections.singletonList(expr);
     }
 
     @Override

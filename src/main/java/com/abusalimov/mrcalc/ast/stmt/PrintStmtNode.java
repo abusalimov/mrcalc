@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.ast.stmt;
 
+import com.abusalimov.mrcalc.ast.ExprHolderNode;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 
@@ -8,7 +9,7 @@ import com.abusalimov.mrcalc.ast.expr.ExprNode;
  *
  * @author Eldar Abusalimov
  */
-public class PrintStmtNode extends AbstractExprStmtNode {
+public class PrintStmtNode extends ExprHolderNode implements StmtNode {
     public PrintStmtNode() {
     }
 

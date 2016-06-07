@@ -14,14 +14,28 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author - Eldar Abusalimov
  */
 public class CodeTextPane extends JTextPane {
+    private Consumer<List<Diagnostic>> errorListener;
+    private List<Diagnostic> diagnostics = Collections.emptyList();
 
     public CodeTextPane() {
         getStyledDocument().addDocumentListener(new HighlightListener());
+    }
+
+    public void setErrorListener(Consumer<List<Diagnostic>> errorListener) {
+        this.errorListener = errorListener;
+    }
+
+    private void fireErrorListener(List<Diagnostic> diagnostics) {
+        if (errorListener != null)
+            errorListener.accept(diagnostics);
     }
 
     private boolean onSameLine(int startOffset, int endOffset) {
@@ -66,7 +80,11 @@ public class CodeTextPane extends JTextPane {
                 compiler.compile(node);
 //                interpreter.exec(stmts);
             } catch (SyntaxErrorException | CompileErrorException e) {
-                for (Diagnostic diagnostic : e.getDiagnostics()) {
+                diagnostics = e.getDiagnostics();
+
+                fireErrorListener(diagnostics);
+
+                for (Diagnostic diagnostic : diagnostics) {
                     try {
                         highlight(diagnostic);
                     } catch (BadLocationException e1) {
@@ -79,7 +97,9 @@ public class CodeTextPane extends JTextPane {
         }
 
         private void clearHighlight() {
+            diagnostics = Collections.emptyList();
             getHighlighter().removeAllHighlights();
+            fireErrorListener(diagnostics);
         }
 
         private void highlight(Diagnostic diagnostic) throws BadLocationException {
@@ -95,6 +115,5 @@ public class CodeTextPane extends JTextPane {
                 getHighlighter().addHighlight(startOffset, endOffset, squigglePainter);
             }
         }
-
     }
 }

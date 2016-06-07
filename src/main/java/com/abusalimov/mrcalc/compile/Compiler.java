@@ -12,10 +12,11 @@ import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
-import com.abusalimov.mrcalc.compile.exprtree.*;
+import com.abusalimov.mrcalc.compile.exprtree.Expr;
+import com.abusalimov.mrcalc.compile.exprtree.ExprBuilderFactory;
+import com.abusalimov.mrcalc.compile.exprtree.PrimitiveCastBuilder;
+import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
 import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
-import com.abusalimov.mrcalc.diagnostic.AbstractDiagnosticEmitter;
-import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
 import java.util.*;
 import java.util.function.Function;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 /**
  * @author Eldar Abusalimov
  */
-public class Compiler extends AbstractDiagnosticEmitter {
+public class Compiler extends AbstractNodeDiagnosticEmitter {
 
     private Map<String, Variable> variableMap = new HashMap<>();
     private Map<ExprNode, Type> typeMap = new HashMap<>();
@@ -207,7 +208,4 @@ public class Compiler extends AbstractDiagnosticEmitter {
         return typeMap.getOrDefault(node, Type.UNKNOWN);
     }
 
-    protected void emitNodeDiagnostic(Node node, String message) {
-        emitDiagnostic(new Diagnostic(node.getLocation(), message));
-    }
 }

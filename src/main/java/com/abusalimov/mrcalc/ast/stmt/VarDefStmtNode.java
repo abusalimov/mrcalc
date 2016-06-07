@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.ast.stmt;
 
+import com.abusalimov.mrcalc.ast.ExprHolderNode;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 
@@ -9,7 +10,7 @@ import com.abusalimov.mrcalc.ast.expr.ExprNode;
  *
  * @author Eldar Abusalimov
  */
-public class VarDefStmtNode extends AbstractExprStmtNode implements StmtNode {
+public class VarDefStmtNode extends ExprHolderNode implements StmtNode {
     private String name;
 
     public VarDefStmtNode() {

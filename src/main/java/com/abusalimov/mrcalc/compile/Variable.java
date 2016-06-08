@@ -2,7 +2,7 @@ package com.abusalimov.mrcalc.compile;
 
 import com.abusalimov.mrcalc.compile.type.Type;
 
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Immutable representation of a variable declaration.
@@ -22,6 +22,18 @@ public class Variable {
     public Variable(String name, Type type) {
         this.name = Objects.requireNonNull(name);
         this.type = Objects.requireNonNull(type);
+    }
+
+    public static Map<String, Variable> createVariableMap(Variable... variables) {
+        return createVariableMap(Arrays.asList(variables));
+    }
+
+    public static Map<String, Variable> createVariableMap(List<Variable> variables) {
+        Map<String, Variable> map = new LinkedHashMap<>();
+        for (Variable variable : variables) {
+            map.put(variable.getName(), variable);
+        }
+        return map;
     }
 
     /**

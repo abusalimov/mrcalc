@@ -1,9 +1,6 @@
 package com.abusalimov.mrcalc.compile;
 
-import com.abusalimov.mrcalc.ast.LambdaNode;
-import com.abusalimov.mrcalc.ast.Node;
-import com.abusalimov.mrcalc.ast.NodeVisitor;
-import com.abusalimov.mrcalc.ast.ProgramNode;
+import com.abusalimov.mrcalc.ast.*;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
@@ -13,7 +10,6 @@ import com.abusalimov.mrcalc.compile.exprtree.*;
 import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.compile.type.Primitive;
 import com.abusalimov.mrcalc.compile.type.Type;
-import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 
 import java.util.*;
 import java.util.function.Function;
@@ -26,8 +22,7 @@ import java.util.stream.Collectors;
  */
 public class Compiler extends AbstractNodeDiagnosticEmitter {
 
-    private Map<String, Variable> variableMap = new HashMap<>();
-    private Map<ExprNode, Type> exprTypeMap = new HashMap<>();
+    private Map<String, Variable> globalVariableMap = new HashMap<>();
     private int syntheticVariableCounter;
 
     private ExprBuilderFactory<?, ?> exprBuilderFactory;
@@ -66,20 +61,19 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
             @Override
             public Stmt doVisit(VarDefStmtNode node) {
                 String name = node.getName();
-                ExprNode expr = node.getExpr();
                 /*
                  * Need to visit the value prior to defining a variable in the scope in order
                  * to forbid self-recursive variable references from within the definition:
                  *
                  *   var r = r  # error
                  */
-                Stmt stmt = compileInternal(expr, name);
+                Stmt stmt = compileInternal(node, name);
 
-                if (variableMap.containsKey(name)) {
+                if (globalVariableMap.containsKey(name)) {
                     emitNodeDiagnostic(node,
                             String.format("Variable '%s' is already defined", name));
                 } else {
-                    variableMap.put(name, stmt.getOutputVariable());
+                    globalVariableMap.put(name, stmt.getOutputVariable());
                 }
 
                 return stmt;
@@ -87,7 +81,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
 
             @Override
             public Stmt doVisit(PrintStmtNode node) {
-                return compileInternal(node.getExpr(), nextSyntheticVariableName());
+                return compileInternal(node, nextSyntheticVariableName());
             }
 
             @Override
@@ -101,39 +95,32 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
         return "$print" + (++syntheticVariableCounter);
     }
 
-    protected Stmt compileInternal(ExprNode rootNode, String outputVariableName) {
-        Type type = inferType(rootNode);
+    protected Stmt compileInternal(ExprHolderNode node, String outputVariableName) {
+        ExprTypeInfo exprTypeInfo = inferTypeInfo(node);
 
-        List<Variable> variables = getReferencedVariables(rootNode);
-        Function<Object[], ?> exprFunction = buildExprFunction(rootNode, variables);
-        Variable outputVariable = new Variable(outputVariableName, type);
-        return new Stmt(exprFunction, variables, outputVariable);
+        List<Variable> referencedVariables = getReferencedVariables(exprTypeInfo.getExprNode());
+        Function<Object[], ?> exprFunction = buildExprFunction(exprTypeInfo, referencedVariables);
+
+        Variable outputVariable = new Variable(outputVariableName, exprTypeInfo.getExprType());
+        return new Stmt(exprFunction, referencedVariables, outputVariable);
     }
 
-    private Type inferType(ExprNode node) {
-        return inferType(node, variableMap, exprTypeMap);
+    private ExprTypeInfo inferTypeInfo(ExprHolderNode node) {
+        ExprTypeInfo exprTypeInfo = new ExprTypeInfo(node, new HashMap<>(globalVariableMap));
+        inferType(exprTypeInfo);
+        return exprTypeInfo;
     }
 
-    private Type inferType(ExprNode node,
-                           Map<String, Variable> variableMap,
-                           Map<ExprNode, Type> exprTypeMap) {
-        TypeInferrer typeInferrer = new TypeInferrer(variableMap) {
-            @Override
-            public Type visit(Node node) {
-                Type type = super.visit(node);
-                exprTypeMap.put((ExprNode) node, Objects.requireNonNull(type));
-                return type;
-            }
-        };
-        return typeInferrer.runWithDiagnosticListener(() -> typeInferrer.visit(node),
-                this::emitDiagnostic);
+    private Type inferType(ExprTypeInfo exprTypeInfo) {
+        return new TypeInferrer().infer(exprTypeInfo, this::emitDiagnostic);
     }
 
     private List<Variable> getReferencedVariables(ExprNode node) {
-        return getReferencedVariables(node, variableMap);
+        return getReferencedVariables(node, globalVariableMap);
     }
 
-    private List<Variable> getReferencedVariables(ExprNode node, Map<String, Variable> variableMap) {
+    private List<Variable> getReferencedVariables(ExprNode node,
+                                                  Map<String, Variable> variableMap) {
         Set<Variable> variableSet = new LinkedHashSet<>();
 
         new NodeVisitor<Void>() {
@@ -158,7 +145,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
 
 
     protected <I extends Expr<Long>, F extends Expr<Double>> Function<Object[], ?> buildExprFunction(
-            ExprNode rootNode, List<Variable> variables) {
+            ExprTypeInfo exprTypeInfo, List<Variable> referencedVariables) {
         ExprBuilderFactory<I, F> factory = getExprBuilderFactory();
 
         ObjectOpBuilder<Object, ? extends Expr<Object>, I> objectOpBuilder = factory
@@ -169,10 +156,12 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
         PrimitiveCastBuilder<I, F> primitiveCastBuilder = factory.createPrimitiveCastBuilder();
 
         ObjectExprVisitor<Object, ? extends Expr<Object>, I> objectExprVisitor =
-                new ObjectExprVisitor<>(objectOpBuilder, variables);
+                new ObjectExprVisitor<>(objectOpBuilder, referencedVariables);
 
-        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder, variables);
-        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder, variables);
+        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder,
+                referencedVariables);
+        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder,
+                referencedVariables);
 
         Function<Node, I> visitInteger = integerExprVisitor::visit;
         Function<Node, F> visitFloat = floatExprVisitor::visit;
@@ -189,11 +178,15 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
             put(Primitive.FLOAT, visitFloat);
         }};
 
-        objectExprVisitor.setDelegate(node -> visitIntegerMap.get(getNodeType(node)).apply(node));
-        integerExprVisitor.setDelegate(node -> visitIntegerMap.get(getNodeType(node)).apply(node));
-        floatExprVisitor.setDelegate(node -> visitFloatMap.get(getNodeType(node)).apply(node));
+        objectExprVisitor.setDelegate(node -> visitIntegerMap
+                .get(exprTypeInfo.getExprType(node)).apply(node));
+        integerExprVisitor.setDelegate(node -> visitIntegerMap
+                .get(exprTypeInfo.getExprType(node)).apply(node));
+        floatExprVisitor.setDelegate(node -> visitFloatMap
+                .get(exprTypeInfo.getExprType(node)).apply(node));
 
-        Type rootType = getNodeType(rootNode);
+        ExprNode rootNode = exprTypeInfo.getExprNode();
+        Type rootType = exprTypeInfo.getExprType(rootNode);
         if (!(rootType instanceof Primitive)) {
             return objectExprVisitor.buildFunction(rootNode);
         }
@@ -214,10 +207,6 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     @SuppressWarnings("unchecked")
     private <I extends Expr<Long>, F extends Expr<Double>> ExprBuilderFactory<I, F> getExprBuilderFactory() {
         return (ExprBuilderFactory<I, F>) this.exprBuilderFactory;
-    }
-
-    private Type getNodeType(ExprNode node) {
-        return exprTypeMap.getOrDefault(node, Primitive.UNKNOWN);
     }
 
 }

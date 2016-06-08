@@ -1,12 +1,13 @@
 package com.abusalimov.mrcalc.compile;
 
+import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 import com.abusalimov.mrcalc.ast.expr.RangeNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
-import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.compile.exprtree.Expr;
 import com.abusalimov.mrcalc.compile.exprtree.ObjectOpBuilder;
+import com.abusalimov.mrcalc.compile.impl.function.ObjectFuncExpr;
 
 import java.util.HashMap;
 import java.util.List;
@@ -56,7 +57,15 @@ public class ObjectExprVisitor<T, E extends Expr<T>, I extends Expr<Long>> imple
     }
 
     @Override
-    public E doVisit(StmtNode node) {
+    public E doVisit(ExprNode node) {
+        // TODO stub
+        return (E) (ObjectFuncExpr) args -> {
+            throw new UnsupportedOperationException("NIY");
+        };
+    }
+
+    @Override
+    public E doVisit(Node node) {
         throw new UnsupportedOperationException("Expressions only");
     }
 

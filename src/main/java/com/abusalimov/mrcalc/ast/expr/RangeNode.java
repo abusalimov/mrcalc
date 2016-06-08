@@ -1,6 +1,7 @@
 package com.abusalimov.mrcalc.ast.expr;
 
 import com.abusalimov.mrcalc.ast.AbstractNode;
+import com.abusalimov.mrcalc.ast.NodeArgVisitor;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 
 import java.util.Arrays;
@@ -48,5 +49,10 @@ public class RangeNode extends AbstractNode implements ExprNode {
     @Override
     public <T> T accept(NodeVisitor<T> visitor) {
         return visitor.doVisit(this);
+    }
+
+    @Override
+    public <T, A> T accept(NodeArgVisitor<T, A> visitor, A arg) {
+        return visitor.doVisit(this, arg);
     }
 }

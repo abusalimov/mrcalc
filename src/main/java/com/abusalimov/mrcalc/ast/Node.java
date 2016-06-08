@@ -30,6 +30,18 @@ public interface Node {
     <T> T accept(NodeVisitor<T> visitor);
 
     /**
+     * Implementations must call an appropriate overloaded visitor method passing it the specified
+     * argument.
+     *
+     * @param visitor the target of the double-dispatch
+     * @param arg     the argument to pass to the visitor method
+     * @param <T>     the visitor return type
+     * @param <A>     the visitor argument type
+     * @return the result of calling the visitor method
+     */
+    <T, A> T accept(NodeArgVisitor<T, A> visitor, A arg);
+
+    /**
      * Returns a source location of this node, if any.
      *
      * @return a {@link Location} instance or {@code null}

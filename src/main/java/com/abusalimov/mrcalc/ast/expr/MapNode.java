@@ -1,9 +1,6 @@
 package com.abusalimov.mrcalc.ast.expr;
 
-import com.abusalimov.mrcalc.ast.AbstractNode;
-import com.abusalimov.mrcalc.ast.LambdaNode;
-import com.abusalimov.mrcalc.ast.Node;
-import com.abusalimov.mrcalc.ast.NodeVisitor;
+import com.abusalimov.mrcalc.ast.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -49,5 +46,10 @@ public class MapNode extends AbstractNode implements ExprNode {
     @Override
     public <T> T accept(NodeVisitor<T> visitor) {
         return visitor.doVisit(this);
+    }
+
+    @Override
+    public <T, A> T accept(NodeArgVisitor<T, A> visitor, A arg) {
+        return visitor.doVisit(this, arg);
     }
 }

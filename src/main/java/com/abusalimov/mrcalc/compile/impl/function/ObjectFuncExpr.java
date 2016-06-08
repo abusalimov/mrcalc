@@ -7,5 +7,6 @@ import java.util.function.Function;
 /**
  * @author Eldar Abusalimov
  */
-interface ObjectFuncExpr extends Function<Object[], Object>, Expr<Object> {
+// TODO revert to package-local
+public interface ObjectFuncExpr extends Function<Object[], Object>, Expr<Object> {
 }

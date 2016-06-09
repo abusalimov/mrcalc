@@ -99,7 +99,8 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
         ExprTypeInfo exprTypeInfo = inferTypeInfo(node);
 
         List<Variable> referencedVariables = getReferencedVariables(exprTypeInfo.getExprNode());
-        Function<Object[], ?> exprFunction = buildExprFunction(exprTypeInfo, referencedVariables);
+        Function<Object[], ?> exprFunction = objects -> null;
+//        buildExprFunction(exprTypeInfo, referencedVariables);
 
         Variable outputVariable = new Variable(outputVariableName, exprTypeInfo.getExprType());
         return new Stmt(exprFunction, referencedVariables, outputVariable);

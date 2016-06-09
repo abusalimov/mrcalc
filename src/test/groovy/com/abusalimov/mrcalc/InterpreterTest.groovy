@@ -12,6 +12,7 @@ import static groovy.test.GroovyAssert.shouldFail
 /**
  * @author Eldar Abusalimov
  */
+@Ignore
 class InterpreterTest {
     private Parser parser
     private Compiler compiler

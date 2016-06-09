@@ -41,9 +41,12 @@ public abstract class AbstractLocation implements Location {
     @Override
     public int getEndOffset() {
         /* The token.getStopIndex() method returns the index of the last char (inclusive),
-         * but we want the index past that char (i.e. exclusive). */
+         * but we want the index past that char (i.e. exclusive).
+         * Zero-length tokens like EOF have their stopIndex < startOffset, and EOF at the very
+         * beginning will have its stopIndex == -1, like a token with no location info at all.
+         * This is likely a subtle ANTLR bug, which is easy to workaround. */
         int stopIndex = getStopToken().getStopIndex();
-        if (stopIndex >= 0) {
+        if (stopIndex >= 0 || getStopToken().getStartIndex() >= 0) {
             stopIndex += 1;
         }
         return stopIndex;

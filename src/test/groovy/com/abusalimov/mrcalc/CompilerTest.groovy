@@ -5,6 +5,7 @@ import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -45,6 +46,14 @@ class CompilerTest {
     void "compiles valid variable references"() {
         assert compile("var answer = 42; answer")
         assert compile("var x = 0; var y = 1; var z = 3; var foo = x+y+z")
+    }
+
+    @Ignore("buildExprFunction() stub")
+    @Test
+    void "compiles lambdas within map/reduce expressions"() {
+        assert compile("map({1,2}, a -> a^2)")
+        assert compile("reduce({0,9}, 0, a b -> a+b)")
+        assert compile("map({0,9}, x -> reduce({1,x}, 1, a b -> a * b))")
     }
 
     @Test

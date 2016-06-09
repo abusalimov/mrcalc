@@ -8,7 +8,9 @@ import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
 /**
  * @author Eldar Abusalimov
  */
-class CompilerTest extends GroovyTestCase {
+class CompilerTest extends DiagnosticTestCase {
+    def diagnosticExceptionClass = CompileErrorException
+
     private Parser parser
     private Compiler compiler
 
@@ -40,14 +42,17 @@ class CompilerTest extends GroovyTestCase {
         assert null != compile("var x = 0; var y = 1; var z = 3; var foo = x+y+z")
     }
 
-    void testThrowsErrorOnDuplicateVariable() {
-        shouldFail CompileErrorException, { compile("var answer = 42; var answer = -1") }
+    void "test error on duplicate variables"() {
+        shouldDiagnose("already defined") { compile("var answer = 42; var answer = -1") }
     }
 
-    void testThrowsErrorOnUndefinedVariable() {
-        shouldFail CompileErrorException, { compile("unknown") }
-        shouldFail CompileErrorException, { compile("var x = y + z") }
-        shouldFail CompileErrorException, { compile("var foo = bar; var bar = foo") }
-        shouldFail CompileErrorException, { compile("var r = r") }
+    void "test error on undefined variables"() {
+        shouldDiagnose("undefined variable") { compile("unknown") }
+        shouldDiagnose("undefined variable") { compile("var x = y + z") }
+        shouldDiagnose("undefined variable") { compile("var foo = bar; var bar = foo") }
+    }
+
+    void "test error on self-referencing variable"() {
+        shouldDiagnose("undefined variable") { compile("var r = r") }
     }
 }

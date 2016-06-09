@@ -46,7 +46,7 @@ public class ExprTypeInfo {
 
     public Type getExprType(ExprNode exprNode) {
         return exprTypeMap.computeIfAbsent(exprNode, node -> {
-            throw new IllegalStateException("No inferred type for expr");
+            throw new IllegalStateException("No inferred type for expr " + node);
         });
     }
 

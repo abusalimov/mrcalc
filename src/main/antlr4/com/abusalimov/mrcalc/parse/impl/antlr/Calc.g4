@@ -1,6 +1,6 @@
 grammar Calc;
 
-program: STMT_DELIM? stmt (STMT_DELIM stmt)* STMT_DELIM? EOF ;
+program: STMT_DELIM* stmt (STMT_DELIM+ stmt)* STMT_DELIM* EOF ;
 
 stmt
     : 'var' name=ID '=' expr      # varDefStmt
@@ -29,7 +29,7 @@ number returns [Number value]
     | token=FLOAT {$value = Double.valueOf($token.text);}
     ;
 
-STMT_DELIM : [\r\n;]+ ;
+STMT_DELIM : [\r\n;] ;
 
 WS : [ \t]+ -> skip ;
 

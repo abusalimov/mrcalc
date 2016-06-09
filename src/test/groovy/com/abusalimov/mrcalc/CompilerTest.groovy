@@ -29,22 +29,22 @@ class CompilerTest {
 
     @Test
     void "compiles simple math expressions"() {
-        assert null != compile("0")
-        assert null != compile("(1)")
-        assert null != compile("(1+2)")
-        assert null != compile("1+2-3*4/5^6")
+        assert compile("0")
+        assert compile("(1)")
+        assert compile("(1+2)")
+        assert compile("1+2-3*4/5^6")
     }
 
     @Test
     void "compiles valid variable definition statements"() {
-        assert null != compile("var answer = 42")
-        assert null != compile("var x = 0; var y = 1; var z = 3")
+        assert compile("var answer = 42")
+        assert compile("var x = 0; var y = 1; var z = 3")
     }
 
     @Test
     void "compiles valid variable references"() {
-        assert null != compile("var answer = 42; answer")
-        assert null != compile("var x = 0; var y = 1; var z = 3; var foo = x+y+z")
+        assert compile("var answer = 42; answer")
+        assert compile("var x = 0; var y = 1; var z = 3; var foo = x+y+z")
     }
 
     @Test

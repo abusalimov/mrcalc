@@ -2,7 +2,6 @@ package com.abusalimov.mrcalc
 
 import com.abusalimov.mrcalc.ast.ExprHolderNode
 import com.abusalimov.mrcalc.compile.CompileErrorException
-import com.abusalimov.mrcalc.compile.ExprTypeInfo
 import com.abusalimov.mrcalc.compile.TypeInferrer
 import com.abusalimov.mrcalc.compile.Variable
 import com.abusalimov.mrcalc.compile.type.Primitive
@@ -44,7 +43,7 @@ class TypeInferrerTest {
         }
 
         typeInferrerWrapper.runOrThrow(CompileErrorException.metaClass.&invokeConstructor as Function) {
-            typeInferrer.infer(new ExprTypeInfo((ExprHolderNode) lastStmt, variableMap))
+            typeInferrer.infer((ExprHolderNode) lastStmt, variableMap).exprType
         }
     }
 

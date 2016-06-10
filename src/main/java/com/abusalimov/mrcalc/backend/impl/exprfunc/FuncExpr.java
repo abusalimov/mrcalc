@@ -10,5 +10,5 @@ import java.util.function.Function;
  * @param <T> the return type of the function (used for more strict type checking)
  * @author Eldar Abusalimov
  */
-public interface FuncExpr<T> extends Function<Object[], T>, Expr {
+interface FuncExpr<T> extends Function<Object[], T>, Expr {
 }

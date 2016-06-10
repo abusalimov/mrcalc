@@ -30,24 +30,54 @@ import java.util.Map;
  *
  * @author Eldar Abusalimov
  */
-public class TypeInferrer extends AbstractNodeDiagnosticEmitter
-        implements NodeArgVisitor<Type, ExprTypeInfo> {
+public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeArgVisitor<Type, ExprTypeInfo> {
 
-    public Type infer(ExprTypeInfo exprTypeInfo) {
+    /**
+     * Given an AST node {@link ExprHolderNode holding an expression} and the global variables mapping, creates a new
+     * {@link ExprTypeInfo} instance and fills it in by inferring types of all the sub-expressions.
+     *
+     * @param holderNode  the AST node to infer types for
+     * @param variableMap the global variables mapping
+     * @return the newly created and populated {@link ExprTypeInfo} instance, {@link ExprTypeInfo#isComplete()
+     * incomplete} in case of type errors
+     */
+    public ExprTypeInfo infer(ExprHolderNode holderNode, Map<String, Variable> variableMap) {
+        ExprTypeInfo exprTypeInfo = new ExprTypeInfo(holderNode, variableMap);
+        inferType(exprTypeInfo);
+        return exprTypeInfo;
+    }
+
+    /**
+     * The same as {@link #infer(ExprHolderNode, Map)}, but also reports diagnostic errors discovered during the
+     * process, if any, to the specified {@link DiagnosticListener}.
+     *
+     * @param holderNode         the AST node to infer types for
+     * @param variableMap        the global variables mapping
+     * @param diagnosticListener the listener to report type errors to
+     * @return the {@link ExprTypeInfo} instance
+     * @see #infer(ExprHolderNode, Map)
+     */
+    public ExprTypeInfo infer(ExprHolderNode holderNode, Map<String, Variable> variableMap,
+                              DiagnosticListener diagnosticListener) {
+        return runWithDiagnosticListener(() -> infer(holderNode, variableMap), diagnosticListener);
+    }
+
+    protected ExprTypeInfo inferChild(ExprTypeInfo parentExprTypeInfo,
+                                      ExprHolderNode holderNode, Map<String, Variable> variableMap) {
+        ExprTypeInfo exprTypeInfo = infer(holderNode, variableMap);
+        parentExprTypeInfo.addChild(exprTypeInfo);
+        return exprTypeInfo;
+    }
+
+    protected ExprTypeInfo inferLambda(ExprTypeInfo parentExprTypeInfo, LambdaNode lambda, Type... argTypes) {
+        Map<String, Variable> argVariableMap = createArgMap(lambda.getArgNames(), argTypes);
+        return inferChild(parentExprTypeInfo, lambda, argVariableMap);
+    }
+
+    protected Type inferType(ExprTypeInfo exprTypeInfo) {
         Type type = visit(exprTypeInfo.getExprNode(), exprTypeInfo);
         assert exprTypeInfo.getExprType() == type;
         return type;
-    }
-
-    public Type infer(ExprTypeInfo exprTypeInfo, DiagnosticListener diagnosticListener) {
-        return runWithDiagnosticListener(() -> infer(exprTypeInfo), diagnosticListener);
-    }
-
-    protected Type inferLambdaType(ExprTypeInfo parentExprTypeInfo, LambdaNode lambda, Type... argTypes) {
-        Map<String, Variable> argVariableMap = createArgMap(lambda.getArgNames(), argTypes);
-        ExprTypeInfo lambdaExprTypeInfo = new ExprTypeInfo(lambda, argVariableMap);
-        parentExprTypeInfo.addChild(lambdaExprTypeInfo);
-        return infer(lambdaExprTypeInfo);
     }
 
     @Override
@@ -135,7 +165,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter
             return Sequence.of(Primitive.UNKNOWN);
         }
 
-        return Sequence.of(inferLambdaType(exprTypeInfo, lambda, sequenceElementType));
+        return Sequence.of(inferLambda(exprTypeInfo, lambda, sequenceElementType).getExprType());
     }
 
     @Override
@@ -150,7 +180,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter
             return Primitive.UNKNOWN;
         }
 
-        Type lambdaType = inferLambdaType(exprTypeInfo, lambda, neutralType, sequenceElementType);
+        Type lambdaType = inferLambda(exprTypeInfo, lambda, neutralType, sequenceElementType).getExprType();
         if (!neutralType.equals(lambdaType)) {
             if (neutralType != Primitive.UNKNOWN && lambdaType != Primitive.UNKNOWN) {
                 emitNodeDiagnostic(lambda,
@@ -185,7 +215,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter
         return valid;
     }
 
-    protected Type checkSequenceType(Type type, ExprNode sequence, String funcName) {
+    private Type checkSequenceType(Type type, ExprNode sequence, String funcName) {
         if (!(type instanceof Sequence)) {
             if (type != Primitive.UNKNOWN) {
                 emitNodeDiagnostic(sequence,

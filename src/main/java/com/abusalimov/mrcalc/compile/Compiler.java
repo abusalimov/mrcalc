@@ -63,9 +63,13 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
      * @throws CompileErrorException in case the AST has semantic errors, like type mismatch
      */
     public List<Stmt> compile(ProgramNode node) throws CompileErrorException {
-        try (DiagnosticCollectorCloseable<CompileErrorException> ignored =
+        try (DiagnosticCollectorCloseable<CompileErrorException> diagnosticsToThrow =
                      collectDiagnosticsToThrow(CompileErrorException::new)) {
-            return compileProgram(node);
+            List<Stmt> stmts = compileProgram(node);
+            if (!stmts.stream().allMatch(Stmt::isComplete)) {
+                throw diagnosticsToThrow.createException();
+            }
+            return stmts;
         }
     }
 
@@ -78,9 +82,13 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
      * @see #compile(ProgramNode)
      */
     public Stmt compile(StmtNode node) throws CompileErrorException {
-        try (DiagnosticCollectorCloseable<CompileErrorException> ignored =
+        try (DiagnosticCollectorCloseable<CompileErrorException> diagnosticsToThrow =
                      collectDiagnosticsToThrow(CompileErrorException::new)) {
-            return compileStmt(node);
+            Stmt stmt = compileStmt(node);
+            if (!stmt.isComplete()) {
+                throw diagnosticsToThrow.createException();
+            }
+            return stmt;
         }
     }
 

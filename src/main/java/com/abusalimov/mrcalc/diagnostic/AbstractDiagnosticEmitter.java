@@ -138,8 +138,29 @@ public class AbstractDiagnosticEmitter implements DiagnosticEmitter {
 
             List<Diagnostic> collectedDiagnostics = getDiagnosticListener().getDiagnostics();
             if (collectedDiagnostics.size() > 0) {
-                throw exceptionConstructor.apply(collectedDiagnostics);
+                throw createException(collectedDiagnostics);
             }
+        }
+
+        /**
+         * Creates a new exception using the constructor specified at the creation time of this closeable and the list
+         * of the collected diagnostics.
+         *
+         * @return a new exception with the list of diagnostics collected so far
+         */
+        public E createException() {
+            return createException(getDiagnosticListener().getDiagnostics());
+        }
+
+        /**
+         * Creates a new exception using the constructor specified at the creation time of this closeable and the
+         * specified list of diagnostics
+         *
+         * @param diagnostics the list of diagnostics to pass to the exception constructor
+         * @return a new exception instance
+         */
+        public E createException(List<Diagnostic> diagnostics) {
+            return exceptionConstructor.apply(diagnostics);
         }
     }
 

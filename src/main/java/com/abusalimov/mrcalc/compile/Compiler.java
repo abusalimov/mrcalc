@@ -6,8 +6,8 @@ import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
-import com.abusalimov.mrcalc.compile.exprtree.*;
-import com.abusalimov.mrcalc.compile.impl.function.FuncExprBuilderFactoryImpl;
+import com.abusalimov.mrcalc.backend.*;
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.compile.type.Primitive;
 import com.abusalimov.mrcalc.compile.type.Type;
 

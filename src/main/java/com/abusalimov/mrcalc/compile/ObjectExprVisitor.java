@@ -5,9 +5,9 @@ import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 import com.abusalimov.mrcalc.ast.expr.RangeNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
-import com.abusalimov.mrcalc.compile.exprtree.Expr;
-import com.abusalimov.mrcalc.compile.exprtree.ObjectOpBuilder;
-import com.abusalimov.mrcalc.compile.impl.function.ObjectFuncExpr;
+import com.abusalimov.mrcalc.backend.Expr;
+import com.abusalimov.mrcalc.backend.ObjectOpBuilder;
+import com.abusalimov.mrcalc.backend.impl.exprfunc.ObjectFuncExpr;
 
 import java.util.HashMap;
 import java.util.List;

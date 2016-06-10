@@ -8,7 +8,7 @@ import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.backend.Expr;
-import com.abusalimov.mrcalc.backend.PrimitiveOpBuilder;
+import com.abusalimov.mrcalc.backend.NumberMath;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,12 +18,12 @@ import java.util.function.Function;
 /**
  * @author Eldar Abusalimov
  */
-public class ExprVisitor<T extends Number, E extends Expr<T>> implements NodeVisitor<E> {
-    private final PrimitiveOpBuilder<T, E> builder;
+public class ExprVisitor<T extends Number, E extends Expr> implements NodeVisitor<E> {
+    private final NumberMath<T, E, E> builder;
     private final Map<String, Integer> varIndices;
     private Function<ExprNode, E> delegate;
 
-    public ExprVisitor(PrimitiveOpBuilder<T, E> builder, List<Variable> variables) {
+    public ExprVisitor(NumberMath<T, E, E> builder, List<Variable> variables) {
         this.builder = builder;
         this.varIndices = varListToIndices(variables);
     }
@@ -40,12 +40,12 @@ public class ExprVisitor<T extends Number, E extends Expr<T>> implements NodeVis
     }
 
     public Function<Object[], T> buildFunction(ExprNode node) {
-        return builder.toFunction(visit(node));
+        return (Function<Object[], T>) builder.toFunction(visit(node));
     }
 
     @Override
     public E doVisit(VarRefNode node) {
-        return builder.load(node.getName(), varIndices.get(node.getName()));
+        return builder.load(varIndices.get(node.getName()), node.getName());
     }
 
     @Override

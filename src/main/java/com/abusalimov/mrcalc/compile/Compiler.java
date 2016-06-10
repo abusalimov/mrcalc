@@ -24,10 +24,10 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     private Map<String, Variable> globalVariableMap = new HashMap<>();
     private int syntheticVariableCounter;
 
-    private ExprBuilderFactory<?, ?> exprBuilderFactory;
+    private Backend<?> backend;
 
-    public Compiler(ExprBuilderFactory<?, ?> exprBuilderFactory) {
-        this.exprBuilderFactory = exprBuilderFactory;
+    public Compiler(Backend<?> backend) {
+        this.backend = backend;
     }
 
     public List<Stmt> compile(ProgramNode node) throws CompileErrorException {
@@ -139,37 +139,37 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     }
 
 
-    protected <I extends Expr<Long>, F extends Expr<Double>> Function<Object[], ?> buildExprFunction(
+    protected <E extends Expr> Function<Object[], ?> buildExprFunction(
             ExprTypeInfo exprTypeInfo, List<Variable> referencedVariables) {
-        ExprBuilderFactory<I, F> factory = getExprBuilderFactory();
+        Backend<E> backend = getBackend();
 
-        ObjectOpBuilder<Object, ? extends Expr<Object>, I> objectOpBuilder = factory
-                .createObjectOpBuilder();
+        ObjectMath<Object, ? extends Expr, E> objectMath = backend.getObjectMath(Object.class);
 
-        PrimitiveOpBuilder<Long, I> integerOpBuilder = factory.createIntegerOpBuilder();
-        PrimitiveOpBuilder<Double, F> floatOpBuilder = factory.createFloatOpBuilder();
-        PrimitiveCastBuilder<I, F> primitiveCastBuilder = factory.createPrimitiveCastBuilder();
+        NumberMath<Long, E, E> integerMath = backend.getNumberMath(Long.class);
+        NumberMath<Double, E, E> floatMath = backend.getNumberMath(Double.class);
+        NumberCast<E, E> i2fCast= backend.getNumberCast(Double.class, Long.class);
+        NumberCast<E, E> f2iCast = backend.getNumberCast(Long.class, Double.class);
 
-        ObjectExprVisitor<Object, ? extends Expr<Object>, I> objectExprVisitor =
-                new ObjectExprVisitor<>(objectOpBuilder, referencedVariables);
+        ObjectExprVisitor<Object, ? extends Expr, E> objectExprVisitor =
+                new ObjectExprVisitor<>(objectMath, referencedVariables);
 
-        ExprVisitor<Long, I> integerExprVisitor = new ExprVisitor<>(integerOpBuilder,
+        ExprVisitor<Long, E> integerExprVisitor = new ExprVisitor<>(integerMath,
                 referencedVariables);
-        ExprVisitor<Double, F> floatExprVisitor = new ExprVisitor<>(floatOpBuilder,
+        ExprVisitor<Double, E> floatExprVisitor = new ExprVisitor<>(floatMath,
                 referencedVariables);
 
-        Function<Node, I> visitInteger = integerExprVisitor::visit;
-        Function<Node, F> visitFloat = floatExprVisitor::visit;
+        Function<Node, E> visitInteger = integerExprVisitor::visit;
+        Function<Node, E> visitFloat = floatExprVisitor::visit;
 
-        Map<Primitive, Function<Node, I>> visitIntegerMap = new EnumMap<Primitive, Function<Node, I>>(
+        Map<Primitive, Function<Node, E>> visitIntegerMap = new EnumMap<Primitive, Function<Node, E>>(
                 Primitive.class) {{
             put(Primitive.INTEGER, visitInteger);
-            put(Primitive.FLOAT, visitFloat.andThen(primitiveCastBuilder::toInteger));
+            put(Primitive.FLOAT, visitFloat.andThen(f2iCast::cast));
         }};
 
-        Map<Primitive, Function<Node, F>> visitFloatMap = new EnumMap<Primitive, Function<Node, F>>(
+        Map<Primitive, Function<Node, E>> visitFloatMap = new EnumMap<Primitive, Function<Node, E>>(
                 Primitive.class) {{
-            put(Primitive.INTEGER, visitInteger.andThen(primitiveCastBuilder::toFloat));
+            put(Primitive.INTEGER, visitInteger.andThen(i2fCast::cast));
             put(Primitive.FLOAT, visitFloat);
         }};
 
@@ -200,8 +200,8 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     }
 
     @SuppressWarnings("unchecked")
-    private <I extends Expr<Long>, F extends Expr<Double>> ExprBuilderFactory<I, F> getExprBuilderFactory() {
-        return (ExprBuilderFactory<I, F>) this.exprBuilderFactory;
+    private <E extends Expr> Backend<E> getBackend() {
+        return (Backend<E>) this.backend;
     }
 
 }

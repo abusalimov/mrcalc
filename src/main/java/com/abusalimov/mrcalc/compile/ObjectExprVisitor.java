@@ -6,8 +6,8 @@ import com.abusalimov.mrcalc.ast.expr.ExprNode;
 import com.abusalimov.mrcalc.ast.expr.RangeNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.backend.Expr;
-import com.abusalimov.mrcalc.backend.ObjectOpBuilder;
-import com.abusalimov.mrcalc.backend.impl.exprfunc.ObjectFuncExpr;
+import com.abusalimov.mrcalc.backend.ObjectMath;
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncExpr;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,13 +17,13 @@ import java.util.function.Function;
 /**
  * @author Eldar Abusalimov
  */
-public class ObjectExprVisitor<T, E extends Expr<T>, I extends Expr<Long>> implements
+public class ObjectExprVisitor<T, E extends Expr, I extends Expr> implements
         NodeVisitor<E> {
-    private final ObjectOpBuilder<T, E, I> builder;
+    private final ObjectMath<T, E, I> builder;
     private final Map<String, Integer> varIndices;
     private Function<ExprNode, I> delegate;
 
-    public ObjectExprVisitor(ObjectOpBuilder<T, E, I> builder, List<Variable> variables) {
+    public ObjectExprVisitor(ObjectMath<T, E, I> builder, List<Variable> variables) {
         this.builder = builder;
         this.varIndices = varListToIndices(variables);
     }
@@ -40,12 +40,12 @@ public class ObjectExprVisitor<T, E extends Expr<T>, I extends Expr<Long>> imple
     }
 
     public Function<Object[], T> buildFunction(ExprNode node) {
-        return builder.toFunction(visit(node));
+        return (Function<Object[], T>) builder.toFunction(visit(node));
     }
 
     @Override
     public E doVisit(VarRefNode node) {
-        return builder.load(node.getName(), varIndices.get(node.getName()));
+        return builder.load(varIndices.get(node.getName()), node.getName());
     }
 
     @Override
@@ -53,13 +53,16 @@ public class ObjectExprVisitor<T, E extends Expr<T>, I extends Expr<Long>> imple
         I startOperand = delegateVisit(node.getStart());
         I endOperand = delegateVisit(node.getEnd());
 
-        return builder.range(startOperand, endOperand);
+        // TODO stub
+        return (E) (FuncExpr) args -> {
+            throw new UnsupportedOperationException("NIY");
+        };
     }
 
     @Override
     public E doVisit(ExprNode node) {
         // TODO stub
-        return (E) (ObjectFuncExpr) args -> {
+        return (E) (FuncExpr) args -> {
             throw new UnsupportedOperationException("NIY");
         };
     }

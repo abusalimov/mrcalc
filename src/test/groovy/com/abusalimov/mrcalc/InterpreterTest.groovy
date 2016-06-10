@@ -1,7 +1,7 @@
 package com.abusalimov.mrcalc
 
-import com.abusalimov.mrcalc.backend.ExprBuilderFactory
-import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncExprBuilderFactoryImpl
+import com.abusalimov.mrcalc.backend.Backend
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
 import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
@@ -16,15 +16,15 @@ import static groovy.test.GroovyAssert.shouldFail
  */
 class InterpreterTest {
     private Parser parser
-    private ExprBuilderFactory exprFactory
+    private Backend backend
     private Compiler compiler
     private Interpreter interpreter
 
     @Before
     void setUp() {
         parser = new ANTLRParserImpl()
-        exprFactory = new FuncExprBuilderFactoryImpl()
-        compiler = new Compiler(exprFactory)
+        backend = new FuncBackendImpl()
+        compiler = new Compiler(backend)
         interpreter = new Interpreter()
     }
 

@@ -1,5 +1,7 @@
 package com.abusalimov.mrcalc
 
+import com.abusalimov.mrcalc.backend.ExprBuilderFactory
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncExprBuilderFactoryImpl
 import com.abusalimov.mrcalc.compile.CompileErrorException
 import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
@@ -15,12 +17,14 @@ class CompilerTest {
     def shouldDiagnose = DiagnosticAssert.&shouldDiagnose.curry CompileErrorException
 
     private Parser parser
+    private ExprBuilderFactory exprFactory
     private Compiler compiler
 
     @Before
     void setUp() {
         parser = new ANTLRParserImpl()
-        compiler = new Compiler()
+        exprFactory = new FuncExprBuilderFactoryImpl()
+        compiler = new Compiler(exprFactory)
     }
 
     def compile(String s) {

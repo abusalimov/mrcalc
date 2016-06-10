@@ -7,7 +7,6 @@ import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.backend.*;
-import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncExprBuilderFactoryImpl;
 import com.abusalimov.mrcalc.compile.type.Primitive;
 import com.abusalimov.mrcalc.compile.type.Type;
 
@@ -26,10 +25,6 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     private int syntheticVariableCounter;
 
     private ExprBuilderFactory<?, ?> exprBuilderFactory;
-
-    public Compiler() {
-        this(new FuncExprBuilderFactoryImpl());
-    }
 
     public Compiler(ExprBuilderFactory<?, ?> exprBuilderFactory) {
         this.exprBuilderFactory = exprBuilderFactory;

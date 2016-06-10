@@ -1,5 +1,7 @@
 package com.abusalimov.mrcalc
 
+import com.abusalimov.mrcalc.backend.ExprBuilderFactory
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncExprBuilderFactoryImpl
 import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
@@ -14,13 +16,15 @@ import static groovy.test.GroovyAssert.shouldFail
  */
 class InterpreterTest {
     private Parser parser
+    private ExprBuilderFactory exprFactory
     private Compiler compiler
     private Interpreter interpreter
 
     @Before
     void setUp() {
         parser = new ANTLRParserImpl()
-        compiler = new Compiler()
+        exprFactory = new FuncExprBuilderFactoryImpl()
+        compiler = new Compiler(exprFactory)
         interpreter = new Interpreter()
     }
 

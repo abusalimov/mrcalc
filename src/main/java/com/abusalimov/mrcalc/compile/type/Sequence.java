@@ -10,7 +10,6 @@ import java.util.Objects;
  * @author Eldar Abusalimov
  */
 public class Sequence implements Type {
-
     private final Primitive primitive;
     private final int sequenceDepth;
 
@@ -54,6 +53,11 @@ public class Sequence implements Type {
     @Override
     public Primitive getPrimitive() {
         return primitive;
+    }
+
+    @Override
+    public Class<?> getTypeClass() {
+        return Object.class;
     }
 
     public int getSequenceDepth() {

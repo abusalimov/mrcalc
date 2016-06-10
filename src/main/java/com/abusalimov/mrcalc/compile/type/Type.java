@@ -13,4 +13,11 @@ public interface Type {
      * @return the underlying scalar type
      */
     Primitive getPrimitive();
+
+    /**
+     * Returns a Java class corresponding to this type.
+     *
+     * @return the backing Java class
+     */
+    Class<?> getTypeClass();
 }

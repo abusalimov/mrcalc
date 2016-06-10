@@ -10,19 +10,21 @@ import java.util.List;
  * @author Eldar Abusalimov
  */
 public enum Primitive implements Type {
-    INTEGER("integer"),
-    FLOAT("float"),
+    INTEGER("integer", Long.class),
+    FLOAT("float", Double.class),
 
     /**
      * The UNKNOWN type is a special case. It is used as a placeholder when the proper type of the expression can't be
      * inferred because of type errors.
      */
-    UNKNOWN("?");
+    UNKNOWN("?", null);
 
     private final String name;
+    private final Class<? extends Number> typeClass;
 
-    Primitive(String name) {
+    Primitive(String name, Class<? extends Number> typeClass) {
         this.name = name;
+        this.typeClass = typeClass;
     }
 
     /**
@@ -54,6 +56,11 @@ public enum Primitive implements Type {
     @Override
     public Primitive getPrimitive() {
         return this;
+    }
+
+    @Override
+    public Class<? extends Number> getTypeClass() {
+        return typeClass;
     }
 
     @Override

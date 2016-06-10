@@ -83,8 +83,16 @@ public class AbstractDiagnosticEmitter implements DiagnosticEmitter {
 
             List<Diagnostic> collectedDiagnostics = getDiagnosticListener().getDiagnostics();
             if (collectedDiagnostics.size() > 0) {
-                throw exceptionConstructor.apply(collectedDiagnostics);
+                throw createException(collectedDiagnostics);
             }
+        }
+
+        public E createException() {
+            return createException(getDiagnosticListener().getDiagnostics());
+        }
+
+        public E createException(List<Diagnostic> diagnostics) {
+            return exceptionConstructor.apply(diagnostics);
         }
     }
 

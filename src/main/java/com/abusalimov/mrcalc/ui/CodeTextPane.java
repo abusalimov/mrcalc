@@ -1,8 +1,10 @@
 package com.abusalimov.mrcalc.ui;
 
+import com.abusalimov.mrcalc.Interpreter;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.compile.CompileErrorException;
 import com.abusalimov.mrcalc.compile.Compiler;
+import com.abusalimov.mrcalc.compile.Stmt;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 import com.abusalimov.mrcalc.parse.Parser;
 import com.abusalimov.mrcalc.parse.SyntaxErrorException;
@@ -97,13 +99,12 @@ public class CodeTextPane extends JTextPane {
             clearHighlight();
             Parser parser = new ANTLRParserImpl();
             Compiler compiler = new Compiler();
-//            Interpreter interpreter = new Interpreter();
+            Interpreter interpreter = new Interpreter(System.out);
             try {
                 ProgramNode node = parser
                         .parse(getDocument().getText(0, getDocument().getLength()));
-//                List<Stmt> stmts =
-                compiler.compile(node);
-//                interpreter.exec(stmts);
+                List<Stmt> stmts = compiler.compile(node);
+                interpreter.exec(stmts);
             } catch (SyntaxErrorException | CompileErrorException e) {
                 diagnostics = e.getDiagnostics();
 

@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.compile;
 
+import com.abusalimov.mrcalc.ast.ExprHolderNode;
 import com.abusalimov.mrcalc.ast.LambdaNode;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeArgVisitor;
@@ -21,21 +22,33 @@ import java.util.Map;
 public class TypeInferrer extends AbstractNodeDiagnosticEmitter
         implements NodeArgVisitor<Type, ExprTypeInfo> {
 
-    public Type infer(ExprTypeInfo exprTypeInfo) {
+    public ExprTypeInfo inferWithDiagnosticListener(ExprHolderNode holderNode, Map<String, Variable> variableMap,
+                                                    DiagnosticListener diagnosticListener) {
+        return runWithDiagnosticListener(() -> infer(holderNode, variableMap), diagnosticListener);
+    }
+
+    public ExprTypeInfo infer(ExprHolderNode holderNode, Map<String, Variable> variableMap) {
+        ExprTypeInfo exprTypeInfo = new ExprTypeInfo(holderNode, variableMap);
+        inferType(exprTypeInfo);
+        return exprTypeInfo;
+    }
+
+    protected ExprTypeInfo inferChild(ExprTypeInfo parentExprTypeInfo,
+                                      ExprHolderNode holderNode, Map<String, Variable> variableMap) {
+        ExprTypeInfo exprTypeInfo = infer(holderNode, variableMap);
+        parentExprTypeInfo.addChild(exprTypeInfo);
+        return exprTypeInfo;
+    }
+
+    protected ExprTypeInfo inferLambda(ExprTypeInfo parentExprTypeInfo, LambdaNode lambda, Type... argTypes) {
+        Map<String, Variable> argVariableMap = createArgMap(lambda.getArgNames(), argTypes);
+        return inferChild(parentExprTypeInfo, lambda, argVariableMap);
+    }
+
+    protected Type inferType(ExprTypeInfo exprTypeInfo) {
         Type type = visit(exprTypeInfo.getExprNode(), exprTypeInfo);
         assert exprTypeInfo.getExprType() == type;
         return type;
-    }
-
-    public Type inferWithDiagnosticListener(ExprTypeInfo exprTypeInfo, DiagnosticListener diagnosticListener) {
-        return runWithDiagnosticListener(() -> infer(exprTypeInfo), diagnosticListener);
-    }
-
-    protected Type inferLambdaType(ExprTypeInfo parentExprTypeInfo, LambdaNode lambda, Type... argTypes) {
-        Map<String, Variable> argVariableMap = createArgMap(lambda.getArgNames(), argTypes);
-        ExprTypeInfo lambdaExprTypeInfo = new ExprTypeInfo(lambda, argVariableMap);
-        parentExprTypeInfo.addChild(lambdaExprTypeInfo);
-        return infer(lambdaExprTypeInfo);
     }
 
     @Override
@@ -52,7 +65,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter
 
     @Override
     public Type doVisit(VarRefNode node, ExprTypeInfo exprTypeInfo) {
-        Variable variable = exprTypeInfo.getVariable(node.getName());
+        Variable variable = exprTypeInfo.referenceVariable(node.getName());
 
         if (variable == null) {
             emitNodeDiagnostic(node,
@@ -123,7 +136,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter
             return Sequence.of(Primitive.UNKNOWN);
         }
 
-        return Sequence.of(inferLambdaType(exprTypeInfo, lambda, sequenceElementType));
+        return Sequence.of(inferLambda(exprTypeInfo, lambda, sequenceElementType).getExprType());
     }
 
     @Override
@@ -138,7 +151,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter
             return Primitive.UNKNOWN;
         }
 
-        Type lambdaType = inferLambdaType(exprTypeInfo, lambda, neutralType, sequenceElementType);
+        Type lambdaType = inferLambda(exprTypeInfo, lambda, neutralType, sequenceElementType).getExprType();
         if (!neutralType.equals(lambdaType)) {
             if (neutralType != Primitive.UNKNOWN && lambdaType != Primitive.UNKNOWN) {
                 emitNodeDiagnostic(lambda,

@@ -16,9 +16,8 @@ public class Stmt {
     private final List<Variable> inputVariables;
     private final Variable outputVariable;
 
-    public Stmt(Function<Object[], ?> exprFunction, List<Variable> inputVariables,
-                Variable outputVariable) {
-        this.exprFunction = Objects.requireNonNull(exprFunction);
+    public Stmt(Function<Object[], ?> exprFunction, List<Variable> inputVariables, Variable outputVariable) {
+        this.exprFunction = exprFunction;
         this.inputVariables = Objects.requireNonNull(inputVariables);
         this.outputVariable = Objects.requireNonNull(outputVariable);
     }
@@ -31,6 +30,9 @@ public class Stmt {
      * @return the result
      */
     public Object exec(Map<Variable, Object> memory) {
+        if (!isComplete()) {
+            throw new UnsupportedOperationException("Incomplete statement");
+        }
         Object[] args = bindVariables(memory);
         Object result = exprFunction.apply(args);
         memory.put(outputVariable, result);
@@ -48,6 +50,10 @@ public class Stmt {
             ret[idx++] = value;
         }
         return ret;
+    }
+
+    public boolean isComplete() {
+        return exprFunction != null;
     }
 
     public List<Variable> getInputVariables() {

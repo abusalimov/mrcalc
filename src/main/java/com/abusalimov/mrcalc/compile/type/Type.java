@@ -5,4 +5,6 @@ package com.abusalimov.mrcalc.compile.type;
  */
 public interface Type {
     Primitive getPrimitive();
+
+    Class<?> getTypeClass();
 }

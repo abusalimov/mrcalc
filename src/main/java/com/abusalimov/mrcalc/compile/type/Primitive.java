@@ -8,14 +8,16 @@ import java.util.List;
  * @author Eldar Abusalimov
  */
 public enum Primitive implements Type {
-    INTEGER("integer"),
-    FLOAT("float"),
-    UNKNOWN("?");
+    INTEGER("integer", Long.class),
+    FLOAT("float", Double.class),
+    UNKNOWN("?", null);
 
     private final String name;
+    private final Class<? extends Number> typeClass;
 
-    Primitive(String name) {
+    Primitive(String name, Class<? extends Number> typeClass) {
         this.name = name;
+        this.typeClass = typeClass;
     }
 
     public static Primitive promote(Primitive... types) {
@@ -32,6 +34,11 @@ public enum Primitive implements Type {
     @Override
     public Primitive getPrimitive() {
         return this;
+    }
+
+    @Override
+    public Class<? extends Number> getTypeClass() {
+        return typeClass;
     }
 
     @Override

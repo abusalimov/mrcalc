@@ -1,5 +1,7 @@
 package com.abusalimov.mrcalc.ui;
 
+import com.abusalimov.mrcalc.CalcExecutor;
+
 import javax.swing.*;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.StyleConstants;
@@ -16,12 +18,12 @@ public class MrCalcMainFrame extends JFrame {
     private JTextArea outputTextArea;
     private MessageList messageList;
 
-    public MrCalcMainFrame() {
+    public MrCalcMainFrame(CalcExecutor calcExecutor) {
         super("MrCalc");
 
         outputTextArea = new JTextArea();
         outputTextArea.setEditable(false);
-        codeTextPane = new CodeTextPane(outputTextArea);
+        codeTextPane = new CodeTextPane(calcExecutor, outputTextArea);
         messageList = new MessageList(codeTextPane);
         codeTextPane.setErrorListener(errors -> messageList.setMessages(errors));
 

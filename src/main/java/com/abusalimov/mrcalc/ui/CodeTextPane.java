@@ -1,12 +1,7 @@
 package com.abusalimov.mrcalc.ui;
 
-import com.abusalimov.mrcalc.ast.ProgramNode;
-import com.abusalimov.mrcalc.compile.CompileErrorException;
-import com.abusalimov.mrcalc.compile.Compiler;
+import com.abusalimov.mrcalc.CalcExecutor;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
-import com.abusalimov.mrcalc.parse.Parser;
-import com.abusalimov.mrcalc.parse.SyntaxErrorException;
-import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -27,9 +22,9 @@ public class CodeTextPane extends JTextPane {
     private Consumer<List<Diagnostic>> errorListener;
     private List<Diagnostic> diagnostics = Collections.emptyList();
 
-    public CodeTextPane(JTextArea outputTextArea) {
+    public CodeTextPane(CalcExecutor calcExecutor, JTextArea outputTextArea) {
         this.outputTextArea = outputTextArea;
-        getStyledDocument().addDocumentListener(new HighlightListener());
+        getStyledDocument().addDocumentListener(new HighlightListener(calcExecutor));
         ToolTipManager.sharedInstance().registerComponent(this);
     }
 
@@ -80,6 +75,13 @@ public class CodeTextPane extends JTextPane {
                 new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 0, 0, 16));
         private final EOFPainter eofPainter = new EOFPainter(Color.RED);
 
+        private final CalcExecutor calcExecutor;
+
+        public HighlightListener(CalcExecutor calcExecutor) {
+            this.calcExecutor = calcExecutor;
+            calcExecutor.setCallback(diagnostics -> SwingUtilities.invokeLater(() -> highlight(diagnostics)));
+        }
+
         @Override
         public void insertUpdate(DocumentEvent e) {
             SwingUtilities.invokeLater(this::handleEvent);
@@ -98,28 +100,9 @@ public class CodeTextPane extends JTextPane {
         private void handleEvent() {
             clearHighlight();
             outputTextArea.setText("");
-            Parser parser = new ANTLRParserImpl();
-            Compiler compiler = new Compiler();
-//            PrintStream printStream = new PrintStream(new TextAreaStream(outputTextArea));
-//            Interpreter interpreter = new Interpreter(printStream);
             try {
-                ProgramNode node = parser
-                        .parse(getDocument().getText(0, getDocument().getLength()));
-//                List<Stmt> stmts =
-                compiler.compile(node);
-//                interpreter.exec(stmts);
-            } catch (SyntaxErrorException | CompileErrorException e) {
-                diagnostics = e.getDiagnostics();
-
-                fireErrorListener(diagnostics);
-
-                for (Diagnostic diagnostic : diagnostics) {
-                    try {
-                        highlight(diagnostic);
-                    } catch (BadLocationException e1) {
-                        e.printStackTrace();
-                    }
-                }
+                String sourceCodeText = getDocument().getText(0, getDocument().getLength());
+                calcExecutor.execute(sourceCodeText, new TextAreaStream(outputTextArea));
             } catch (BadLocationException e) {
                 e.printStackTrace();
             }
@@ -131,17 +114,30 @@ public class CodeTextPane extends JTextPane {
             fireErrorListener(diagnostics);
         }
 
-        private void highlight(Diagnostic diagnostic) throws BadLocationException {
+        private void highlight(List<Diagnostic> diagnostics) {
+            if (!EventQueue.isDispatchThread())
+                throw new IllegalThreadStateException();
+
+            fireErrorListener(diagnostics);
+            diagnostics.forEach(this::highlight);
+            repaint();
+        }
+
+        private void highlight(Diagnostic diagnostic) {
             int startOffset = diagnostic.getLocation().getStartOffset();
             int endOffset = diagnostic.getLocation().getEndOffset();
 
-            if (startOffset == endOffset) {
-                getHighlighter().addHighlight(startOffset, endOffset + 1, eofPainter);
-            } else if (!onSameLine(startOffset, endOffset)) {
-                getHighlighter().addHighlight(startOffset, endOffset, eofPainter);
-            } else {
-                getHighlighter().addHighlight(startOffset, endOffset, defaultPainter);
-                getHighlighter().addHighlight(startOffset, endOffset, squigglePainter);
+            try {
+                if (startOffset == endOffset) {
+                    getHighlighter().addHighlight(startOffset, endOffset + 1, eofPainter);
+                } else if (!onSameLine(startOffset, endOffset)) {
+                    getHighlighter().addHighlight(startOffset, endOffset, eofPainter);
+                } else {
+                    getHighlighter().addHighlight(startOffset, endOffset, defaultPainter);
+                    getHighlighter().addHighlight(startOffset, endOffset, squigglePainter);
+                }
+            } catch (BadLocationException e) {
+                e.printStackTrace();
             }
         }
     }

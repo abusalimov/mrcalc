@@ -19,9 +19,9 @@ public class MrCalcMainFrame extends JFrame {
     public MrCalcMainFrame() {
         super("MrCalc");
 
-        codeTextPane = new CodeTextPane();
         outputTextArea = new JTextArea();
         outputTextArea.setEditable(false);
+        codeTextPane = new CodeTextPane(outputTextArea);
         messageList = new MessageList(codeTextPane);
         codeTextPane.setErrorListener(errors -> messageList.setMessages(errors));
 

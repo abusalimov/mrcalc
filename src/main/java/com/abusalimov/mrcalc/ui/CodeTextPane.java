@@ -23,10 +23,12 @@ import java.util.function.Consumer;
  * @author - Eldar Abusalimov
  */
 public class CodeTextPane extends JTextPane {
+    private final JTextArea outputTextArea;
     private Consumer<List<Diagnostic>> errorListener;
     private List<Diagnostic> diagnostics = Collections.emptyList();
 
-    public CodeTextPane() {
+    public CodeTextPane(JTextArea outputTextArea) {
+        this.outputTextArea = outputTextArea;
         getStyledDocument().addDocumentListener(new HighlightListener());
         ToolTipManager.sharedInstance().registerComponent(this);
     }
@@ -95,9 +97,11 @@ public class CodeTextPane extends JTextPane {
 
         private void handleEvent() {
             clearHighlight();
+            outputTextArea.setText("");
             Parser parser = new ANTLRParserImpl();
             Compiler compiler = new Compiler();
-//            Interpreter interpreter = new Interpreter();
+//            PrintStream printStream = new PrintStream(new TextAreaStream(outputTextArea));
+//            Interpreter interpreter = new Interpreter(printStream);
             try {
                 ProgramNode node = parser
                         .parse(getDocument().getText(0, getDocument().getLength()));

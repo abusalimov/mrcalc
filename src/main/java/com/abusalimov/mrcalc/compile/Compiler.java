@@ -1,8 +1,10 @@
 package com.abusalimov.mrcalc.compile;
 
-import com.abusalimov.mrcalc.ast.*;
+import com.abusalimov.mrcalc.ast.ExprHolderNode;
+import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.NodeVisitor;
+import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
-import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
@@ -10,7 +12,10 @@ import com.abusalimov.mrcalc.backend.*;
 import com.abusalimov.mrcalc.compile.type.Primitive;
 import com.abusalimov.mrcalc.compile.type.Type;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -93,7 +98,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     protected Stmt compileInternal(ExprHolderNode node, String outputVariableName) {
         ExprTypeInfo exprTypeInfo = inferTypeInfo(node);
 
-        List<Variable> referencedVariables = getReferencedVariables(exprTypeInfo.getExprNode());
+        List<Variable> referencedVariables = exprTypeInfo.getReferencedVariables();
         Function<Object[], ?> exprFunction = buildExprFunction(exprTypeInfo, referencedVariables);
 
         Variable outputVariable = new Variable(outputVariableName, exprTypeInfo.getExprType());
@@ -109,35 +114,6 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     private Type inferType(ExprTypeInfo exprTypeInfo) {
         return new TypeInferrer().infer(exprTypeInfo, this::emitDiagnostic);
     }
-
-    private List<Variable> getReferencedVariables(ExprNode node) {
-        return getReferencedVariables(node, globalVariableMap);
-    }
-
-    private List<Variable> getReferencedVariables(ExprNode node,
-                                                  Map<String, Variable> variableMap) {
-        Set<Variable> variableSet = new LinkedHashSet<>();
-
-        new NodeVisitor<Void>() {
-            @Override
-            public Void doVisit(VarRefNode node) {
-                Variable variable = variableMap.get(node.getName());
-                if (variable != null) {
-                    variableSet.add(variable);
-                }
-                return null;
-            }
-
-            @Override
-            public Void doVisit(LambdaNode node) {
-                /* Do not visit children of lambda since it introduces a new scope. */
-                return null;
-            }
-        }.visit(node);
-
-        return new ArrayList<>(variableSet);
-    }
-
 
     protected <E extends Expr> Function<Object[], ?> buildExprFunction(
             ExprTypeInfo exprTypeInfo, List<Variable> referencedVariables) {

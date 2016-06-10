@@ -64,7 +64,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter
 
     @Override
     public Type doVisit(VarRefNode node, ExprTypeInfo exprTypeInfo) {
-        Variable variable = exprTypeInfo.getVariable(node.getName());
+        Variable variable = exprTypeInfo.referenceVariable(node.getName());
 
         if (variable == null) {
             emitNodeDiagnostic(node,

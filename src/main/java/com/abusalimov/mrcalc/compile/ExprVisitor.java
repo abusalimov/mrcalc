@@ -7,8 +7,8 @@ import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
 import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
-import com.abusalimov.mrcalc.compile.exprtree.Expr;
-import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
+import com.abusalimov.mrcalc.backend.Expr;
+import com.abusalimov.mrcalc.backend.PrimitiveOpBuilder;
 
 import java.util.HashMap;
 import java.util.List;

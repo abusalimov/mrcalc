@@ -1,6 +1,6 @@
-package com.abusalimov.mrcalc.compile.impl.function;
+package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
-import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
+import com.abusalimov.mrcalc.backend.PrimitiveOpBuilder;
 
 import java.util.function.Function;
 

@@ -7,9 +7,7 @@ import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
-
 /**
  * @author Eldar Abusalimov
  */
@@ -52,7 +50,6 @@ class CompilerTest {
         assert compile("var x = 0; var y = 1; var z = 3; var foo = x+y+z")
     }
 
-    @Ignore("buildExprFunction() stub")
     @Test
     void "compiles lambdas within map/reduce expressions"() {
         assert compile("map({1,2}, a -> a^2)")

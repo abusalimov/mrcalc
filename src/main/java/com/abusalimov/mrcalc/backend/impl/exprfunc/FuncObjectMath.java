@@ -9,26 +9,26 @@ import java.util.function.Function;
 /**
  * @author Eldar Abusalimov
  */
-public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<List<?>>> {
+public class FuncObjectMath<T> implements ObjectMath<T, FuncObjectExpr<T>, FuncObjectExpr<List<?>>> {
     public static final FuncObjectMath INSTANCE = new FuncObjectMath();
 
     @Override
-    public Function<Object[], ?> toFunction(FuncExpr<T> expr) {
+    public Function<Object[], ?> toFunction(FuncObjectExpr<T> expr) {
         return expr;
     }
 
     @Override
-    public FuncExpr<T> load(String name, int slot) {
+    public FuncObjectExpr<T> load(String name, int slot) {
         return args -> (T) args[slot];
     }
 
     @Override
-    public FuncExpr<T> constant(T literal) {
+    public FuncObjectExpr<T> constant(T literal) {
         return args -> literal;
     }
 
     @Override
-    public FuncExpr<List<?>> map(FuncExpr<List<?>> sequenceExpr, FuncExpr<T> lambda) {
+    public FuncObjectExpr<List<?>> map(FuncObjectExpr<List<?>> sequenceExpr, FuncObjectExpr<T> lambda) {
         return args -> {
             List<?> sequence = sequenceExpr.apply(args);
             int length = sequence.size();
@@ -41,7 +41,8 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Li
     }
 
     @Override
-    public FuncExpr<T> reduce(FuncExpr<List<?>> sequenceExpr, FuncExpr<T> neutral, FuncExpr<T> lambda) {
+    public FuncObjectExpr<T> reduce(FuncObjectExpr<List<?>> sequenceExpr, FuncObjectExpr<T> neutral,
+                                    FuncObjectExpr<T> lambda) {
         return args -> {
             List<?> sequence = sequenceExpr.apply(args);
             T ret = neutral.apply(args);

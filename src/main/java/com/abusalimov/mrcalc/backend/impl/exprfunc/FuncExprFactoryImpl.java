@@ -15,7 +15,7 @@ import static java.util.Arrays.asList;
 /**
  * @author Eldar Abusalimov
  */
-public class FuncExprFactoryImpl implements ExprFactory<FuncExpr<?>> {
+public class FuncExprFactoryImpl implements ExprFactory<FuncObjectExpr<?>> {
     private static final Map<Class<?>, ObjectMath<?, ?, ?>> mathMap = new HashMap<>();
     private static final Map<List<Class<? extends Number>>, NumberCast<?, ?>> numberCastMap = new HashMap<>();
 
@@ -30,21 +30,21 @@ public class FuncExprFactoryImpl implements ExprFactory<FuncExpr<?>> {
     }
 
     private static <F extends Number, T extends Number> void putNumberCast(Class<T> toType, Class<F> fromType,
-                                                                           NumberCast<FuncExpr<F>, FuncExpr<T>> cast) {
+                                                                           NumberCast<FuncObjectExpr<F>, FuncObjectExpr<T>> cast) {
         numberCastMap.put(asList(toType, fromType), cast);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> ObjectMath<T, FuncExpr<?>, FuncExpr<?>> getObjectMath(Class<T> returnType) {
-        return (ObjectMath<T, FuncExpr<?>, FuncExpr<?>>) mathMap.getOrDefault(
+    public <T> ObjectMath<T, FuncObjectExpr<?>, FuncObjectExpr<?>> getObjectMath(Class<T> returnType) {
+        return (ObjectMath<T, FuncObjectExpr<?>, FuncObjectExpr<?>>) mathMap.getOrDefault(
                 Objects.requireNonNull(returnType, "returnType"), FuncObjectMath.INSTANCE);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Number> NumberMath<T, FuncExpr<?>, FuncExpr<?>> getNumberMath(Class<T> returnType) {
-        return (NumberMath<T, FuncExpr<?>, FuncExpr<?>>) mathMap.computeIfAbsent(
+    public <T extends Number> NumberMath<T, FuncObjectExpr<?>, FuncObjectExpr<?>> getNumberMath(Class<T> returnType) {
+        return (NumberMath<T, FuncObjectExpr<?>, FuncObjectExpr<?>>) mathMap.computeIfAbsent(
                 Objects.requireNonNull(returnType, "returnType"), aClass -> {
                     throw new UnsupportedOperationException("Unknown Number class " + aClass);
                 });
@@ -52,8 +52,8 @@ public class FuncExprFactoryImpl implements ExprFactory<FuncExpr<?>> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public NumberCast<FuncExpr<?>, FuncExpr<?>> getNumberCast(Class<? extends Number> toType,
-                                                              Class<? extends Number> fromType) {
-        return (NumberCast<FuncExpr<?>, FuncExpr<?>>) numberCastMap.get(asList(toType, fromType));
+    public NumberCast<FuncObjectExpr<?>, FuncObjectExpr<?>> getNumberCast(Class<? extends Number> toType,
+                                                                          Class<? extends Number> fromType) {
+        return (NumberCast<FuncObjectExpr<?>, FuncObjectExpr<?>>) numberCastMap.get(asList(toType, fromType));
     }
 }

@@ -92,12 +92,12 @@ public class CodeTextPane extends JTextPane {
 
         @Override
         public void insertUpdate(DocumentEvent e) {
-            SwingUtilities.invokeLater(this::handleEvent);
+            handleEvent();
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            SwingUtilities.invokeLater(this::handleEvent);
+            handleEvent();
         }
 
         @Override

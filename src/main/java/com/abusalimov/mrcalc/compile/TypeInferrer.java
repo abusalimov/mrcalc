@@ -17,6 +17,32 @@ import java.util.*;
 /**
  * Type inferrer deduces types of expressions based on their sub-expressions or surrounding constructions.
  * <p>
+ * Rules that are used to infer a type of an expression are simple and straightforward:
+ * <ul>
+ * <li> Literal constants are {@link Primitive} scalars: either {@link Primitive#INTEGER} or {@link Primitive#FLOAT};
+ *
+ * <li> References to a global variable obviously yield a type of that variable. The type inferrer relies on an
+ *      externally provided mapping of typed variables;
+ *
+ * <li> Unary operation expression has a primitive type of the sole operand;
+ *
+ * <li> Binary operation expression type is inferred from the operands using {@link Primitive#promote(List) promotion}
+ *      rules by widening the operand types to a common primitive type. For example, adding an {@link Primitive#INTEGER}
+ *      and a {@link Primitive#FLOAT} together yields a {@link Primitive#FLOAT} as the most wide types of two;
+ *
+ * <li> Ranges yield a {@link Sequence} of {@link Primitive#INTEGER}s;
+ *
+ * <li> A call to the map() function yields a {@link Sequence} of a return type of its lambda applied to an element of a
+ *      sequence passed in: {@code map([T], (T -> R)) -> [R]};
+ *
+ * <li> A call to the reduce() function yields a type of its neutral element, which, in turn, must be also exactly the
+ *      same as a return type of a lambda applied to that neutral element and an element of a sequence passed in:
+ *      {@code reduce([T], R, (R, T -> R)) -> R};
+ *
+ * <li> The return type of a lambda used by map() and reduce() functions is determined by following the inference rules
+ *      applied within a variable context of the lambda arguments, with type of these arguments provided by the
+ *      surrounding map/reduce function.
+ * </ul>
  * The type inferrer is also responsible for reporting any type errors found in expressions, like attempting to map a
  * scalar value or to add two sequences together.
  * <p>

@@ -12,9 +12,7 @@ import com.abusalimov.mrcalc.compile.type.Sequence;
 import com.abusalimov.mrcalc.compile.type.Type;
 import com.abusalimov.mrcalc.diagnostic.DiagnosticListener;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Type inferrer deduces types of expressions based on their sub-expressions or surrounding constructions.
@@ -195,24 +193,43 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
 
     private Map<String, Variable> createArgMap(List<String> argNames, Type... argTypes) {
         if (argNames.size() != argTypes.length) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Lambda arity mismatch");
         }
+
         Map<String, Variable> argMap = new LinkedHashMap<>();
         for (String argName : argNames) {
             argMap.put(argName, new Variable(argName, argTypes[argMap.size()]));
         }
-        // TODO ensure no duplicate variables
+
+        if (argMap.size() != argNames.size()) {
+            throw new IllegalArgumentException("Duplicate lambda argument names");
+        }
         return argMap;
     }
 
     private boolean checkLambdaArity(LambdaNode lambda, int arity, String funcName) {
-        boolean valid = (lambda.getArgNames().size() == arity);
-        if (!valid) {
+        List<String> argNames = lambda.getArgNames();
+        if (argNames.size() != arity) {
             emitNodeDiagnostic(lambda,
                     String.format("Lambda for %s accepts exactly %d argument%s", funcName, arity,
                             arity == 1 ? "" : "s"));
         }
-        return valid;
+
+        Set<String> seenArgNames = new HashSet<>();
+        Set<String> duplicateArgNames = new LinkedHashSet<>();
+        for (String argName : argNames) {
+            if (!seenArgNames.add(argName)) {
+                duplicateArgNames.add(argName);
+            }
+        }
+
+        /* Report each duplicate name only once, even if some of them occur three times or more. */
+        for (String argName : duplicateArgNames) {
+            emitNodeDiagnostic(lambda,
+                    String.format("Duplicate lambda argument '%s'", argName));
+        }
+
+        return (argNames.size() == arity) && duplicateArgNames.isEmpty();
     }
 
     private Type checkSequenceType(Type type, ExprNode sequence, String funcName) {

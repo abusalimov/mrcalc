@@ -18,6 +18,9 @@ import java.util.function.Consumer;
  * @author - Eldar Abusalimov
  */
 public class CodeTextPane extends JTextPane {
+    private static int squiggleSize = 2;
+    private static int squigglesAtEof = 2;
+
     private final JTextArea outputTextArea;
     private Consumer<List<Diagnostic>> errorListener;
     private List<Diagnostic> diagnostics = Collections.emptyList();
@@ -38,7 +41,7 @@ public class CodeTextPane extends JTextPane {
             try {
                 if ((startOffset == endOffset || !onSameLine(startOffset, endOffset)) &&
                     offset == startOffset &&
-                    modelToView(offset).x + 8 > event.getPoint().x)
+                    modelToView(offset).x + squigglesAtEof * squiggleSize > event.getPoint().x)
                     return diagnostic.getMessage();
 
                 if (offset >= startOffset && offset < endOffset)
@@ -70,10 +73,15 @@ public class CodeTextPane extends JTextPane {
     }
 
     private class HighlightListener implements DocumentListener {
-        private final SquigglePainter squigglePainter = new SquigglePainter(Color.RED);
+        private final SquigglePainter squigglePainter = new SquigglePainter(Color.RED, squiggleSize);
         private final DefaultHighlighter.DefaultHighlightPainter defaultPainter =
                 new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 0, 0, 16));
-        private final EOFPainter eofPainter = new EOFPainter(Color.RED);
+        private final SquigglePainter eofPainter = new SquigglePainter(Color.RED, squiggleSize) {
+            @Override
+            protected void paintSquiggles(Graphics g, Rectangle r) {
+                super.paintSquiggles(g, new Rectangle(r.x + r.width, r.y, squigglesAtEof *squiggle, r.height));
+            }
+        };
 
         private final CalcExecutor calcExecutor;
 

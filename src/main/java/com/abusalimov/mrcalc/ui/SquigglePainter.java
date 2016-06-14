@@ -10,9 +10,12 @@ import javax.swing.text.*;
  */
 public class SquigglePainter extends DefaultHighlighter.DefaultHighlightPainter
 {
-    public SquigglePainter(Color color)
+    protected final int squiggle;
+
+    public SquigglePainter(Color color, int squiggle)
     {
         super( color );
+        this.squiggle = squiggle;
     }
 
     /**
@@ -41,12 +44,12 @@ public class SquigglePainter extends DefaultHighlighter.DefaultHighlightPainter
 
         //  Draw the squiggles
 
-        paintSquiggles(g, r, 2);
+        paintSquiggles(g, r);
 
         return r;
     }
 
-    protected void paintSquiggles(Graphics g, Rectangle r, int squiggle) {
+    protected void paintSquiggles(Graphics g, Rectangle r) {
         int twoSquiggles = squiggle * 2;
         int y = r.y + r.height - squiggle - 1;
 

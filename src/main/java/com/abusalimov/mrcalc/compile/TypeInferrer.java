@@ -67,9 +67,13 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         return exprTypeInfo;
     }
 
-    protected ExprTypeInfo inferLambda(ExprTypeInfo parentExprTypeInfo, LambdaNode lambda, Type... argTypes) {
+    protected Type inferLambdaType(ExprTypeInfo parentExprTypeInfo, String funcName, LambdaNode lambda,
+                                   Type... argTypes) {
+        if (!checkLambdaArity(lambda, argTypes.length, funcName)) {
+            return Primitive.UNKNOWN;
+        }
         Map<String, Variable> argVariableMap = createArgMap(lambda.getArgNames(), argTypes);
-        return inferChild(parentExprTypeInfo, lambda, argVariableMap);
+        return inferChild(parentExprTypeInfo, lambda, argVariableMap).getExprType();
     }
 
     protected Type inferType(ExprTypeInfo exprTypeInfo) {
@@ -157,13 +161,9 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         ExprNode sequence = node.getSequence();
         Type sequenceElementType = checkSequenceType(visit(sequence, exprTypeInfo), sequence, "map()");
 
-        LambdaNode lambda = node.getLambda();
+        Type lambdaType = inferLambdaType(exprTypeInfo, "map()", node.getLambda(), sequenceElementType);
 
-        if (!checkLambdaArity(lambda, 1, "map()")) {
-            return Sequence.of(Primitive.UNKNOWN);
-        }
-
-        return Sequence.of(inferLambda(exprTypeInfo, lambda, sequenceElementType).getExprType());
+        return Sequence.of(lambdaType);
     }
 
     @Override
@@ -172,16 +172,11 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         Type sequenceElementType = checkSequenceType(visit(sequence, exprTypeInfo), sequence, "reduce()");
         Type neutralType = visit(node.getNeutral(), exprTypeInfo);
 
-        LambdaNode lambda = node.getLambda();
+        Type lambdaType = inferLambdaType(exprTypeInfo, "reduce()", node.getLambda(), neutralType, sequenceElementType);
 
-        if (!checkLambdaArity(lambda, 2, "reduce()")) {
-            return Primitive.UNKNOWN;
-        }
-
-        Type lambdaType = inferLambda(exprTypeInfo, lambda, neutralType, sequenceElementType).getExprType();
         if (!neutralType.equals(lambdaType)) {
             if (neutralType != Primitive.UNKNOWN && lambdaType != Primitive.UNKNOWN) {
-                emitNodeDiagnostic(lambda,
+                emitNodeDiagnostic(node.getLambda(),
                         String.format("Lambda return type '%s' is incompatible with neutral element type '%s'",
                                 lambdaType, neutralType));
             }

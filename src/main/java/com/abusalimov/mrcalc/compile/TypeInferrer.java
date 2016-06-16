@@ -86,20 +86,18 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         return runWithDiagnosticListener(() -> infer(holderNode, variableMap), diagnosticListener);
     }
 
-    protected ExprTypeInfo inferChild(ExprTypeInfo parentExprTypeInfo,
-                                      ExprHolderNode holderNode, Map<String, Variable> variableMap) {
-        ExprTypeInfo exprTypeInfo = infer(holderNode, variableMap);
-        parentExprTypeInfo.addChild(exprTypeInfo);
-        return exprTypeInfo;
-    }
-
     protected Type inferLambdaType(ExprTypeInfo parentExprTypeInfo, String funcName, LambdaNode lambda,
                                    Type... argTypes) {
         if (!checkLambdaArity(lambda, argTypes.length, funcName)) {
             return Primitive.UNKNOWN;
         }
-        Map<String, Variable> argVariableMap = createArgMap(lambda.getArgNames(), argTypes);
-        return inferChild(parentExprTypeInfo, lambda, argVariableMap).getExprType();
+        List<Variable> argVariableMap = createArgList(lambda.getArgNames(), argTypes);
+
+        ExprTypeInfo exprTypeInfo = new LambdaExprTypeInfo(lambda, argVariableMap);
+        inferType(exprTypeInfo);
+        parentExprTypeInfo.addChild(exprTypeInfo);
+
+        return exprTypeInfo.getExprType();
     }
 
     protected Type inferType(ExprTypeInfo exprTypeInfo) {
@@ -212,22 +210,6 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         return lambdaType;
     }
 
-    private Map<String, Variable> createArgMap(List<String> argNames, Type... argTypes) {
-        if (argNames.size() != argTypes.length) {
-            throw new IllegalArgumentException("Lambda arity mismatch");
-        }
-
-        Map<String, Variable> argMap = new LinkedHashMap<>();
-        for (String argName : argNames) {
-            argMap.put(argName, new Variable(argName, argTypes[argMap.size()]));
-        }
-
-        if (argMap.size() != argNames.size()) {
-            throw new IllegalArgumentException("Duplicate lambda argument names");
-        }
-        return argMap;
-    }
-
     private boolean checkLambdaArity(LambdaNode lambda, int arity, String funcName) {
         List<String> argNames = lambda.getArgNames();
         if (argNames.size() != arity) {
@@ -262,5 +244,59 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
             return Primitive.UNKNOWN;
         }
         return ((Sequence) type).getElementType();
+    }
+
+    private List<Variable> createArgList(List<String> argNames, Type... argTypes) {
+        if (argNames.size() != argTypes.length) {
+            throw new IllegalArgumentException("Lambda arity mismatch");
+        }
+
+        List<Variable> args = new ArrayList<>(argNames.size());
+        for (String argName : argNames) {
+            args.add(new Variable(argName, argTypes[args.size()]));
+        }
+
+        return args;
+    }
+
+    /**
+     * Provides special indexing of variables referring to lambda arguments.
+     */
+    protected static class LambdaExprTypeInfo extends ExprTypeInfo {
+
+        private final Map<Variable, Integer> argIndexMap = new LinkedHashMap<>();
+
+        /**
+         * Creates a new instance for the given {@link ExprHolderNode} and variables mapping.
+         *
+         * @param lambda the lambda for sub-expressions of which to hold the type info
+         * @param args   the list of argument variables
+         * @throws IllegalArgumentException if some of the arguments have duplicate name
+         */
+        public LambdaExprTypeInfo(LambdaNode lambda, List<Variable> args) {
+            super(lambda, createArgMap(args));
+
+            for (Variable arg : args) {
+                argIndexMap.put(arg, argIndexMap.size());
+            }
+        }
+
+        private static Map<String, Variable> createArgMap(List<Variable> args) {
+            Map<String, Variable> argMap = new LinkedHashMap<>();
+            for (Variable arg : args) {
+                argMap.put(arg.getName(), arg);
+            }
+
+            if (argMap.size() != args.size()) {
+                throw new IllegalArgumentException("Duplicate lambda argument names");
+            }
+            return argMap;
+        }
+
+        @Override
+        public int getReferencedVariableIndex(String name) {
+            Variable variable = getVariable(name);
+            return argIndexMap.getOrDefault(variable, -1);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.abusalimov.mrcalc.ast.stmt;
 
 import com.abusalimov.mrcalc.ast.Node;
+import com.abusalimov.mrcalc.ast.NodeArgVisitor;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 
 /**
@@ -12,5 +13,10 @@ public interface StmtNode extends Node {
     @Override
     default <T> T accept(NodeVisitor<T> visitor) {
         return visitor.doVisit(this);
+    }
+
+    @Override
+    default <T, A> T accept(NodeArgVisitor<T, A> visitor, A arg) {
+        return visitor.doVisit(this, arg);
     }
 }

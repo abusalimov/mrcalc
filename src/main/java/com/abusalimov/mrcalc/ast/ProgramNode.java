@@ -38,4 +38,9 @@ public class ProgramNode extends AbstractNode {
     public <T> T accept(NodeVisitor<T> visitor) {
         return visitor.doVisit(this);
     }
+
+    @Override
+    public <T, A> T accept(NodeArgVisitor<T, A> visitor, A arg) {
+        return visitor.doVisit(this, arg);
+    }
 }

@@ -39,6 +39,25 @@ class ParserTest extends GroovyTestCase {
         assert null != parse("(foo)+1")
     }
 
+    void testParsesPrintStatement() {
+        assert null != parse("print 0")
+        assert null != parse("print(1+2)")
+        assert null != parse("print foo/bar")
+    }
+
+    void testParsesRanges() {
+        assert null != parse("{1, 2}")
+        assert null != parse("({(0),(0)})")
+        assert null != parse("{1-2, 3+4}")
+        assert null != parse("{foo, bar}")
+    }
+
+    void testParsesMapReduce() {
+        assert null != parse("map({1,2}, a -> a^2)")
+        assert null != parse("reduce({0,9}, 0, a b -> a+b)")
+        assert null != parse("map({0,9}, x -> reduce({1,x}, 1, a b -> a * b))")
+    }
+
     void testThrowsSyntaxErrors() {
         shouldFail SyntaxErrorException, { parse "(" }
         shouldFail SyntaxErrorException, { parse ")" }
@@ -52,5 +71,7 @@ class ParserTest extends GroovyTestCase {
         shouldFail SyntaxErrorException, { parse "+" }
         shouldFail SyntaxErrorException, { parse "1++" }
         shouldFail SyntaxErrorException, { parse "***" }
+
+        shouldFail SyntaxErrorException, { parse "print" }
     }
 }

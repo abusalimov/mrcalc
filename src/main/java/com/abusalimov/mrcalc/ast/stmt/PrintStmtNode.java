@@ -6,28 +6,16 @@ import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 
 /**
- * A variable defines an expression identified using a unique name, there must not be more than one
- * variable with the same name in a single scope.
+ * The "print" statement evaluates the expression an outputs the result.
  *
  * @author Eldar Abusalimov
  */
-public class VarDefStmtNode extends ExprHolderNode implements StmtNode {
-    private String name;
-
-    public VarDefStmtNode() {
+public class PrintStmtNode extends ExprHolderNode implements StmtNode {
+    public PrintStmtNode() {
     }
 
-    public VarDefStmtNode(String name, ExprNode expr) {
+    public PrintStmtNode(ExprNode expr) {
         super(expr);
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Override

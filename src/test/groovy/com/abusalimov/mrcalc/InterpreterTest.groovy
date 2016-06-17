@@ -67,10 +67,10 @@ class InterpreterTest {
         assert 0L == eval("reduce({1,999}, 0, x y -> x*y)")
         assert 0L == eval("reduce({1,999}, 0, x y -> x)")
         assert 999L == eval("reduce({1,999}, 0, x y -> y)")
-        assert 10000L == eval("""
-            var seq = map({0,9}, x -> map({0,9}, x -> map({0,9}, x -> map({0,9}, x -> 1))))
-            reduce(seq, 0, x y -> x + reduce(y, 0, x y -> x + reduce(y, 0, x y -> x + reduce(y, 0, x y -> x + y))))
-        """)
+//        assert 10000L == eval("""
+//            var seq = map({0,9}, x -> map({0,9}, x -> map({0,9}, x -> map({0,9}, x -> 1))))
+//            reduce(seq, 0, x y -> x + reduce(y, 0, x y -> x + reduce(y, 0, x y -> x + reduce(y, 0, x y -> x + y))))
+//        """)
     }
 
     @Ignore("NIY")

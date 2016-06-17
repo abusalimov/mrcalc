@@ -35,9 +35,9 @@ import java.util.*;
  * <li> A call to the map() function yields a {@link Sequence} of a return type of its lambda applied to an element of a
  *      sequence passed in: {@code map([T], (T -> R)) -> [R]};
  *
- * <li> A call to the reduce() function yields a type of its neutral element, which, in turn, must be also exactly the
- *      same as a return type of a lambda applied to that neutral element and an element of a sequence passed in:
- *      {@code reduce([T], R, (R, T -> R)) -> R};
+ * <li> A call to the reduce() function yields a type of the sequence element, which also must be exactly the same as
+ *      the neutral element type and a return type of the lambda applied to that neutral element and an element of the
+ *      sequence passed in: {@code reduce([T], T, (T, T -> T)) -> T};
  *
  * <li> The return type of a lambda used by map() and reduce() functions is determined by following the inference rules
  *      applied within a variable context of the lambda arguments, with type of these arguments provided by the
@@ -198,16 +198,27 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
 
         Type lambdaType = inferLambdaType(exprTypeInfo, "reduce()", node.getLambda(), neutralType, sequenceElementType);
 
-        if (!neutralType.equals(lambdaType)) {
-            if (neutralType != Primitive.UNKNOWN && lambdaType != Primitive.UNKNOWN) {
-                emitNodeDiagnostic(node.getLambda(),
-                        String.format("Lambda return type '%s' is incompatible with neutral element type '%s'",
-                                lambdaType, neutralType));
+        Type retType = lambdaType;
+
+        if (!neutralType.equals(sequenceElementType)) {
+            if (neutralType != Primitive.UNKNOWN && sequenceElementType != Primitive.UNKNOWN) {
+                emitNodeDiagnostic(node.getNeutral(),
+                        String.format("Neutral element type '%s' is incompatible with sequence element type '%s'",
+                                      neutralType, sequenceElementType));
             }
-            return Primitive.UNKNOWN;
+            retType = Primitive.UNKNOWN;
         }
 
-        return lambdaType;
+        if (!lambdaType.equals(sequenceElementType)) {
+            if (lambdaType != Primitive.UNKNOWN && sequenceElementType != Primitive.UNKNOWN) {
+                emitNodeDiagnostic(node.getLambda(),
+                        String.format("Lambda return type '%s' is incompatible with sequence element type '%s'",
+                                      lambdaType, sequenceElementType));
+            }
+            retType = Primitive.UNKNOWN;
+        }
+
+        return retType;
     }
 
     private boolean checkLambdaArity(LambdaNode lambda, int arity, String funcName) {

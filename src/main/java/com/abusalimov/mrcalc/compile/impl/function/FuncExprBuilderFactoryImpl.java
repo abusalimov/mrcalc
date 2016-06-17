@@ -1,13 +1,16 @@
 package com.abusalimov.mrcalc.compile.impl.function;
 
-import com.abusalimov.mrcalc.compile.exprtree.ExprBuilderFactory;
-import com.abusalimov.mrcalc.compile.exprtree.PrimitiveCastBuilder;
-import com.abusalimov.mrcalc.compile.exprtree.PrimitiveOpBuilder;
+import com.abusalimov.mrcalc.compile.exprtree.*;
 
 /**
  * @author Eldar Abusalimov
  */
 public class FuncExprBuilderFactoryImpl implements ExprBuilderFactory<IntegerFuncExpr, FloatFuncExpr> {
+    @Override
+    public ObjectOpBuilder<Object, ? extends Expr<Object>, IntegerFuncExpr> createObjectOpBuilder() {
+        return new ObjectFuncOpBuilder();
+    }
+
     @Override
     public PrimitiveOpBuilder<Long, IntegerFuncExpr> createIntegerOpBuilder() {
         return new IntegerFuncOpBuilder();

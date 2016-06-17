@@ -1,9 +1,9 @@
 package com.abusalimov.mrcalc.ast;
 
-import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.ExprNode;
-import com.abusalimov.mrcalc.ast.expr.LiteralNode;
-import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.*;
+import com.abusalimov.mrcalc.ast.stmt.ExprStmtNode;
+import com.abusalimov.mrcalc.ast.stmt.StmtNode;
+import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 
 /**
  * Basic AST visitor using a double-dispatch pattern. Subclasses of {@link Node} should overload the
@@ -43,8 +43,28 @@ public interface NodeVisitor<T> {
         return defaultVisit(node);
     }
 
+    default T doVisit(ProgramNode node) {
+        return doVisit((Node) node);
+    }
+
+    default T doVisit(StmtNode node) {
+        return doVisit((Node) node);
+    }
+
+    default T doVisit(ExprStmtNode node) {
+        return doVisit((StmtNode) node);
+    }
+
+    default T doVisit(VarDefStmtNode node) {
+        return doVisit((StmtNode) node);
+    }
+
     default T doVisit(ExprNode node) {
         return doVisit((Node) node);
+    }
+
+    default T doVisit(VarRefNode node) {
+        return doVisit((ExprNode) node);
     }
 
     default T doVisit(LiteralNode node) {

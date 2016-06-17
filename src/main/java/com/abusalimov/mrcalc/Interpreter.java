@@ -4,14 +4,30 @@ import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
 import com.abusalimov.mrcalc.ast.expr.LiteralNode;
 import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
+import com.abusalimov.mrcalc.ast.expr.VarRefNode;
 import com.abusalimov.mrcalc.compile.Code;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Eldar Abusalimov
  */
 public class Interpreter implements NodeVisitor<Long> {
+    private Map<String, Long> memory = new HashMap<>();
+
+    @Override
+    public Long doVisit(VarRefNode node) {
+        String name = node.getName();
+        Long value = memory.get(name);
+        if (value == null) {
+            value = visit(node.getLinkedDef().getValue());
+            memory.put(name, value);
+        }
+        return value;
+    }
+
     @Override
     public Long doVisit(LiteralNode node) {
         return (Long) node.getValue();

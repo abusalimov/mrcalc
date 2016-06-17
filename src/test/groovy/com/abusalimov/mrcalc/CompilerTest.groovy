@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc
 
+import com.abusalimov.mrcalc.compile.CompileErrorException
 import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
@@ -27,5 +28,26 @@ class CompilerTest extends GroovyTestCase {
         assert null != compile("(1)")
         assert null != compile("(1+2)")
         assert null != compile("1+2-3*4/5^6")
+    }
+
+    void testCompilesValidVarDefs() {
+        assert null != compile("var answer = 42")
+        assert null != compile("var x = 0; var y = 1; var z = 3")
+    }
+
+    void testCompilesValidVarRefs() {
+        assert null != compile("var answer = 42; answer")
+        assert null != compile("var x = 0; var y = 1; var z = 3; var foo = x+y+z")
+    }
+
+    void testThrowsErrorOnDuplicateVariable() {
+        shouldFail CompileErrorException, { compile("var answer = 42; var answer = -1") }
+    }
+
+    void testThrowsErrorOnUndefinedVariable() {
+        shouldFail CompileErrorException, { compile("unknown") }
+        shouldFail CompileErrorException, { compile("var x = y + z") }
+        shouldFail CompileErrorException, { compile("var foo = bar; var bar = foo") }
+        shouldFail CompileErrorException, { compile("var r = r") }
     }
 }

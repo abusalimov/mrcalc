@@ -2,8 +2,6 @@ package com.abusalimov.mrcalc.compile;
 
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
 
-import java.util.Objects;
-
 /**
  * TODO stub implementation
  *
@@ -13,7 +11,7 @@ public class Code {
     private final ExprNode exprNode;
 
     public Code(ExprNode exprNode) {
-        this.exprNode = Objects.requireNonNull(exprNode);
+        this.exprNode = exprNode;
     }
 
     public ExprNode getExprNode() {

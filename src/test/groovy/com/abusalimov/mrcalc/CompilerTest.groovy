@@ -1,13 +1,13 @@
 package com.abusalimov.mrcalc
 
+import com.abusalimov.mrcalc.backend.Backend
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
 import com.abusalimov.mrcalc.compile.CompileErrorException
 import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
-
 /**
  * @author Eldar Abusalimov
  */
@@ -15,12 +15,14 @@ class CompilerTest {
     def shouldDiagnose = DiagnosticAssert.&shouldDiagnose.curry CompileErrorException
 
     private Parser parser
+    private Backend backend
     private Compiler compiler
 
     @Before
     void setUp() {
         parser = new ANTLRParserImpl()
-        compiler = new Compiler()
+        backend = new FuncBackendImpl()
+        compiler = new Compiler(backend)
     }
 
     def compile(String s) {
@@ -48,7 +50,6 @@ class CompilerTest {
         assert compile("var x = 0; var y = 1; var z = 3; var foo = x+y+z")
     }
 
-    @Ignore("buildExprFunction() stub")
     @Test
     void "compiles lambdas within map/reduce expressions"() {
         assert compile("map({1,2}, a -> a^2)")

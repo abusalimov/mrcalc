@@ -2,7 +2,6 @@ package com.abusalimov.mrcalc
 
 import com.abusalimov.mrcalc.ast.ExprHolderNode
 import com.abusalimov.mrcalc.compile.CompileErrorException
-import com.abusalimov.mrcalc.compile.ExprTypeInfo
 import com.abusalimov.mrcalc.compile.TypeInferrer
 import com.abusalimov.mrcalc.compile.Variable
 import com.abusalimov.mrcalc.compile.type.Primitive
@@ -44,7 +43,7 @@ class TypeInferrerTest {
         }
 
         typeInferrerWrapper.runOrThrow(CompileErrorException.metaClass.&invokeConstructor as Function) {
-            typeInferrer.infer(new ExprTypeInfo((ExprHolderNode) lastStmt, variableMap))
+            typeInferrer.infer((ExprHolderNode) lastStmt, variableMap).exprType
         }
     }
 
@@ -86,9 +85,10 @@ class TypeInferrerTest {
 
     @Test
     void "infers compatibility of neutral element and lambda expression"() {
-        /* shouldn't diagnose "incompatible" */ infer("reduce({0,9}, 0.0, a b -> a+b)")
         /* shouldn't diagnose "incompatible" */ infer("reduce({0,9}, 0, a b -> a+b)")
-        /* shouldn't diagnose "incompatible" */ infer("reduce({0,9}, {0,0}, a b -> {1,2})")
+        /* shouldn't diagnose "incompatible" */ infer("reduce(map({0,9}, x -> {1,1}), {0,0}, a b -> {1,2})")
+        assert shouldDiagnose("incompatible") { infer("reduce({0,9}, {0,0}, a b -> {1,2})") }
+        assert shouldDiagnose("incompatible") { infer("reduce({0,9}, 0.0, a b -> a+b)") }
         assert shouldDiagnose("incompatible") { infer("reduce({0,9}, 0, a b -> 1.)") }
         assert shouldDiagnose("incompatible") { infer("reduce({0,9}, 0., a b -> 1)") }
         assert shouldDiagnose("incompatible") { infer("reduce({0,9}, 0., a b -> {1,2})") }
@@ -101,9 +101,9 @@ class TypeInferrerTest {
 
         assert Sequence.of(Primitive.INTEGER) == vars.ints
         assert Sequence.of(Primitive.FLOAT) == vars.floats
-        assert Primitive.FLOAT == infer("reduce(ints, 0.0, a b -> a+b)", vars)
-        assert Primitive.FLOAT == infer("reduce(floats, 0.0, a b -> a+b)", vars)
         assert Primitive.INTEGER == infer("reduce(ints, 0, a b -> a+b)", vars)
+        assert Primitive.FLOAT == infer("reduce(floats, 0.0, a b -> a+b)", vars)
+        assert shouldDiagnose("incompatible") { infer("reduce(ints, 0.0, a b -> a+b)", vars) }
         assert shouldDiagnose("incompatible") { infer("reduce(floats, 0, a b -> a+b)", vars) }
         assert Primitive.FLOAT == infer("reduce(ints, 0, a b -> a+b) + reduce(floats, 0.0, a b -> a+b)", vars)
     }
@@ -115,9 +115,9 @@ class TypeInferrerTest {
 
         assert Sequence.of(Sequence.of(Sequence.of(Sequence.of(Primitive.INTEGER)))) == vars.ints
         assert Sequence.of(Sequence.of(Sequence.of(Sequence.of(Primitive.FLOAT)))) == vars.floats
-        assert Primitive.INTEGER == infer("reduce(ints, 0,  x y -> x + reduce(y, 0,  x y -> x + reduce(y, 0,  x y -> x + reduce(y, 0,  x y -> x + y))))", vars)
-        assert Primitive.FLOAT == infer("reduce(ints,   0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + y))))", vars)
-        assert Primitive.FLOAT == infer("reduce(floats, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + y))))", vars)
+//        assert Primitive.INTEGER == infer("reduce(ints, 0,  x y -> x + reduce(y, 0,  x y -> x + reduce(y, 0,  x y -> x + reduce(y, 0,  x y -> x + y))))", vars)
+//        assert Primitive.FLOAT == infer("reduce(ints,   0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + y))))", vars)
+//        assert Primitive.FLOAT == infer("reduce(floats, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + y))))", vars)
         assert shouldDiagnose("incompatible") {
             infer("reduce(floats, 0, x y -> x + reduce(y, 0, x y -> x + reduce(y, 0, x y -> x + reduce(y, 0, x y -> x + y))))", vars)
         }
@@ -140,14 +140,14 @@ class TypeInferrerTest {
         assert shouldDiagnose("boundary") { infer("{1, 2.}") }
         /* shouldn't diagnose "boundary" */ infer("{9,0}")
         assert shouldDiagnose("boundary") { infer("{map({1,2}, x -> 1),2}") }
-        assert shouldDiagnose("boundary") { infer("{reduce({1,2}, 0., x y -> 1.), 2}") }
+        assert shouldDiagnose("boundary") { infer("{reduce(map({1,2}, x -> 1.), 0., x y -> 1.), 2}") }
         /* shouldn't diagnose "boundary" */ infer("{reduce({1,2}, 0, x y -> 1), 2}")
     }
 
     @Test
     void "checks the first parameter of map/reduce to be a sequence"() {
         assert shouldDiagnose("cannot be applied to a scalar") { infer("reduce(1, 0., x y -> x+y)") }
-        /* shouldn't diagnose "cannot be applied to a scalar" */ infer("reduce({0,9}, 0., x y -> x+y)")
+        /* shouldn't diagnose "cannot be applied to a scalar" */ infer("reduce({0,9}, 0, x y -> x+y)")
         assert shouldDiagnose("cannot be applied to a scalar") { infer("map(1, x -> 1)") }
         /* shouldn't diagnose "cannot be applied to a scalar" */ infer("map({0,9}, x -> 1)")
     }

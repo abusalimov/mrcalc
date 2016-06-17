@@ -2,12 +2,10 @@ package com.abusalimov.mrcalc.compile;
 
 import com.abusalimov.mrcalc.ast.ExprHolderNode;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
+import com.abusalimov.mrcalc.compile.type.Primitive;
 import com.abusalimov.mrcalc.compile.type.Type;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Encapsulates the results of type inference by mapping each sub-expression to its type.
@@ -45,17 +43,30 @@ public class ExprTypeInfo {
 
     private final Map<ExprNode, Type> exprTypeMap = new HashMap<>();
     private final Map<ExprHolderNode, ExprTypeInfo> childMap = new LinkedHashMap<>();
+    private final Map<Variable, Integer> referencedVariableMap = new LinkedHashMap<>();
 
     /**
      * Creates a new instance for the given {@link ExprHolderNode} and variables mapping.
      *
      * @param holderNode  the root for an AST subtree for sub-expressions of which to hold the type info
-     * @param variableMap the mapping of variables that can be {@link #getVariable(String) queried} within the
+     * @param variableMap the mapping of variables that can be {@link #referenceVariable(String) referenced} within the
      *                    expression
      */
     public ExprTypeInfo(ExprHolderNode holderNode, Map<String, Variable> variableMap) {
         this.holderNode = Objects.requireNonNull(holderNode);
         this.variableMap = Objects.requireNonNull(variableMap);
+    }
+
+    /**
+     * Tells whether all sub-expressions have valid types (i.e. neither of that is {@link Primitive#UNKNOWN}), and each
+     * {@link #getChild(ExprHolderNode) child} is also complete.
+     *
+     * @return true if the expression has valid types inferred for each its sub-expression, false otherwise
+     */
+    public boolean isComplete() {
+        return (!exprTypeMap.isEmpty() &&
+                exprTypeMap.values().stream().allMatch(type -> type.getPrimitive() != Primitive.UNKNOWN) &&
+                childMap.values().stream().allMatch(ExprTypeInfo::isComplete));
     }
 
     /**
@@ -68,6 +79,41 @@ public class ExprTypeInfo {
         return variableMap.get(name);
     }
 
+    /**
+     * As {@link #getVariable(String)} retrieves a {@link Variable} by its name, and also remembers that variable and
+     * its {@link #getReferencedVariableIndex(String) index} across all referenced variables in the order of referencing
+     * them.
+     *
+     * @param name the name of the variable to get
+     * @return the variable, if any, null otherwise
+     */
+    public Variable referenceVariable(String name) {
+        return variableMap.computeIfPresent(name, (s, variable) -> {
+            referencedVariableMap.putIfAbsent(variable, referencedVariableMap.size());
+            return variable;
+        });
+    }
+
+    /**
+     * Returns the index of a {@link Variable}, {@link #referenceVariable(String) referenced} previously.
+     *
+     * @param name the name of the variable
+     * @return the index of the variable, if any, in the order of referencing comparing to other variables, or -1 in
+     * case there is no such variable, or the variable was not referenced
+     */
+    public int getReferencedVariableIndex(String name) {
+        Variable variable = variableMap.get(name);
+        return referencedVariableMap.getOrDefault(variable, -1);
+    }
+
+    /**
+     * Returns the list of all referenced variable, in the order of referencing.
+     *
+     * @return the list of referenced variables
+     */
+    public List<Variable> getReferencedVariables() {
+        return new ArrayList<>(referencedVariableMap.keySet());
+    }
 
     /**
      * Returns the {@link ExprHolderNode} provided at the {@link #ExprTypeInfo(ExprHolderNode, Map) creation} time.

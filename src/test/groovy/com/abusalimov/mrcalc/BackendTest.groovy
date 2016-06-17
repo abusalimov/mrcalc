@@ -120,12 +120,12 @@ class BackendTest<E extends Expr> {
         def iReduce = integerMath.reduce(iMapNeg, iConst(0), integerMath.add(iLoad(0), iLoad(1)))
         assert -14L == integerMath.toFunction(iReduce).apply()
 
-        def fMap = floatMath.map(integerMath.range(iConst(0), iConst(3)), floatMath.mul(l2d.cast(iLoad(0)), fConst(1.0)))
-        assert [0.0d, 1.0d, 2.0d, 3.0d] == floatMath.toFunction(fMap).apply()
-        def fMapSub = floatMath.map(fMap, floatMath.sub(fLoad(0), fConst(4)))
-        assert [-4.0d, -3.0d, -2.0d, -1.0d] == floatMath.toFunction(fMapSub).apply()
-        def fReduce = floatMath.reduce(fMapSub, floatMath.neg(fConst(1)), floatMath.mul(fLoad(0), fLoad(1)))
-        assert -24.0d == floatMath.toFunction(fReduce).apply()
+        def fMap = floatMath.map(integerMath.range(iConst(0), iConst(4)), floatMath.mul(l2d.cast(iLoad(0)), fConst(1.0)))
+        assert [0.0d, 1.0d, 2.0d, 3.0d, 4.0d] == floatMath.toFunction(fMap).apply()
+        def fMapSub = floatMath.map(fMap, floatMath.sub(fLoad(0), fConst(5)))
+        assert [-5.0d, -4.0d, -3.0d, -2.0d, -1.0d] == floatMath.toFunction(fMapSub).apply()
+        def fReduce = floatMath.reduce(fMapSub, fConst(1), floatMath.mul(fLoad(0), fLoad(1)))
+        assert -120.0d == floatMath.toFunction(fReduce).apply()
     }
 
     @Test

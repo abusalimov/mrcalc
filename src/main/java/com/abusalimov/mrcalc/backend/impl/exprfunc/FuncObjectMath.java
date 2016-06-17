@@ -2,9 +2,9 @@ package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.ObjectMath;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Implements operations common for all expression types, both numeric and generic.
@@ -30,29 +30,24 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Li
         return args -> literal;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public FuncExpr<List<?>> map(FuncExpr<List<?>> sequenceExpr, FuncExpr<T> lambda) {
         return args -> {
             List<?> sequence = sequenceExpr.apply(args);
-            int length = sequence.size();
-            T[] ret = (T[]) new Object[length];
-            for (int i = 0; i < length; i++) {
-                ret[i] = lambda.apply(new Object[]{sequence.get(i)});
-            }
-            return Arrays.asList(ret);
+            return sequence.parallelStream()
+                    .map(x -> lambda.apply(new Object[]{x}))
+                    .collect(Collectors.toList());
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public FuncExpr<T> reduce(FuncExpr<List<?>> sequenceExpr, FuncExpr<T> neutral, FuncExpr<T> lambda) {
         return args -> {
-            List<?> sequence = sequenceExpr.apply(args);
-            T ret = neutral.apply(args);
-            for (Object element : sequence) {
-                ret = lambda.apply(new Object[]{ret, element});
-            }
-            return ret;
+            List<T> sequence = (List<T>) sequenceExpr.apply(args);
+            return sequence.parallelStream()
+                    .reduce(neutral.apply(args),
+                            (x, y) -> lambda.apply(new Object[]{x, y}));
         };
     }
 }

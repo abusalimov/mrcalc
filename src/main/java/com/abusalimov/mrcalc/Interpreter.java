@@ -1,74 +1,65 @@
 package com.abusalimov.mrcalc;
 
-import com.abusalimov.mrcalc.ast.NodeVisitor;
-import com.abusalimov.mrcalc.ast.expr.BinaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
-import com.abusalimov.mrcalc.ast.expr.UnaryOpNode;
-import com.abusalimov.mrcalc.ast.expr.VarRefNode;
-import com.abusalimov.mrcalc.compile.Code;
+import com.abusalimov.mrcalc.ast.ProgramNode;
+import com.abusalimov.mrcalc.compile.Stmt;
+import com.abusalimov.mrcalc.compile.Variable;
 
-import java.math.BigInteger;
+import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
+ * The interpreter provides the necessary execution context for {@link #exec(List) running} compiled
+ * {@link Stmt statements}.
+ *
  * @author Eldar Abusalimov
  */
-public class Interpreter implements NodeVisitor<Long> {
-    private Map<String, Long> memory = new HashMap<>();
+public class Interpreter {
+    private Map<Variable, Object> memory = new HashMap<>();
+    private PrintStream out;
 
-    @Override
-    public Long doVisit(VarRefNode node) {
-        String name = node.getName();
-        Long value = memory.get(name);
-        if (value == null) {
-            value = visit(node.getLinkedDef().getExpr());
-            memory.put(name, value);
+    public Interpreter() {
+    }
+
+    public Interpreter(PrintStream out) {
+        this.out = out;
+    }
+
+    public Object exec(Stmt... stmts) {
+        return exec(Arrays.asList(stmts));
+    }
+
+    /**
+     * Executes given statements and returns the result of the last one, if any.
+     * <p>
+     * The state is preserved between multiple executions, so that a statement can refer to a
+     * variable initialized within some previous call. If an {@link #getOutStream() output} stream
+     * is set, then results of executing `print` statements are printed out there.
+     *
+     * @param stmts a list of statements to execute, as returned by {@link
+     *              com.abusalimov.mrcalc.compile.Compiler#compile(ProgramNode)}
+     * @return the result of executing the last statement, if any {@code null} otherwise
+     */
+    public Object exec(List<Stmt> stmts) {
+        Object result = null;
+
+        for (Stmt stmt : stmts) {
+            result = stmt.exec(memory);
+            if (out != null && stmt.shouldPrintResult()) {
+                out.println(result);
+            }
         }
-        return value;
+
+        return result;
     }
 
-    @Override
-    public Long doVisit(LiteralNode node) {
-        return (Long) node.getValue();
+    public PrintStream getOutStream() {
+        return out;
     }
 
-    @Override
-    public Long doVisit(UnaryOpNode node) {
-        Long operand = visit(node.getOperand());
-        switch (node.getOp()) {
-            case PLUS:
-                return operand;
-            case MINUS:
-                return -operand;
-            default:
-                throw new RuntimeException("Unknown sign " + node.getOp());
-        }
-    }
-
-    @Override
-    public Long doVisit(BinaryOpNode node) {
-        Long a = visit(node.getOperandA());
-        Long b = visit(node.getOperandB());
-        switch (node.getOp()) {
-            case ADD:
-                return a + b;
-            case SUB:
-                return a - b;
-            case MUL:
-                return a * b;
-            case DIV:
-                return a / b;
-            case POW:
-                return BigInteger.valueOf(a)
-                        .modPow(BigInteger.valueOf(b), BigInteger.ONE.shiftLeft(Long.SIZE))
-                        .longValue();
-            default:
-                throw new RuntimeException("Unknown op " + node.getOp());
-        }
-    }
-
-    public Long eval(Code code) {
-        return visit(code.getExprNode());
+    public void setOutStream(PrintStream out) {
+        this.out = out;
     }
 }

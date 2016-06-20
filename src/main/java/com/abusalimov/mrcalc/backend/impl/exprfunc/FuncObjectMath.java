@@ -13,7 +13,7 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Se
     public static final FuncObjectMath INSTANCE = new FuncObjectMath();
 
     @Override
-    public Evaluable<?> toFunction(FuncExpr<T> expr) {
+    public Evaluable<?> toEvaluable(FuncExpr<T> expr) {
         return expr;
     }
 

@@ -23,7 +23,7 @@ public interface ObjectMath<T, E, F> {
      * @param expr the expression to assemble
      * @return the callable function evaluating the expression
      */
-    Evaluable<?> toFunction(E expr);
+    Evaluable<?> toEvaluable(E expr);
 
     /**
      * Creates an expression accessing a variable at the specified index.

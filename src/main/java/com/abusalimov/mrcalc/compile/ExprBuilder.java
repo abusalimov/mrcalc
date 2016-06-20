@@ -49,7 +49,7 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
             throw new IllegalArgumentException("Incomplete ExprTypeInfo");
         }
         E expr = build(eti);
-        return getObjectMath(eti.getExprType()).toFunction(expr);
+        return getObjectMath(eti.getExprType()).toEvaluable(expr);
     }
 
     protected E buildChild(ExprTypeInfo parent, ExprHolderNode node) {

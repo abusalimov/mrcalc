@@ -1,6 +1,9 @@
 package com.abusalimov.mrcalc.runtime;
 
 import java.util.function.*;
+import java.util.stream.DoubleStream;
+import java.util.stream.LongStream;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -10,6 +13,24 @@ import java.util.stream.StreamSupport;
  * @author Eldar Abusalimov
  */
 public class Runtime {
+    private final boolean parallel;
+
+    /**
+     * Creates a new instance providing functions executing in parallel, where possible.
+     */
+    public Runtime() {
+        this(true);
+    }
+
+    /**
+     * Creates a new instance operating in parallel, as indicated by the argument.
+     *
+     * @param parallel whether to use parallel operations, where possible, or not
+     */
+    public Runtime(boolean parallel) {
+        this.parallel = parallel;
+    }
+
     /**
      * Creates a new {@link LongSequence} filled by integers between the specified boundaries.
      *
@@ -22,54 +43,66 @@ public class Runtime {
     }
 
     public <E> E reduce(ObjectSequence<E> sequence, E identity, BinaryOperator<E> operator) {
-        return StreamSupport.stream(sequence.spliterator(), true).reduce(identity, operator);
+        return objectStream(sequence).reduce(identity, operator);
     }
 
     public long reduce(LongSequence sequence, long identity, LongBinaryOperator operator) {
-        return StreamSupport.longStream(sequence.spliterator(), true).reduce(identity, operator);
+        return longStream(sequence).reduce(identity, operator);
     }
 
     public double reduce(DoubleSequence sequence, double identity, DoubleBinaryOperator operator) {
-        return StreamSupport.doubleStream(sequence.spliterator(), true).reduce(identity, operator);
+        return doubleStream(sequence).reduce(identity, operator);
     }
 
     @SuppressWarnings("unchecked")
     public <E, R> ObjectSequence<R> mapToObject(ObjectSequence<E> sequence, Function<? super E, ? extends R> mapper) {
-        return new ObjectSequence(StreamSupport.stream(sequence.spliterator(), true).map(mapper).toArray());
+        return new ObjectSequence(objectStream(sequence).map(mapper).toArray());
     }
 
     @SuppressWarnings("unchecked")
     public <R> ObjectSequence<R> mapToObject(LongSequence sequence, LongFunction<? extends R> mapper) {
-        return new ObjectSequence(StreamSupport.longStream(sequence.spliterator(), true).mapToObj(mapper).toArray());
+        return new ObjectSequence(longStream(sequence).mapToObj(mapper).toArray());
     }
 
     @SuppressWarnings("unchecked")
     public <R> ObjectSequence<R> mapToObject(DoubleSequence sequence, DoubleFunction<? extends R> mapper) {
-        return new ObjectSequence(StreamSupport.doubleStream(sequence.spliterator(), true).mapToObj(mapper).toArray());
+        return new ObjectSequence(doubleStream(sequence).mapToObj(mapper).toArray());
     }
 
     public <E> LongSequence mapToLong(ObjectSequence<E> sequence, ToLongFunction<? super E> mapper) {
-        return new LongSequence(StreamSupport.stream(sequence.spliterator(), true).mapToLong(mapper).toArray());
+        return new LongSequence(objectStream(sequence).mapToLong(mapper).toArray());
     }
 
     public LongSequence mapToLong(LongSequence sequence, LongUnaryOperator mapper) {
-        return new LongSequence(StreamSupport.longStream(sequence.spliterator(), true).map(mapper).toArray());
+        return new LongSequence(longStream(sequence).map(mapper).toArray());
     }
 
     public LongSequence mapToLong(DoubleSequence sequence, DoubleToLongFunction mapper) {
-        return new LongSequence(StreamSupport.doubleStream(sequence.spliterator(), true).mapToLong(mapper).toArray());
+        return new LongSequence(doubleStream(sequence).mapToLong(mapper).toArray());
     }
 
     public <E> DoubleSequence mapToDouble(ObjectSequence<E> sequence, ToDoubleFunction<? super E> mapper) {
-        return new DoubleSequence(StreamSupport.stream(sequence.spliterator(), true).mapToDouble(mapper).toArray());
+        return new DoubleSequence(objectStream(sequence).mapToDouble(mapper).toArray());
     }
 
     public DoubleSequence mapToDouble(LongSequence sequence, LongToDoubleFunction mapper) {
-        return new DoubleSequence(StreamSupport.longStream(sequence.spliterator(), true).mapToDouble(mapper).toArray());
+        return new DoubleSequence(longStream(sequence).mapToDouble(mapper).toArray());
     }
 
     public DoubleSequence mapToDouble(DoubleSequence sequence, DoubleUnaryOperator mapper) {
-        return new DoubleSequence(StreamSupport.doubleStream(sequence.spliterator(), true).map(mapper).toArray());
+        return new DoubleSequence(doubleStream(sequence).map(mapper).toArray());
+    }
+
+    protected <E> Stream<E> objectStream(ObjectSequence<E> sequence) {
+        return StreamSupport.stream(sequence.spliterator(), parallel);
+    }
+
+    protected LongStream longStream(LongSequence sequence) {
+        return StreamSupport.longStream(sequence.spliterator(), parallel);
+    }
+
+    protected DoubleStream doubleStream(DoubleSequence sequence) {
+        return StreamSupport.doubleStream(sequence.spliterator(), parallel);
     }
 
 }

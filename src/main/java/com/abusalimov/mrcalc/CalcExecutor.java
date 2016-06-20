@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Facade class that runs on a separate thread.
@@ -36,18 +37,19 @@ public class CalcExecutor {
         this.callback = callback;
     }
 
-    public void execute(String sourceCode, OutputStream outputStream) {
-        singleExecutor.execute(() -> run(sourceCode, outputStream));
+    public void execute(String sourceCode, Supplier<OutputStream> outputStreamSupplier) {
+        singleExecutor.execute(() -> run(sourceCode, outputStreamSupplier));
     }
 
-    private void run(String sourceCode, OutputStream outputStream) {
+    private void run(String sourceCode, Supplier<OutputStream> outputStreamSupplier) {
         Parser parser = new ANTLRParserImpl();
         Backend backend = new BytebuddyBackendImpl();
         Compiler compiler = new Compiler(backend);
         Runtime runtime = new StreamRuntime();
-        PrintStream printStream = new PrintStream(outputStream);
-        Interpreter interpreter = new Interpreter(runtime, printStream);
-        try {
+        Interpreter interpreter = new Interpreter(runtime);
+
+        try (PrintStream printStream = new PrintStream(outputStreamSupplier.get())) {
+            interpreter.setOutStream(printStream);
             ProgramNode node = parser.parse(sourceCode);
             List<Stmt> stmts = compiler.compile(node);
             interpreter.exec(stmts);

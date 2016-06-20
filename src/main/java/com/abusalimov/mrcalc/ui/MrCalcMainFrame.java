@@ -15,13 +15,13 @@ public class MrCalcMainFrame extends JFrame {
     public static final int PREFERRED_WIDTH = 800;
 
     private CodeTextPane codeTextPane;
-    private JTextArea outputTextArea;
+    private OutputTextArea outputTextArea;
     private MessageList messageList;
 
     public MrCalcMainFrame(CalcExecutor calcExecutor) {
         super("MrCalc");
 
-        outputTextArea = new JTextArea();
+        outputTextArea = new OutputTextArea();
         outputTextArea.setEditable(false);
         codeTextPane = new CodeTextPane(calcExecutor, outputTextArea);
         messageList = new MessageList(codeTextPane);
@@ -35,6 +35,8 @@ public class MrCalcMainFrame extends JFrame {
 
         codeTextPane.setCharacterAttributes(defaultAttr, true);
         outputTextArea.setFont(new Font("Monospaced", Font.BOLD, 16));
+        outputTextArea.setLineWrap(true);
+        outputTextArea.setWrapStyleWord(true);
 
         initLayout();
     }

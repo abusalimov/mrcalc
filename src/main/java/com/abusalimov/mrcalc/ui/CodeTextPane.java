@@ -21,11 +21,11 @@ public class CodeTextPane extends JTextPane {
     private static int squiggleSize = 2;
     private static int squigglesAtEof = 2;
 
-    private final JTextArea outputTextArea;
+    private final OutputTextArea outputTextArea;
     private Consumer<List<Diagnostic>> errorListener;
     private List<Diagnostic> diagnostics = Collections.emptyList();
 
-    public CodeTextPane(CalcExecutor calcExecutor, JTextArea outputTextArea) {
+    public CodeTextPane(CalcExecutor calcExecutor, OutputTextArea outputTextArea) {
         this.outputTextArea = outputTextArea;
         getStyledDocument().addDocumentListener(new HighlightListener(calcExecutor));
         ToolTipManager.sharedInstance().registerComponent(this);
@@ -108,9 +108,10 @@ public class CodeTextPane extends JTextPane {
         private void handleEvent() {
             clearHighlight();
             outputTextArea.setText("");
+
             try {
                 String sourceCodeText = getDocument().getText(0, getDocument().getLength());
-                calcExecutor.execute(sourceCodeText, new TextAreaStream(outputTextArea));
+                calcExecutor.execute(sourceCodeText, outputTextArea::createStream);
             } catch (BadLocationException e) {
                 e.printStackTrace();
             }

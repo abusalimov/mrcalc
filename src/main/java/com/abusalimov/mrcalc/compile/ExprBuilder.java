@@ -69,7 +69,7 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
     @Override
     public E doVisit(VarRefNode node, ExprTypeInfo eti) {
         String name = node.getName();
-        return getObjectMath(node, eti).load(eti.getReferencedVariableIndex(name), name);
+        return getObjectMath(node, eti).load(eti.getReferencedVariableIndex(name));
     }
 
     @Override

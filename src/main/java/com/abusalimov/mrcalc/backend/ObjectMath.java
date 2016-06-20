@@ -29,20 +29,9 @@ public interface ObjectMath<T, E, F> {
      * Creates an expression accessing a variable at the specified index.
      *
      * @param slot the variable index
-     * @param name an optional name of the variable
      * @return the expression loading a value of the specified variable
      */
-    E load(int slot, String name);
-
-    /**
-     * Creates an expression accessing a variable at the specified index.
-     *
-     * @param slot the variable index
-     * @return the expression loading a value of the specified variable
-     */
-    default E load(int slot) {
-        return load(slot, "$v" + slot);
-    }
+    E load(int slot);
 
     /**
      * Creates an expression yielding the specified constant.

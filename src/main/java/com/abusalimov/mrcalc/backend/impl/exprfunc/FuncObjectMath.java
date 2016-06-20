@@ -19,7 +19,7 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Se
 
     @SuppressWarnings("unchecked")
     @Override
-    public FuncExpr<T> load(int slot, String name) {
+    public FuncExpr<T> load(int slot) {
         return (runtime, args) -> (T) args[slot];
     }
 

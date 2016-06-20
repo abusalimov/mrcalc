@@ -54,13 +54,7 @@ public class Interpreter {
         for (Stmt stmt : stmts) {
             result = stmt.exec(runtime, memory);
             if (out != null && stmt.shouldPrintResult()) {
-                String s;
-                if (result instanceof long[]) {
-                    s = Arrays.toString((long[]) result);
-                } else {
-                    s = result.toString();
-                }
-                out.println(s);
+                out.println(result);
             }
         }
 

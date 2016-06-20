@@ -2,6 +2,7 @@ package com.abusalimov.mrcalc.ui;
 
 import com.abusalimov.mrcalc.CalcExecutor;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticException;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -87,7 +88,6 @@ public class CodeTextPane extends JTextPane {
 
         public HighlightListener(CalcExecutor calcExecutor) {
             this.calcExecutor = calcExecutor;
-            calcExecutor.setCallback(diagnostics -> SwingUtilities.invokeLater(() -> highlight(diagnostics)));
         }
 
         @Override
@@ -111,9 +111,12 @@ public class CodeTextPane extends JTextPane {
 
             try {
                 String sourceCodeText = getDocument().getText(0, getDocument().getLength());
-                calcExecutor.execute(sourceCodeText, outputTextArea::createStream);
+                calcExecutor.execute(sourceCodeText, outputTextArea::createStream, diagnostic ->
+                        SwingUtilities.invokeLater(() -> highlight(Collections.singletonList(diagnostic))));
             } catch (BadLocationException e) {
                 e.printStackTrace();
+            } catch (DiagnosticException e) {
+                SwingUtilities.invokeLater(() -> highlight(e.getDiagnostics()));
             }
         }
 

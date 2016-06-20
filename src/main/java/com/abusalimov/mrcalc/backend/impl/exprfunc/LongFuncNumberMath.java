@@ -1,9 +1,8 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.NumberMath;
-
-import java.util.Arrays;
-import java.util.List;
+import com.abusalimov.mrcalc.runtime.LongRange;
+import com.abusalimov.mrcalc.runtime.ObjectSequence;
 
 /**
  * Implements numeric math on boxed {@link Long}s.
@@ -11,20 +10,15 @@ import java.util.List;
  * @author Eldar Abusalimov
  */
 public class LongFuncNumberMath extends FuncObjectMath<Long>
-        implements NumberMath<Long, FuncExpr<Long>, FuncExpr<List<?>>> {
+        implements NumberMath<Long, FuncExpr<Long>, FuncExpr<ObjectSequence<?>>> {
     public static final LongFuncNumberMath INSTANCE = new LongFuncNumberMath();
 
     @Override
-    public FuncExpr<List<?>> range(FuncExpr<Long> startOperand, FuncExpr<Long> endOperand) {
+    public FuncExpr<ObjectSequence<?>> range(FuncExpr<Long> startOperand, FuncExpr<Long> endOperand) {
         return args -> {
-            int start = startOperand.apply(args).intValue();
-            int end = endOperand.apply(args).intValue();
-            int length = Math.max(0, end - start + 1);
-            Long[] ret = new Long[length];
-            for (int i = 0; i < length; i++) {
-                ret[i] = (long) start + i;
-            }
-            return Arrays.asList(ret);
+            long start = startOperand.apply(args);
+            long end = endOperand.apply(args);
+            return new LongRange(start, end + 1).mapToObject(value -> value);
         };
     }
 

@@ -1,17 +1,17 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.ObjectMath;
+import com.abusalimov.mrcalc.runtime.ObjectSequence;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Implements operations common for all expression types, both numeric and generic.
  *
  * @author Eldar Abusalimov
  */
-public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<List<?>>> {
+public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<ObjectSequence<?>>> {
     public static final FuncObjectMath INSTANCE = new FuncObjectMath();
 
     @Override
@@ -31,23 +31,19 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Li
     }
 
     @Override
-    public FuncExpr<List<?>> map(FuncExpr<List<?>> sequenceExpr, FuncExpr<T> lambda) {
+    public FuncExpr<ObjectSequence<?>> map(FuncExpr<ObjectSequence<?>> sequenceExpr, FuncExpr<T> lambda) {
         return args -> {
-            List<?> sequence = sequenceExpr.apply(args);
-            return sequence.parallelStream()
-                    .map(x -> lambda.apply(new Object[]{x}))
-                    .collect(Collectors.toList());
+            ObjectSequence<?> sequence = sequenceExpr.apply(args);
+            return sequence.mapToObject(x -> lambda.apply(new Object[]{x}));
         };
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public FuncExpr<T> reduce(FuncExpr<List<?>> sequenceExpr, FuncExpr<T> neutral, FuncExpr<T> lambda) {
+    public FuncExpr<T> reduce(FuncExpr<ObjectSequence<?>> sequenceExpr, FuncExpr<T> neutral, FuncExpr<T> lambda) {
         return args -> {
-            List<T> sequence = (List<T>) sequenceExpr.apply(args);
-            return sequence.parallelStream()
-                    .reduce(neutral.apply(args),
-                            (x, y) -> lambda.apply(new Object[]{x, y}));
+            ObjectSequence<T> sequence = (ObjectSequence<T>) sequenceExpr.apply(args);
+            return sequence.reduce(neutral.apply(args), (x, y) -> lambda.apply(new Object[]{x, y}));
         };
     }
 }

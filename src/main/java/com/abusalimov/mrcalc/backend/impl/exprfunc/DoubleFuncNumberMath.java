@@ -1,8 +1,7 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.NumberMath;
-
-import java.util.List;
+import com.abusalimov.mrcalc.runtime.ObjectSequence;
 
 /**
  * Implements numeric math on boxed {@link Double}s.
@@ -10,11 +9,11 @@ import java.util.List;
  * @author Eldar Abusalimov
  */
 public class DoubleFuncNumberMath extends FuncObjectMath<Double>
-        implements NumberMath<Double, FuncExpr<Double>, FuncExpr<List<?>>> {
+        implements NumberMath<Double, FuncExpr<Double>, FuncExpr<ObjectSequence<?>>> {
     public static final DoubleFuncNumberMath INSTANCE = new DoubleFuncNumberMath();
 
     @Override
-    public FuncExpr<List<?>> range(FuncExpr<Double> startOperand, FuncExpr<Double> endOperand) {
+    public FuncExpr<ObjectSequence<?>> range(FuncExpr<Double> startOperand, FuncExpr<Double> endOperand) {
         return args -> {
             throw new UnsupportedOperationException("Ranges must be constructed with integers bounds");
         };

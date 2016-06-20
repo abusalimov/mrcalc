@@ -3,6 +3,8 @@ package com.abusalimov.mrcalc.ui;
 import com.abusalimov.mrcalc.CalcExecutor;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
@@ -14,18 +16,20 @@ import java.awt.*;
 public class MrCalcMainFrame extends JFrame {
     public static final int PREFERRED_WIDTH = 800;
 
-    private CodeTextPane codeTextPane;
-    private OutputTextArea outputTextArea;
-    private MessageList messageList;
+    private final BackendTypeSwitcher backendTypeSwitcher;
+    private final CodeTextPane codeTextPane;
+    private final OutputTextArea outputTextArea;
+    private final MessageList messageList;
 
     public MrCalcMainFrame(CalcExecutor calcExecutor) {
         super("MrCalc");
 
+        backendTypeSwitcher = new BackendTypeSwitcher(calcExecutor);
         outputTextArea = new OutputTextArea();
         outputTextArea.setEditable(false);
         codeTextPane = new CodeTextPane(calcExecutor, outputTextArea);
         messageList = new MessageList(codeTextPane);
-        codeTextPane.setErrorListener(errors -> messageList.setMessages(errors));
+        codeTextPane.setErrorListener(messageList::setMessages);
 
         StyleContext style = StyleContext.getDefaultStyleContext();
 
@@ -43,6 +47,12 @@ public class MrCalcMainFrame extends JFrame {
 
     private void initLayout() {
         JScrollPane codeScrollPane = new JScrollPane(codeTextPane);
+
+        JPanel toolPanel = new JPanel();
+        toolPanel.setBorder(new EmptyBorder(0,3,0,3));
+        toolPanel.setLayout(new BorderLayout());
+        backendTypeSwitcher.setBorder(new TitledBorder("Backend"));
+        toolPanel.add(backendTypeSwitcher, BorderLayout.NORTH);
 
         TextLineNumber tln = new TextLineNumber(codeTextPane);
         codeScrollPane.setRowHeaderView(tln);
@@ -65,14 +75,19 @@ public class MrCalcMainFrame extends JFrame {
         splitPane.setOneTouchExpandable(true);
         splitPane.setResizeWeight(0.3);
 
-        JSplitPane outerSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, codeScrollPane,
+        JPanel upperPanel = new JPanel(new BorderLayout());
+        upperPanel.setBorder(new EmptyBorder(3,3,3,3));
+        upperPanel.add(codeScrollPane, BorderLayout.CENTER);
+        upperPanel.add(toolPanel, BorderLayout.EAST);
+
+        JSplitPane outerSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, upperPanel,
                 splitPane);
         outerSplitPane.setOneTouchExpandable(true);
         outerSplitPane.setResizeWeight(1.);
 
         add(outerSplitPane);
 
-        setPreferredSize(new Dimension(PREFERRED_WIDTH, 600));
+        outerSplitPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, 600));
         pack();
     }
 

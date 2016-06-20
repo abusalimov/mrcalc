@@ -3,6 +3,7 @@ package com.abusalimov.mrcalc;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.backend.Backend;
 import com.abusalimov.mrcalc.backend.impl.bytebuddy.BytebuddyBackendImpl;
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl;
 import com.abusalimov.mrcalc.compile.CompileErrorException;
 import com.abusalimov.mrcalc.compile.Compiler;
 import com.abusalimov.mrcalc.compile.Stmt;
@@ -18,6 +19,7 @@ import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
@@ -30,6 +32,15 @@ import java.util.function.Supplier;
  */
 public class CalcExecutor {
     private ExecutorService executor;
+    private BackendImplSwitch backendImplSwitch = BackendImplSwitch.DEFAULT;
+
+    public BackendImplSwitch getBackendImplSwitch() {
+        return backendImplSwitch;
+    }
+
+    public void setBackendImplSwitch(BackendImplSwitch backendImplSwitch) {
+        this.backendImplSwitch = Objects.requireNonNull(backendImplSwitch, "backendImplSwitch");
+    }
 
     /**
      * Compiles the source code and post an execution task.
@@ -65,12 +76,15 @@ public class CalcExecutor {
      * Cancels all running executions, if any.
      */
     public synchronized void cancel() {
-        executor.shutdownNow();
+        if (executor != null) {
+            executor.shutdownNow();
+            executor = null;
+        }
     }
 
     private List<Stmt> compile(String sourceCode) throws CompileErrorException, SyntaxErrorException {
         Parser parser = new ANTLRParserImpl();
-        Backend backend = new BytebuddyBackendImpl();
+        Backend backend = backendImplSwitch.getBackend();
         Compiler compiler = new Compiler(backend);
         ProgramNode node = parser.parse(sourceCode);
         return compiler.compile(node);
@@ -98,6 +112,32 @@ public class CalcExecutor {
             if (diagnosticListener != null) {
                 e.getDiagnostics().forEach(diagnosticListener::report);
             }
+        }
+    }
+
+    /**
+     * A switch for {@link Backend} implementations.
+     */
+    public enum BackendImplSwitch {
+        BYTECODE("JVM Bytecode", new BytebuddyBackendImpl()),
+        INTERPRETED("Interpreted", new FuncBackendImpl());
+
+        public static final BackendImplSwitch DEFAULT = BYTECODE;
+
+        private final String name;
+        private final Backend backend;
+
+        BackendImplSwitch(String name, Backend backend) {
+            this.name = name;
+            this.backend = backend;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Backend getBackend() {
+            return backend;
         }
     }
 }

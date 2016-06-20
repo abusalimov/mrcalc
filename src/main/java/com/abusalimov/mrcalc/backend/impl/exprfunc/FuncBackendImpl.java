@@ -23,13 +23,13 @@ public class FuncBackendImpl implements Backend<FuncExpr<?>> {
     private static final Map<List<Class<? extends Number>>, NumberCast<?, ?>> numberCastMap = new HashMap<>();
 
     static {
-        mathMap.put(Long.class, LongFuncNumberMath.INSTANCE);
-        mathMap.put(Double.class, DoubleFuncNumberMath.INSTANCE);
+        mathMap.put(Long.TYPE, LongFuncNumberMath.INSTANCE);
+        mathMap.put(Double.TYPE, DoubleFuncNumberMath.INSTANCE);
     }
 
     static {
-        putNumberCast(Double.class, Long.class, expr -> (runtime, args) -> expr.eval(runtime, args).doubleValue());
-        putNumberCast(Long.class, Double.class, expr -> (runtime, args) -> expr.eval(runtime, args).longValue());
+        putNumberCast(Double.TYPE, Long.TYPE, expr -> (runtime, args) -> expr.eval(runtime, args).doubleValue());
+        putNumberCast(Long.TYPE, Double.TYPE, expr -> (runtime, args) -> expr.eval(runtime, args).longValue());
     }
 
     private static <F extends Number, T extends Number> void putNumberCast(Class<T> toType, Class<F> fromType,

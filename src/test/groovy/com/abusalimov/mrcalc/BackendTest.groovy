@@ -37,19 +37,19 @@ class BackendTest<E> {
     }
 
     def getIntegerMath() {
-        (NumberMath<Long, E, E>) getNumberMath(Long)
+        (NumberMath<Long, E, E>) getNumberMath(long)
     }
 
     def getFloatMath() {
-        (NumberMath<Double, E, E>) getNumberMath(Double)
+        (NumberMath<Double, E, E>) getNumberMath(double)
     }
 
     def getL2d() {
-        getNumberCast(Double, Long)
+        getNumberCast(double, long)
     }
 
     def getD2l() {
-        getNumberCast(Long, Double)
+        getNumberCast(long, double)
     }
 
     def iLoad(int n) {

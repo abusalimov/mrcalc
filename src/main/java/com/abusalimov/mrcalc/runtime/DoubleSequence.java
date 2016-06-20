@@ -3,10 +3,13 @@ package com.abusalimov.mrcalc.runtime;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Spliterator;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleFunction;
 import java.util.function.DoubleToLongFunction;
 import java.util.function.DoubleUnaryOperator;
+import java.util.stream.DoubleStream;
+import java.util.stream.StreamSupport;
 
 /**
  * The {@link Sequence} implementation specialized to primitive doubles.
@@ -42,23 +45,33 @@ public class DoubleSequence extends AbstractList<Double> implements Sequence<Dou
         return oldValue;
     }
 
+    @Override
+    public Spliterator.OfDouble spliterator() {
+        return Arrays.spliterator(a);
+    }
+
+    public DoubleStream doubleStream() {
+        return StreamSupport.doubleStream(spliterator(), false);
+    }
+
+    public DoubleStream doubleParallelStream() {
+        return StreamSupport.doubleStream(spliterator(), true);
+    }
+
     public double reduce(double identity, DoubleBinaryOperator operator) {
-        return Arrays.stream(a).reduce(identity, operator);
+        return doubleParallelStream().reduce(identity, operator);
     }
 
     @SuppressWarnings("unchecked")
     public <R> ObjectSequence<R> mapToObject(DoubleFunction<? extends R> mapper) {
-        Object[] array = Arrays.stream(a).mapToObj(mapper).toArray();
-        return new ObjectSequence(array);
+        return new ObjectSequence(doubleParallelStream().mapToObj(mapper).toArray());
     }
 
     public LongSequence mapToLong(DoubleToLongFunction mapper) {
-        long[] array = Arrays.stream(a).mapToLong(mapper).toArray();
-        return new LongSequence(array);
+        return new LongSequence(doubleParallelStream().mapToLong(mapper).toArray());
     }
 
     public DoubleSequence mapToDouble(DoubleUnaryOperator mapper) {
-        double[] array = Arrays.stream(a).map(mapper).toArray();
-        return new DoubleSequence(array);
+        return new DoubleSequence(doubleParallelStream().map(mapper).toArray());
     }
 }

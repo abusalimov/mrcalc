@@ -10,6 +10,14 @@ package com.abusalimov.mrcalc.backend;
  * @author Eldar Abusalimov
  */
 public interface NumberMath<T extends Number, E> extends ObjectMath<T, E> {
+    /**
+     * Creates an expression yielding the specified constant.
+     *
+     * @param literal the constant to return from the expression
+     * @return the expression returning the constant value
+     */
+    E constant(T literal);
+
     /* The basic Math operations, the semantics should be obvious. */
 
     /** Expression adding the results of evaluating two operand expressions together. */

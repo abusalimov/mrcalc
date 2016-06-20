@@ -72,7 +72,7 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
 
     @Override
     public E doVisit(LiteralNode<?> node, ExprTypeInfo eti) {
-        return getObjectMath(node, eti).constant(node.getValue());
+        return getNumberMath(node, eti).constant(node.getValue());
     }
 
     @Override

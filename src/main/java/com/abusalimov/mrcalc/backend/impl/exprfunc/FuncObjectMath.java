@@ -21,9 +21,4 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>> {
     public FuncExpr<T> load(int slot) {
         return (runtime, args) -> (T) args[slot];
     }
-
-    @Override
-    public FuncExpr<T> constant(T literal) {
-        return (runtime, args) -> literal;
-    }
 }

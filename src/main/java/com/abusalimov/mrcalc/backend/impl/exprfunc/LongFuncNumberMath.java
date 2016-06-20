@@ -12,6 +12,11 @@ public class LongFuncNumberMath extends FuncObjectMath<Long>
     public static final LongFuncNumberMath INSTANCE = new LongFuncNumberMath();
 
     @Override
+    public FuncExpr<Long> constant(Long literal) {
+        return (runtime, args) -> literal;
+    }
+
+    @Override
     public FuncExpr<Long> add(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) + rightOperand.eval(runtime, args);
     }

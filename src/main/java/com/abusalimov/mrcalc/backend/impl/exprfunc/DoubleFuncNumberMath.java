@@ -12,6 +12,11 @@ public class DoubleFuncNumberMath extends FuncObjectMath<Double>
     public static final DoubleFuncNumberMath INSTANCE = new DoubleFuncNumberMath();
 
     @Override
+    public FuncExpr<Double> constant(Double literal) {
+        return (runtime, args) -> literal;
+    }
+
+    @Override
     public FuncExpr<Double> add(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) + rightOperand.eval(runtime, args);
     }

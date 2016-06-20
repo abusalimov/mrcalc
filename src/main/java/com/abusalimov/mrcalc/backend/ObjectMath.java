@@ -30,12 +30,4 @@ public interface ObjectMath<T, E> {
      * @return the expression loading a value of the specified variable
      */
     E load(int slot);
-
-    /**
-     * Creates an expression yielding the specified constant.
-     *
-     * @param literal the constant to return from the expression
-     * @return the expression returning the constant value
-     */
-    E constant(T literal);
 }

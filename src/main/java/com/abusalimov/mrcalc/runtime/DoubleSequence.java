@@ -4,8 +4,6 @@ import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Spliterator;
-import java.util.stream.DoubleStream;
-import java.util.stream.StreamSupport;
 
 /**
  * The {@link Sequence} implementation specialized to primitive doubles.
@@ -44,13 +42,5 @@ public class DoubleSequence extends AbstractList<Double> implements Sequence<Dou
     @Override
     public Spliterator.OfDouble spliterator() {
         return Arrays.spliterator(a);
-    }
-
-    public DoubleStream doubleStream() {
-        return StreamSupport.doubleStream(spliterator(), false);
-    }
-
-    public DoubleStream doubleParallelStream() {
-        return StreamSupport.doubleStream(spliterator(), true);
     }
 }

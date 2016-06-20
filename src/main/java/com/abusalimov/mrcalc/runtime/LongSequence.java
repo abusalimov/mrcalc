@@ -4,8 +4,6 @@ import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Spliterator;
-import java.util.stream.LongStream;
-import java.util.stream.StreamSupport;
 
 /**
  * The {@link Sequence} implementation specialized to primitive longs.
@@ -44,13 +42,5 @@ public class LongSequence extends AbstractList<Long> implements Sequence<Long> {
     @Override
     public Spliterator.OfLong spliterator() {
         return Arrays.spliterator(a);
-    }
-
-    public LongStream longStream() {
-        return StreamSupport.longStream(spliterator(), false);
-    }
-
-    public LongStream longParallelStream() {
-        return StreamSupport.longStream(spliterator(), true);
     }
 }

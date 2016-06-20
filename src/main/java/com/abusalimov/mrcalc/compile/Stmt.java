@@ -1,12 +1,12 @@
 package com.abusalimov.mrcalc.compile;
 
+import com.abusalimov.mrcalc.runtime.Evaluable;
 import com.abusalimov.mrcalc.runtime.Runtime;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 /**
  * Stmt class represents executable code of a certain statement of a program.
@@ -14,7 +14,7 @@ import java.util.function.BiFunction;
  * @author Eldar Abusalimov
  */
 public class Stmt {
-    private final BiFunction<Runtime, Object[], ?> exprFunction;
+    private final Evaluable<?> exprFunction;
     private final List<Variable> inputVariables;
     private final Variable outputVariable;
 
@@ -26,7 +26,7 @@ public class Stmt {
      * @param inputVariables the list of global variables referenced from within the statement
      * @param outputVariable the variable, to which to assign the result of calling the function
      */
-    public Stmt(BiFunction<Runtime, Object[], ?> exprFunction, List<Variable> inputVariables, Variable outputVariable) {
+    public Stmt(Evaluable<?> exprFunction, List<Variable> inputVariables, Variable outputVariable) {
         this.exprFunction = exprFunction;
         this.inputVariables = Objects.requireNonNull(inputVariables);
         this.outputVariable = Objects.requireNonNull(outputVariable);
@@ -45,7 +45,7 @@ public class Stmt {
             throw new UnsupportedOperationException("Incomplete statement");
         }
         Object[] args = bindVariables(memory);
-        Object result = exprFunction.apply(runtime, args);
+        Object result = exprFunction.eval(runtime, args);
         memory.put(outputVariable, result);
         return result;
     }

@@ -8,12 +8,12 @@ import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.backend.Backend;
+import com.abusalimov.mrcalc.runtime.Evaluable;
 import com.abusalimov.mrcalc.runtime.Runtime;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -150,8 +150,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     protected Stmt compileInternal(ExprHolderNode node, String outputVariableName) {
         ExprTypeInfo exprTypeInfo = inferTypeInfo(node);
 
-        BiFunction<Runtime, Object[], ?> exprFunction = exprTypeInfo.isComplete() ? buildExprFunction(
-                exprTypeInfo) : null;
+        Evaluable<?> exprFunction = exprTypeInfo.isComplete() ? buildExprFunction(exprTypeInfo) : null;
 
         List<Variable> inputVariables = exprTypeInfo.getReferencedVariables();
         Variable outputVariable = new Variable(outputVariableName, exprTypeInfo.getExprType());
@@ -178,7 +177,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
      * @return a callable
      * @throws IllegalArgumentException if the exprTypeInfo is {@link ExprTypeInfo#isComplete() incomplete}
      */
-    protected BiFunction<Runtime, Object[], ?> buildExprFunction(ExprTypeInfo exprTypeInfo) {
+    protected Evaluable<?> buildExprFunction(ExprTypeInfo exprTypeInfo) {
         return exprBuilder.buildFunction(exprTypeInfo);
     }
 

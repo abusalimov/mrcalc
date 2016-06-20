@@ -4,11 +4,10 @@ import com.abusalimov.mrcalc.backend.Backend
 import com.abusalimov.mrcalc.backend.Expr
 import com.abusalimov.mrcalc.backend.NumberMath
 import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
+import com.abusalimov.mrcalc.runtime.Evaluable
 import com.abusalimov.mrcalc.runtime.Runtime
 import org.junit.Before
 import org.junit.Test
-
-import java.util.function.BiFunction
 
 import static groovy.test.GroovyAssert.shouldFail
 
@@ -19,8 +18,8 @@ import static groovy.test.GroovyAssert.shouldFail
 class BackendTest<E extends Expr> {
     static {
         def runtime = new Runtime()
-        BiFunction.metaClass.apply = { Object... args -> apply(runtime, args) }
-        BiFunction.metaClass.call = { Object... args -> apply(args) }
+        Evaluable.metaClass.apply = { Object... args -> eval(runtime, args) }
+        Evaluable.metaClass.call = { Object... args -> apply(args) }
     }
 
     private Backend<E> backend

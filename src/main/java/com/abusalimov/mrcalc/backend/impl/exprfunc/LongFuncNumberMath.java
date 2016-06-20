@@ -15,39 +15,39 @@ public class LongFuncNumberMath extends FuncObjectMath<Long>
     @Override
     public FuncExpr<ObjectSequence<?>> range(FuncExpr<Long> startOperand, FuncExpr<Long> endOperand) {
         return (runtime, args) -> {
-            long start = startOperand.apply(runtime, args);
-            long end = endOperand.apply(runtime, args);
+            long start = startOperand.eval(runtime, args);
+            long end = endOperand.eval(runtime, args);
             return runtime.createLongRange(start, end + 1).mapToObject(value -> value);
         };
     }
 
     @Override
     public FuncExpr<Long> add(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
-        return (runtime, args) -> leftOperand.apply(runtime, args) + rightOperand.apply(runtime, args);
+        return (runtime, args) -> leftOperand.eval(runtime, args) + rightOperand.eval(runtime, args);
     }
 
     @Override
     public FuncExpr<Long> sub(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
-        return (runtime, args) -> leftOperand.apply(runtime, args) - rightOperand.apply(runtime, args);
+        return (runtime, args) -> leftOperand.eval(runtime, args) - rightOperand.eval(runtime, args);
     }
 
     @Override
     public FuncExpr<Long> mul(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
-        return (runtime, args) -> leftOperand.apply(runtime, args) * rightOperand.apply(runtime, args);
+        return (runtime, args) -> leftOperand.eval(runtime, args) * rightOperand.eval(runtime, args);
     }
 
     @Override
     public FuncExpr<Long> div(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
-        return (runtime, args) -> leftOperand.apply(runtime, args) / rightOperand.apply(runtime, args);
+        return (runtime, args) -> leftOperand.eval(runtime, args) / rightOperand.eval(runtime, args);
     }
 
     @Override
     public FuncExpr<Long> pow(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
-        return (runtime, args) -> (long) Math.pow(leftOperand.apply(runtime, args), rightOperand.apply(runtime, args));
+        return (runtime, args) -> (long) Math.pow(leftOperand.eval(runtime, args), rightOperand.eval(runtime, args));
     }
 
     @Override
     public FuncExpr<Long> neg(FuncExpr<Long> operand) {
-        return (runtime, args) -> -operand.apply(runtime, args);
+        return (runtime, args) -> -operand.eval(runtime, args);
     }
 }

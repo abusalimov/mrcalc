@@ -1,8 +1,6 @@
 package com.abusalimov.mrcalc.backend;
 
-import com.abusalimov.mrcalc.runtime.Runtime;
-
-import java.util.function.BiFunction;
+import com.abusalimov.mrcalc.runtime.Evaluable;
 
 /**
  * The base backend class for assembling expressions.
@@ -25,7 +23,7 @@ public interface ObjectMath<T, E extends Expr, F extends Expr> {
      * @param expr the expression to assemble
      * @return the callable function evaluating the expression
      */
-    BiFunction<Runtime, Object[], ?> toFunction(E expr);
+    Evaluable<?> toFunction(E expr);
 
     /**
      * Creates an expression accessing a variable at the specified index.

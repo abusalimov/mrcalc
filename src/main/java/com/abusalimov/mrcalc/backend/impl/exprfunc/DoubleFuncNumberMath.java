@@ -21,31 +21,31 @@ public class DoubleFuncNumberMath extends FuncObjectMath<Double>
 
     @Override
     public FuncExpr<Double> add(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return (runtime, args) -> leftOperand.apply(runtime, args) + rightOperand.apply(runtime, args);
+        return (runtime, args) -> leftOperand.eval(runtime, args) + rightOperand.eval(runtime, args);
     }
 
     @Override
     public FuncExpr<Double> sub(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return (runtime, args) -> leftOperand.apply(runtime, args) - rightOperand.apply(runtime, args);
+        return (runtime, args) -> leftOperand.eval(runtime, args) - rightOperand.eval(runtime, args);
     }
 
     @Override
     public FuncExpr<Double> mul(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return (runtime, args) -> leftOperand.apply(runtime, args) * rightOperand.apply(runtime, args);
+        return (runtime, args) -> leftOperand.eval(runtime, args) * rightOperand.eval(runtime, args);
     }
 
     @Override
     public FuncExpr<Double> div(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return (runtime, args) -> leftOperand.apply(runtime, args) / rightOperand.apply(runtime, args);
+        return (runtime, args) -> leftOperand.eval(runtime, args) / rightOperand.eval(runtime, args);
     }
 
     @Override
     public FuncExpr<Double> pow(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return (runtime, args) -> Math.pow(leftOperand.apply(runtime, args), rightOperand.apply(runtime, args));
+        return (runtime, args) -> Math.pow(leftOperand.eval(runtime, args), rightOperand.eval(runtime, args));
     }
 
     @Override
     public FuncExpr<Double> neg(FuncExpr<Double> operand) {
-        return (runtime, args) -> -operand.apply(runtime, args);
+        return (runtime, args) -> -operand.eval(runtime, args);
     }
 }

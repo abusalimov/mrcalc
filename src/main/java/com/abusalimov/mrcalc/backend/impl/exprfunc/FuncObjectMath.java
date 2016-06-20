@@ -1,11 +1,8 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.ObjectMath;
+import com.abusalimov.mrcalc.runtime.Evaluable;
 import com.abusalimov.mrcalc.runtime.ObjectSequence;
-import com.abusalimov.mrcalc.runtime.Runtime;
-
-import java.util.List;
-import java.util.function.BiFunction;
 
 /**
  * Implements operations common for all expression types, both numeric and generic.
@@ -16,7 +13,7 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Ob
     public static final FuncObjectMath INSTANCE = new FuncObjectMath();
 
     @Override
-    public BiFunction<Runtime, Object[], ?> toFunction(FuncExpr<T> expr) {
+    public Evaluable<?> toFunction(FuncExpr<T> expr) {
         return expr;
     }
 
@@ -34,8 +31,8 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Ob
     @Override
     public FuncExpr<ObjectSequence<?>> map(FuncExpr<ObjectSequence<?>> sequenceExpr, FuncExpr<T> lambda) {
         return (runtime, args) -> {
-            ObjectSequence<?> sequence = sequenceExpr.apply(runtime, args);
-            return sequence.mapToObject(x -> lambda.apply(runtime, new Object[]{x}));
+            ObjectSequence<?> sequence = sequenceExpr.eval(runtime, args);
+            return sequence.mapToObject(x -> lambda.eval(runtime, new Object[]{x}));
         };
     }
 
@@ -43,8 +40,8 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Ob
     @Override
     public FuncExpr<T> reduce(FuncExpr<ObjectSequence<?>> sequenceExpr, FuncExpr<T> neutral, FuncExpr<T> lambda) {
         return (runtime, args) -> {
-            ObjectSequence<T> sequence = (ObjectSequence<T>) sequenceExpr.apply(runtime, args);
-            return sequence.reduce(neutral.apply(runtime, args), (x, y) -> lambda.apply(runtime, new Object[]{x, y}));
+            ObjectSequence<T> sequence = (ObjectSequence<T>) sequenceExpr.eval(runtime, args);
+            return sequence.reduce(neutral.eval(runtime, args), (x, y) -> lambda.eval(runtime, new Object[]{x, y}));
         };
     }
 }

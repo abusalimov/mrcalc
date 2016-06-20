@@ -17,6 +17,7 @@ public class MrCalcMainFrame extends JFrame {
     public static final int PREFERRED_WIDTH = 800;
 
     private final BackendTypeSwitcher backendTypeSwitcher;
+    private final InterruptButton interruptButton;
     private final CodeTextPane codeTextPane;
     private final OutputTextArea outputTextArea;
     private final MessageList messageList;
@@ -25,6 +26,7 @@ public class MrCalcMainFrame extends JFrame {
         super("MrCalc");
 
         backendTypeSwitcher = new BackendTypeSwitcher(calcExecutor);
+        interruptButton = new InterruptButton(calcExecutor);
         outputTextArea = new OutputTextArea();
         outputTextArea.setEditable(false);
         codeTextPane = new CodeTextPane(calcExecutor, outputTextArea);
@@ -53,6 +55,7 @@ public class MrCalcMainFrame extends JFrame {
         toolPanel.setLayout(new BorderLayout());
         backendTypeSwitcher.setBorder(new TitledBorder("Backend"));
         toolPanel.add(backendTypeSwitcher, BorderLayout.NORTH);
+        toolPanel.add(interruptButton, BorderLayout.SOUTH);
 
         TextLineNumber tln = new TextLineNumber(codeTextPane);
         codeScrollPane.setRowHeaderView(tln);

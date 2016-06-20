@@ -18,11 +18,13 @@ import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -33,6 +35,8 @@ import java.util.function.Supplier;
 public class CalcExecutor {
     private ExecutorService executor;
     private BackendImplSwitch backendImplSwitch = BackendImplSwitch.DEFAULT;
+    private boolean executionInProgress;
+    private List<Consumer<Boolean>> listeners = new LinkedList<>();
 
     public BackendImplSwitch getBackendImplSwitch() {
         return backendImplSwitch;
@@ -95,6 +99,7 @@ public class CalcExecutor {
         Runtime runtime = new StreamRuntime();
         Interpreter interpreter = new Interpreter(runtime);
 
+        fireExecutionListeners(true);
         try (PrintStream printStream = new PrintStream(outputStreamSupplier.get())) {
             interpreter.setOutStream(printStream);
             for (Stmt stmt : stmts) {
@@ -112,7 +117,19 @@ public class CalcExecutor {
             if (diagnosticListener != null) {
                 e.getDiagnostics().forEach(diagnosticListener::report);
             }
+        } finally {
+            fireExecutionListeners(false);
         }
+    }
+
+    public void addAndFireExecutionLister(Consumer<Boolean> listener) {
+        listeners.add(listener);
+        listener.accept(executionInProgress);
+    }
+
+    protected void fireExecutionListeners(boolean executionInProgress) {
+        this.executionInProgress = executionInProgress;
+        listeners.forEach(listener -> listener.accept(executionInProgress));
     }
 
     /**

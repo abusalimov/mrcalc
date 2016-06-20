@@ -46,11 +46,11 @@ public class Runtime {
         return objectStream(sequence).reduce(identity, operator);
     }
 
-    public long reduce(LongSequence sequence, long identity, LongBinaryOperator operator) {
+    public long reduceLong(LongSequence sequence, long identity, LongBinaryOperator operator) {
         return longStream(sequence).reduce(identity, operator);
     }
 
-    public double reduce(DoubleSequence sequence, double identity, DoubleBinaryOperator operator) {
+    public double reduceDouble(DoubleSequence sequence, double identity, DoubleBinaryOperator operator) {
         return doubleStream(sequence).reduce(identity, operator);
     }
 
@@ -60,12 +60,12 @@ public class Runtime {
     }
 
     @SuppressWarnings("unchecked")
-    public <R> Sequence<R> mapToObject(LongSequence sequence, LongFunction<? extends R> mapper) {
+    public <R> Sequence<R> mapLongToObject(LongSequence sequence, LongFunction<? extends R> mapper) {
         return new ObjectSequence(longStream(sequence).mapToObj(mapper).toArray());
     }
 
     @SuppressWarnings("unchecked")
-    public <R> Sequence<R> mapToObject(DoubleSequence sequence, DoubleFunction<? extends R> mapper) {
+    public <R> Sequence<R> mapDoubleToObject(DoubleSequence sequence, DoubleFunction<? extends R> mapper) {
         return new ObjectSequence(doubleStream(sequence).mapToObj(mapper).toArray());
     }
 
@@ -73,11 +73,11 @@ public class Runtime {
         return new LongSequence(objectStream(sequence).mapToLong(mapper).toArray());
     }
 
-    public LongSequence mapToLong(LongSequence sequence, LongUnaryOperator mapper) {
+    public LongSequence mapLongToLong(LongSequence sequence, LongUnaryOperator mapper) {
         return new LongSequence(longStream(sequence).map(mapper).toArray());
     }
 
-    public LongSequence mapToLong(DoubleSequence sequence, DoubleToLongFunction mapper) {
+    public LongSequence mapDoubleToLong(DoubleSequence sequence, DoubleToLongFunction mapper) {
         return new LongSequence(doubleStream(sequence).mapToLong(mapper).toArray());
     }
 
@@ -85,11 +85,11 @@ public class Runtime {
         return new DoubleSequence(objectStream(sequence).mapToDouble(mapper).toArray());
     }
 
-    public DoubleSequence mapToDouble(LongSequence sequence, LongToDoubleFunction mapper) {
+    public DoubleSequence mapLongToDouble(LongSequence sequence, LongToDoubleFunction mapper) {
         return new DoubleSequence(longStream(sequence).mapToDouble(mapper).toArray());
     }
 
-    public DoubleSequence mapToDouble(DoubleSequence sequence, DoubleUnaryOperator mapper) {
+    public DoubleSequence mapDoubleToDouble(DoubleSequence sequence, DoubleUnaryOperator mapper) {
         return new DoubleSequence(doubleStream(sequence).map(mapper).toArray());
     }
 

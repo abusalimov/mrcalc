@@ -9,11 +9,9 @@ import com.abusalimov.mrcalc.runtime.Evaluable;
  *
  * @param <T> the base type of values involved in or returned by the expressions constructed using this factory
  * @param <E> the main expression type used by the implementation
- * @param <F> the auxiliary expression type used to emphasize the distinction with the base expression type and ensure
- *            type safety. This is likely to identical to the E type upon generic instantiation
  * @author Eldar Abusalimov
  */
-public interface ObjectMath<T, E, F> {
+public interface ObjectMath<T, E> {
     /**
      * Completes the assembling and returns a callable function accepting an array of values of the referenced variables
      * and returning the results of evaluating the expression.
@@ -40,25 +38,4 @@ public interface ObjectMath<T, E, F> {
      * @return the expression returning the constant value
      */
     E constant(T literal);
-
-    /**
-     * Creates an expression mapping the result of the specified sequence expression using the given lambda.
-     *
-     * @param sequence the expression yielding a sequence to map
-     * @param lambda   the expression to use for transforming each element of the sequence
-     * @return the expression performing the map() logic
-     */
-    F map(F sequence, E lambda);
-
-    /**
-     * Creates an expression reducing the result of the specified sequence expression using the given lambda and
-     * starting from the result of neutral expression.
-     *
-     * @param sequence the expression yielding a sequence to reduce
-     * @param neutral  the expression yielding a neutral element
-     * @param lambda   the expression to use to combine an accumulated return value with each element of the sequence
-     * @return the expression performing the reduce() logic
-     */
-    E reduce(F sequence, E neutral, E lambda);
-
 }

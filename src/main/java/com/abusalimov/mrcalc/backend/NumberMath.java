@@ -7,11 +7,9 @@ package com.abusalimov.mrcalc.backend;
  *
  * @param <T> the base numeric type operated on by the expressions constructed using this factory
  * @param <E> the main expression type used by the implementation
- * @param <F> the auxiliary expression type used to emphasize the distinction with the base expression type and ensure
- *            type safety. This is likely to identical to the E type upon generic instantiation
  * @author Eldar Abusalimov
  */
-public interface NumberMath<T extends Number, E, F> extends ObjectMath<T, E, F> {
+public interface NumberMath<T extends Number, E> extends ObjectMath<T, E> {
     /* The basic Math operations, the semantics should be obvious. */
 
     /** Expression adding the results of evaluating two operand expressions together. */
@@ -31,14 +29,4 @@ public interface NumberMath<T extends Number, E, F> extends ObjectMath<T, E, F> 
 
     /** Expression negating the result of evaluating the operand expression. */
     E neg(E operand);
-
-    /**
-     * Creates an expression yielding a range object with its boundaries calculated by evaluating the specified start
-     * and stop expressions.
-     *
-     * @param start the expression yielding a value of the start boundary of the range
-     * @param end   the expression yielding a value of the end boundary of the range
-     * @return the expression creating a new range sequence
-     */
-    F range(E start, E end);
 }

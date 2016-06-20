@@ -1,7 +1,6 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.NumberMath;
-import com.abusalimov.mrcalc.runtime.Sequence;
 
 /**
  * Implements numeric math on boxed {@link Long}s.
@@ -9,18 +8,8 @@ import com.abusalimov.mrcalc.runtime.Sequence;
  * @author Eldar Abusalimov
  */
 public class LongFuncNumberMath extends FuncObjectMath<Long>
-        implements NumberMath<Long, FuncExpr<Long>, FuncExpr<Sequence<?>>> {
+        implements NumberMath<Long, FuncExpr<Long>> {
     public static final LongFuncNumberMath INSTANCE = new LongFuncNumberMath();
-
-    @Override
-    public FuncExpr<Sequence<?>> range(FuncExpr<Long> startOperand, FuncExpr<Long> endOperand) {
-        return (runtime, args) -> {
-            long start = startOperand.eval(runtime, args);
-            long end = endOperand.eval(runtime, args);
-            Sequence.OfLong longSequence = runtime.createLongRange(start, end + 1);
-            return runtime.mapLongToObject(longSequence, value -> value);  /* Box primitive longs. */
-        };
-    }
 
     @Override
     public FuncExpr<Long> add(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {

@@ -5,11 +5,9 @@ import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeArgVisitor;
 import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
-import com.abusalimov.mrcalc.backend.Backend;
-import com.abusalimov.mrcalc.backend.NumberCast;
-import com.abusalimov.mrcalc.backend.NumberMath;
-import com.abusalimov.mrcalc.backend.ObjectMath;
+import com.abusalimov.mrcalc.backend.*;
 import com.abusalimov.mrcalc.compile.type.PrimitiveType;
+import com.abusalimov.mrcalc.compile.type.SequenceType;
 import com.abusalimov.mrcalc.compile.type.Type;
 import com.abusalimov.mrcalc.runtime.Evaluable;
 
@@ -113,7 +111,7 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
         E startOperand = visit(node.getStart(), eti);
         E endOperand = visit(node.getEnd(), eti);
 
-        return getNumberMath(PrimitiveType.INTEGER).range(startOperand, endOperand);
+        return getSequenceRange(node.getStart(), eti).range(startOperand, endOperand);
     }
 
     @Override
@@ -121,7 +119,7 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
         E sequence = visit(node.getSequence(), eti);
         E lambda = buildChild(eti, node.getLambda());
 
-        return getObjectMath(eti.getChild(node.getLambda()).getExprType()).map(sequence, lambda);
+        return getSequenceMap(node, node.getSequence(), eti).map(sequence, lambda);
     }
 
     @Override
@@ -130,24 +128,24 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
         E neutral = visit(node.getNeutral(), eti);
         E lambda = buildChild(eti, node.getLambda());
 
-        return getObjectMath(node, eti).reduce(sequence, neutral, lambda);
+        return getSequenceReduce(node, eti).reduce(sequence, neutral, lambda);
     }
 
-    private <T> ObjectMath<T, E, E> getObjectMath(ExprNode node, ExprTypeInfo eti) {
+    private <T> ObjectMath<T, E> getObjectMath(ExprNode node, ExprTypeInfo eti) {
         return getObjectMath(eti.getExprType(node));
     }
 
     @SuppressWarnings("unchecked")
-    private <T> ObjectMath<T, E, E> getObjectMath(Type exprType) {
+    private <T> ObjectMath<T, E> getObjectMath(Type exprType) {
         return backend.getObjectMath((Class<T>) exprType.getTypeClass());
     }
 
-    private <T extends Number> NumberMath<T, E, E> getNumberMath(ExprNode node, ExprTypeInfo eti) {
+    private <T extends Number> NumberMath<T, E> getNumberMath(ExprNode node, ExprTypeInfo eti) {
         return getNumberMath(eti.getExprType(node));
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Number> NumberMath<T, E, E> getNumberMath(Type exprType) {
+    private <T extends Number> NumberMath<T, E> getNumberMath(Type exprType) {
         return backend.getNumberMath((Class<T>) exprType.getTypeClass());
     }
 
@@ -156,17 +154,55 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
     }
 
     private NumberCast<E, E> getNumberCast(Type toType, Type fromType) {
-        if (!(toType instanceof PrimitiveType && fromType instanceof PrimitiveType)) {
-            throw new IllegalArgumentException("Nodes of primitive types expected");
-        }
-        PrimitiveType toPrimitiveType = (PrimitiveType) toType;
-        PrimitiveType fromPrimitiveType = (PrimitiveType) fromType;
+        PrimitiveType toPrimitive = checkPrimitive(toType);
+        PrimitiveType fromPrimitive = checkPrimitive(fromType);
 
-        if (fromPrimitiveType == toPrimitiveType) {
+        if (fromPrimitive == toPrimitive) {
             return expr -> expr;
         }
 
-        return backend.getNumberCast(toPrimitiveType.getTypeClass(), fromPrimitiveType.getTypeClass());
+        return backend.getNumberCast(toPrimitive.getTypeClass(), fromPrimitive.getTypeClass());
+    }
+
+    private SequenceRange<E, E> getSequenceRange(ExprNode boundaryNode, ExprTypeInfo eti) {
+        return getSequenceRange(eti.getExprType(boundaryNode));
+    }
+
+    private SequenceRange<E, E> getSequenceRange(Type elementType) {
+        PrimitiveType elementPrimitive = (PrimitiveType) elementType;
+        return backend.getSequenceRange(elementPrimitive.getTypeClass());
+    }
+
+    private SequenceReduce<E, E, E> getSequenceReduce(ExprNode returnNode, ExprTypeInfo eti) {
+        return getSequenceReduce(eti.getExprType(returnNode));
+    }
+
+    private SequenceReduce<E, E, E> getSequenceReduce(Type returnType) {
+        return backend.getSequenceReduce(returnType.getTypeClass()
+        );
+    }
+
+    private SequenceMap<E, E, E> getSequenceMap(ExprNode returnNode, ExprNode sequenceNode, ExprTypeInfo eti) {
+        return getSequenceMap(eti.getExprType(returnNode), eti.getExprType(sequenceNode));
+    }
+
+    private SequenceMap<E, E, E> getSequenceMap(Type returnType, Type sequenceType) {
+        return backend.getSequenceMap(getSequenceElementType(returnType).getTypeClass(),
+                getSequenceElementType(sequenceType).getTypeClass());
+    }
+
+    private PrimitiveType checkPrimitive(Type type) {
+        if (!(type instanceof PrimitiveType)) {
+            throw new IllegalArgumentException("Node of primitive type expected");
+        }
+        return (PrimitiveType) type;
+    }
+
+    private Type getSequenceElementType(Type type) {
+        if (!(type instanceof SequenceType)) {
+            throw new IllegalArgumentException("Node of sequence type expected");
+        }
+        return ((SequenceType) type).getElementType();
     }
 
     @Override

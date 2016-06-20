@@ -3,6 +3,7 @@ package com.abusalimov.mrcalc;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.compile.Stmt;
 import com.abusalimov.mrcalc.compile.Variable;
+import com.abusalimov.mrcalc.runtime.Runtime;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -17,13 +18,16 @@ import java.util.Map;
  * @author Eldar Abusalimov
  */
 public class Interpreter {
+    private final Runtime runtime;
     private Map<Variable, Object> memory = new HashMap<>();
     private PrintStream out;
 
-    public Interpreter() {
+    public Interpreter(Runtime runtime) {
+        this.runtime = runtime;
     }
 
-    public Interpreter(PrintStream out) {
+    public Interpreter(Runtime runtime, PrintStream out) {
+        this.runtime = runtime;
         this.out = out;
     }
 
@@ -46,7 +50,7 @@ public class Interpreter {
         Object result = null;
 
         for (Stmt stmt : stmts) {
-            result = stmt.exec(memory);
+            result = stmt.exec(runtime, memory);
             if (out != null && stmt.shouldPrintResult()) {
                 String s;
                 if (result instanceof long[]) {

@@ -10,6 +10,7 @@ import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 import com.abusalimov.mrcalc.parse.Parser;
 import com.abusalimov.mrcalc.parse.SyntaxErrorException;
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl;
+import com.abusalimov.mrcalc.runtime.Runtime;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -43,8 +44,9 @@ public class CalcExecutor {
         Parser parser = new ANTLRParserImpl();
         Backend backend = new FuncBackendImpl();
         Compiler compiler = new Compiler(backend);
+        Runtime runtime = new Runtime();
         PrintStream printStream = new PrintStream(outputStream);
-        Interpreter interpreter = new Interpreter(printStream);
+        Interpreter interpreter = new Interpreter(runtime, printStream);
         try {
             ProgramNode node = parser.parse(sourceCode);
             List<Stmt> stmts = compiler.compile(node);

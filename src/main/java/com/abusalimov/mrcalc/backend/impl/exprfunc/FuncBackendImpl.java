@@ -28,8 +28,8 @@ public class FuncBackendImpl implements Backend<FuncExpr<?>> {
     }
 
     static {
-        putNumberCast(Double.class, Long.class, expr -> args -> expr.apply(args).doubleValue());
-        putNumberCast(Long.class, Double.class, expr -> args -> expr.apply(args).longValue());
+        putNumberCast(Double.class, Long.class, expr -> (runtime, args) -> expr.apply(runtime, args).doubleValue());
+        putNumberCast(Long.class, Double.class, expr -> (runtime, args) -> expr.apply(runtime, args).longValue());
     }
 
     private static <F extends Number, T extends Number> void putNumberCast(Class<T> toType, Class<F> fromType,

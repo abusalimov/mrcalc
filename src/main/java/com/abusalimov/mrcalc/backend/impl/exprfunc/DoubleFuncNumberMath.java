@@ -14,38 +14,38 @@ public class DoubleFuncNumberMath extends FuncObjectMath<Double>
 
     @Override
     public FuncExpr<ObjectSequence<?>> range(FuncExpr<Double> startOperand, FuncExpr<Double> endOperand) {
-        return args -> {
+        return (runtime, args) -> {
             throw new UnsupportedOperationException("Ranges must be constructed with integers bounds");
         };
     }
 
     @Override
     public FuncExpr<Double> add(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return args -> leftOperand.apply(args) + rightOperand.apply(args);
+        return (runtime, args) -> leftOperand.apply(runtime, args) + rightOperand.apply(runtime, args);
     }
 
     @Override
     public FuncExpr<Double> sub(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return args -> leftOperand.apply(args) - rightOperand.apply(args);
+        return (runtime, args) -> leftOperand.apply(runtime, args) - rightOperand.apply(runtime, args);
     }
 
     @Override
     public FuncExpr<Double> mul(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return args -> leftOperand.apply(args) * rightOperand.apply(args);
+        return (runtime, args) -> leftOperand.apply(runtime, args) * rightOperand.apply(runtime, args);
     }
 
     @Override
     public FuncExpr<Double> div(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return args -> leftOperand.apply(args) / rightOperand.apply(args);
+        return (runtime, args) -> leftOperand.apply(runtime, args) / rightOperand.apply(runtime, args);
     }
 
     @Override
     public FuncExpr<Double> pow(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
-        return args -> Math.pow(leftOperand.apply(args), rightOperand.apply(args));
+        return (runtime, args) -> Math.pow(leftOperand.apply(runtime, args), rightOperand.apply(runtime, args));
     }
 
     @Override
     public FuncExpr<Double> neg(FuncExpr<Double> operand) {
-        return args -> -operand.apply(args);
+        return (runtime, args) -> -operand.apply(runtime, args);
     }
 }

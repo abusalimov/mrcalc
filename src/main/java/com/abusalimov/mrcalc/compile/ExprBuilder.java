@@ -8,9 +8,10 @@ import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
 import com.abusalimov.mrcalc.backend.*;
 import com.abusalimov.mrcalc.compile.type.Primitive;
 import com.abusalimov.mrcalc.compile.type.Type;
+import com.abusalimov.mrcalc.runtime.Runtime;
 
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * Expression builder turns a valid expression into a callable function.
@@ -41,7 +42,7 @@ public class ExprBuilder<E extends Expr> implements NodeArgVisitor<E, ExprTypeIn
      * @throws IllegalArgumentException if the {@code ExprTypeInfo} provided is {@link ExprTypeInfo#isComplete()
      *                                  incomplete}
      */
-    public Function<Object[], ?> buildFunction(ExprTypeInfo eti) {
+    public BiFunction<Runtime, Object[], ?> buildFunction(ExprTypeInfo eti) {
         if (!eti.isComplete()) {
             throw new IllegalArgumentException("Incomplete ExprTypeInfo");
         }

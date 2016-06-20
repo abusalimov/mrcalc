@@ -32,16 +32,17 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>, FuncExpr<Ob
     public FuncExpr<ObjectSequence<?>> map(FuncExpr<ObjectSequence<?>> sequenceExpr, FuncExpr<T> lambda) {
         return (runtime, args) -> {
             ObjectSequence<?> sequence = sequenceExpr.eval(runtime, args);
-            return sequence.mapToObject(x -> lambda.eval(runtime, new Object[]{x}));
+            return runtime.mapToObject(sequence, x -> lambda.eval(runtime, new Object[]{x}));
         };
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public FuncExpr<T> reduce(FuncExpr<ObjectSequence<?>> sequenceExpr, FuncExpr<T> neutral, FuncExpr<T> lambda) {
+    public FuncExpr<T> reduce(FuncExpr<ObjectSequence<?>> sequenceExpr, FuncExpr<T> neutralExpr, FuncExpr<T> lambda) {
         return (runtime, args) -> {
             ObjectSequence<T> sequence = (ObjectSequence<T>) sequenceExpr.eval(runtime, args);
-            return sequence.reduce(neutral.eval(runtime, args), (x, y) -> lambda.eval(runtime, new Object[]{x, y}));
+            T neutral = neutralExpr.eval(runtime, args);
+            return runtime.reduce(sequence, neutral, (x, y) -> lambda.eval(runtime, new Object[]{x, y}));
         };
     }
 }

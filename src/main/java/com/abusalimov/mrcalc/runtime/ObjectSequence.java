@@ -4,10 +4,6 @@ import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Spliterator;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -51,22 +47,5 @@ public class ObjectSequence<E> extends AbstractList<E> implements Sequence<E> {
     @Override
     public Stream<E> parallelStream() {
         return StreamSupport.stream(spliterator(), true);
-    }
-
-    public E reduce(E identity, BinaryOperator<E> operator) {
-        return parallelStream().reduce(identity, operator);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <R> ObjectSequence<R> mapToObject(Function<? super E, ? extends R> mapper) {
-        return new ObjectSequence(parallelStream().map(mapper).toArray());
-    }
-
-    public LongSequence mapToLong(ToLongFunction<? super E> mapper) {
-        return new LongSequence(parallelStream().mapToLong(mapper).toArray());
-    }
-
-    public DoubleSequence mapToDouble(ToDoubleFunction<? super E> mapper) {
-        return new DoubleSequence(parallelStream().mapToDouble(mapper).toArray());
     }
 }

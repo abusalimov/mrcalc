@@ -4,10 +4,6 @@ import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Spliterator;
-import java.util.function.LongBinaryOperator;
-import java.util.function.LongFunction;
-import java.util.function.LongToDoubleFunction;
-import java.util.function.LongUnaryOperator;
 import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
 
@@ -56,22 +52,5 @@ public class LongSequence extends AbstractList<Long> implements Sequence<Long> {
 
     public LongStream longParallelStream() {
         return StreamSupport.longStream(spliterator(), true);
-    }
-
-    public long reduce(long identity, LongBinaryOperator operator) {
-        return longParallelStream().reduce(identity, operator);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <R> ObjectSequence<R> mapToObject(LongFunction<? extends R> mapper) {
-        return new ObjectSequence(longParallelStream().mapToObj(mapper).toArray());
-    }
-
-    public LongSequence mapToLong(LongUnaryOperator mapper) {
-        return new LongSequence(longParallelStream().map(mapper).toArray());
-    }
-
-    public DoubleSequence mapToDouble(LongToDoubleFunction mapper) {
-        return new DoubleSequence(longParallelStream().mapToDouble(mapper).toArray());
     }
 }

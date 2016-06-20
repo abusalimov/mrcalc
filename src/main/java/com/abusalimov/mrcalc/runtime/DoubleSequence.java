@@ -4,10 +4,6 @@ import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Spliterator;
-import java.util.function.DoubleBinaryOperator;
-import java.util.function.DoubleFunction;
-import java.util.function.DoubleToLongFunction;
-import java.util.function.DoubleUnaryOperator;
 import java.util.stream.DoubleStream;
 import java.util.stream.StreamSupport;
 
@@ -56,22 +52,5 @@ public class DoubleSequence extends AbstractList<Double> implements Sequence<Dou
 
     public DoubleStream doubleParallelStream() {
         return StreamSupport.doubleStream(spliterator(), true);
-    }
-
-    public double reduce(double identity, DoubleBinaryOperator operator) {
-        return doubleParallelStream().reduce(identity, operator);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <R> ObjectSequence<R> mapToObject(DoubleFunction<? extends R> mapper) {
-        return new ObjectSequence(doubleParallelStream().mapToObj(mapper).toArray());
-    }
-
-    public LongSequence mapToLong(DoubleToLongFunction mapper) {
-        return new LongSequence(doubleParallelStream().mapToLong(mapper).toArray());
-    }
-
-    public DoubleSequence mapToDouble(DoubleUnaryOperator mapper) {
-        return new DoubleSequence(doubleParallelStream().map(mapper).toArray());
     }
 }

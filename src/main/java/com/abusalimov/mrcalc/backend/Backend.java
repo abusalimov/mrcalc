@@ -1,12 +1,12 @@
 package com.abusalimov.mrcalc.backend;
 
 /**
- * The backend is responsible for assembling {@link Expr expressions} into callable functions.
+ * The backend is responsible for assembling expressions into callable functions.
  *
  * @param <E> the type of expressions used by the backend implementation
  * @author Eldar Abusalimov
  */
-public interface Backend<E extends Expr> {
+public interface Backend<E> {
     /**
      * Gets an {@link ObjectMath} instance suitable for assembling expressions of the given type.
      *

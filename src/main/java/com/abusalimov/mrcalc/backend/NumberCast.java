@@ -8,7 +8,7 @@ package com.abusalimov.mrcalc.backend;
  * @param <E> the target type of the conversion
  * @author Eldar Abusalimov
  */
-public interface NumberCast<F extends Expr, E extends Expr> {
+public interface NumberCast<F, E> {
     /**
      * Wraps the specified expression to make it yield a value of another numeric type.
      *

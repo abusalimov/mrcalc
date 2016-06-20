@@ -5,7 +5,10 @@ import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeArgVisitor;
 import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
-import com.abusalimov.mrcalc.backend.*;
+import com.abusalimov.mrcalc.backend.Backend;
+import com.abusalimov.mrcalc.backend.NumberCast;
+import com.abusalimov.mrcalc.backend.NumberMath;
+import com.abusalimov.mrcalc.backend.ObjectMath;
 import com.abusalimov.mrcalc.compile.type.PrimitiveType;
 import com.abusalimov.mrcalc.compile.type.Type;
 import com.abusalimov.mrcalc.runtime.Evaluable;
@@ -21,7 +24,7 @@ import java.util.Objects;
  *
  * @author Eldar Abusalimov
  */
-public class ExprBuilder<E extends Expr> implements NodeArgVisitor<E, ExprTypeInfo> {
+public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
     private final Backend<E> backend;
 
     /**

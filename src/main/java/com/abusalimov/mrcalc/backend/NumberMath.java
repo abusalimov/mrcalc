@@ -11,7 +11,7 @@ package com.abusalimov.mrcalc.backend;
  *            type safety. This is likely to identical to the E type upon generic instantiation
  * @author Eldar Abusalimov
  */
-public interface NumberMath<T extends Number, E extends Expr, F extends Expr> extends ObjectMath<T, E, F> {
+public interface NumberMath<T extends Number, E, F> extends ObjectMath<T, E, F> {
     /* The basic Math operations, the semantics should be obvious. */
 
     /** Expression adding the results of evaluating two operand expressions together. */

@@ -42,7 +42,7 @@ public class Runtime {
         return new LongRange(startInclusive, endExclusive);
     }
 
-    public <E> E reduce(ObjectSequence<E> sequence, E identity, BinaryOperator<E> operator) {
+    public <E> E reduce(Sequence<E> sequence, E identity, BinaryOperator<E> operator) {
         return objectStream(sequence).reduce(identity, operator);
     }
 
@@ -55,21 +55,21 @@ public class Runtime {
     }
 
     @SuppressWarnings("unchecked")
-    public <E, R> ObjectSequence<R> mapToObject(ObjectSequence<E> sequence, Function<? super E, ? extends R> mapper) {
+    public <E, R> Sequence<R> mapToObject(Sequence<E> sequence, Function<? super E, ? extends R> mapper) {
         return new ObjectSequence(objectStream(sequence).map(mapper).toArray());
     }
 
     @SuppressWarnings("unchecked")
-    public <R> ObjectSequence<R> mapToObject(LongSequence sequence, LongFunction<? extends R> mapper) {
+    public <R> Sequence<R> mapToObject(LongSequence sequence, LongFunction<? extends R> mapper) {
         return new ObjectSequence(longStream(sequence).mapToObj(mapper).toArray());
     }
 
     @SuppressWarnings("unchecked")
-    public <R> ObjectSequence<R> mapToObject(DoubleSequence sequence, DoubleFunction<? extends R> mapper) {
+    public <R> Sequence<R> mapToObject(DoubleSequence sequence, DoubleFunction<? extends R> mapper) {
         return new ObjectSequence(doubleStream(sequence).mapToObj(mapper).toArray());
     }
 
-    public <E> LongSequence mapToLong(ObjectSequence<E> sequence, ToLongFunction<? super E> mapper) {
+    public <E> LongSequence mapToLong(Sequence<E> sequence, ToLongFunction<? super E> mapper) {
         return new LongSequence(objectStream(sequence).mapToLong(mapper).toArray());
     }
 
@@ -81,7 +81,7 @@ public class Runtime {
         return new LongSequence(doubleStream(sequence).mapToLong(mapper).toArray());
     }
 
-    public <E> DoubleSequence mapToDouble(ObjectSequence<E> sequence, ToDoubleFunction<? super E> mapper) {
+    public <E> DoubleSequence mapToDouble(Sequence<E> sequence, ToDoubleFunction<? super E> mapper) {
         return new DoubleSequence(objectStream(sequence).mapToDouble(mapper).toArray());
     }
 
@@ -93,7 +93,7 @@ public class Runtime {
         return new DoubleSequence(doubleStream(sequence).map(mapper).toArray());
     }
 
-    protected <E> Stream<E> objectStream(ObjectSequence<E> sequence) {
+    protected <E> Stream<E> objectStream(Sequence<E> sequence) {
         return StreamSupport.stream(sequence.spliterator(), parallel);
     }
 

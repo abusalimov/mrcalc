@@ -7,42 +7,37 @@ import com.abusalimov.mrcalc.backend.NumberMath;
  *
  * @author Eldar Abusalimov
  */
-public class LongFuncNumberMath extends FuncObjectMath<Long>
-        implements NumberMath<Long, FuncExpr<Long>> {
+public class LongFuncNumberMath extends AbstractFuncNumberMath<Long>
+        implements NumberMath<Long, Func<Long>> {
     public static final LongFuncNumberMath INSTANCE = new LongFuncNumberMath();
 
     @Override
-    public FuncExpr<Long> constant(Long literal) {
-        return (runtime, args) -> literal;
-    }
-
-    @Override
-    public FuncExpr<Long> add(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
+    public Func<Long> add(Func<Long> leftOperand, Func<Long> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) + rightOperand.eval(runtime, args);
     }
 
     @Override
-    public FuncExpr<Long> sub(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
+    public Func<Long> sub(Func<Long> leftOperand, Func<Long> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) - rightOperand.eval(runtime, args);
     }
 
     @Override
-    public FuncExpr<Long> mul(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
+    public Func<Long> mul(Func<Long> leftOperand, Func<Long> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) * rightOperand.eval(runtime, args);
     }
 
     @Override
-    public FuncExpr<Long> div(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
+    public Func<Long> div(Func<Long> leftOperand, Func<Long> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) / rightOperand.eval(runtime, args);
     }
 
     @Override
-    public FuncExpr<Long> pow(FuncExpr<Long> leftOperand, FuncExpr<Long> rightOperand) {
+    public Func<Long> pow(Func<Long> leftOperand, Func<Long> rightOperand) {
         return (runtime, args) -> (long) Math.pow(leftOperand.eval(runtime, args), rightOperand.eval(runtime, args));
     }
 
     @Override
-    public FuncExpr<Long> neg(FuncExpr<Long> operand) {
+    public Func<Long> neg(Func<Long> operand) {
         return (runtime, args) -> -operand.eval(runtime, args);
     }
 }

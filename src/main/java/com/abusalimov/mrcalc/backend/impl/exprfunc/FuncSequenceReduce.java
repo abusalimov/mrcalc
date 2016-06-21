@@ -9,11 +9,11 @@ import com.abusalimov.mrcalc.runtime.Sequence;
  * @param <T> the type of a sequence elements and a reduction result
  * @author Eldar Abusalimov
  */
-public class FuncSequenceReduce<T> implements SequenceReduce<FuncExpr<T>, FuncExpr<Sequence<T>>, FuncExpr<T>> {
+public class FuncSequenceReduce<T> implements SequenceReduce<Func<T>, Func<Sequence<T>>, Func<T>> {
     public static final FuncSequenceReduce INSTANCE = new FuncSequenceReduce();
 
     @Override
-    public FuncExpr<T> reduce(FuncExpr<Sequence<T>> sequenceExpr, FuncExpr<T> neutralExpr, FuncExpr<T> lambda) {
+    public Func<T> reduce(Func<Sequence<T>> sequenceExpr, Func<T> neutralExpr, Func<T> lambda) {
         return (runtime, args) -> {
             Sequence<T> sequence = sequenceExpr.eval(runtime, args);
             T neutral = neutralExpr.eval(runtime, args);

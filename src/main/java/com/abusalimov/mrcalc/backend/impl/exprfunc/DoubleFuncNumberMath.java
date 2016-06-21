@@ -7,42 +7,37 @@ import com.abusalimov.mrcalc.backend.NumberMath;
  *
  * @author Eldar Abusalimov
  */
-public class DoubleFuncNumberMath extends FuncObjectMath<Double>
-        implements NumberMath<Double, FuncExpr<Double>> {
+public class DoubleFuncNumberMath extends AbstractFuncNumberMath<Double>
+        implements NumberMath<Double, Func<Double>> {
     public static final DoubleFuncNumberMath INSTANCE = new DoubleFuncNumberMath();
 
     @Override
-    public FuncExpr<Double> constant(Double literal) {
-        return (runtime, args) -> literal;
-    }
-
-    @Override
-    public FuncExpr<Double> add(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
+    public Func<Double> add(Func<Double> leftOperand, Func<Double> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) + rightOperand.eval(runtime, args);
     }
 
     @Override
-    public FuncExpr<Double> sub(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
+    public Func<Double> sub(Func<Double> leftOperand, Func<Double> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) - rightOperand.eval(runtime, args);
     }
 
     @Override
-    public FuncExpr<Double> mul(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
+    public Func<Double> mul(Func<Double> leftOperand, Func<Double> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) * rightOperand.eval(runtime, args);
     }
 
     @Override
-    public FuncExpr<Double> div(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
+    public Func<Double> div(Func<Double> leftOperand, Func<Double> rightOperand) {
         return (runtime, args) -> leftOperand.eval(runtime, args) / rightOperand.eval(runtime, args);
     }
 
     @Override
-    public FuncExpr<Double> pow(FuncExpr<Double> leftOperand, FuncExpr<Double> rightOperand) {
+    public Func<Double> pow(Func<Double> leftOperand, Func<Double> rightOperand) {
         return (runtime, args) -> Math.pow(leftOperand.eval(runtime, args), rightOperand.eval(runtime, args));
     }
 
     @Override
-    public FuncExpr<Double> neg(FuncExpr<Double> operand) {
+    public Func<Double> neg(Func<Double> operand) {
         return (runtime, args) -> -operand.eval(runtime, args);
     }
 }

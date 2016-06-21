@@ -8,5 +8,5 @@ import com.abusalimov.mrcalc.runtime.Evaluable;
  * @param <T> the return type of the function (used for more strict type checking)
  * @author Eldar Abusalimov
  */
-interface FuncExpr<T> extends Evaluable<T> {
+interface Func<T> extends Evaluable<T> {
 }

@@ -15,8 +15,8 @@ import static java.util.Arrays.asList;
  *
  * @author Eldar Abusalimov
  */
-public class FuncBackendImpl implements Backend<FuncExpr<?>> {
-    private static final Map<Class<?>, ObjectMath<?, ?>> mathMap = new HashMap<>();
+public class FuncBackendImpl implements Backend<Func<?>, Func<?>> {
+    private static final Map<Class<?>, NumberMath<?, ?>> mathMap = new HashMap<>();
     private static final Map<List<Class<? extends Number>>, NumberCast<?, ?>> numberCastMap = new HashMap<>();
 
     static {
@@ -30,26 +30,21 @@ public class FuncBackendImpl implements Backend<FuncExpr<?>> {
     }
 
     private static <F extends Number, T extends Number> void putNumberCast(Class<T> toType, Class<F> fromType,
-                                                                           NumberCast<FuncExpr<F>, FuncExpr<T>> cast) {
+                                                                           NumberCast<Func<F>, Func<T>> cast) {
         numberCastMap.put(asList(toType, fromType), cast);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public ArgumentLoad<FuncExpr<?>> getArgumentLoad(Class<?> parameterType) {
-        return (slot) -> (runtime, args) -> args[slot];
+    public <R> FunctionAssembler<R, Func<?>, Func<?>> createFunctionAssembler(Class<R> returnType,
+                                                                              Class<?>... parameterTypes) {
+        return new FuncAssembler();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> ObjectMath<T, FuncExpr<?>> getObjectMath(Class<T> returnType) {
-        return (ObjectMath<T, FuncExpr<?>>) mathMap.getOrDefault(
-                Objects.requireNonNull(returnType, "returnType"), FuncObjectMath.INSTANCE);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T extends Number> NumberMath<T, FuncExpr<?>> getNumberMath(Class<T> returnType) {
-        return (NumberMath<T, FuncExpr<?>>) mathMap.computeIfAbsent(
+    public <T extends Number> NumberMath<T, Func<?>> getNumberMath(Class<T> returnType) {
+        return (NumberMath<T, Func<?>>) mathMap.computeIfAbsent(
                 Objects.requireNonNull(returnType, "returnType"), aClass -> {
                     throw new UnsupportedOperationException("Unknown Number class " + aClass);
                 });
@@ -57,27 +52,25 @@ public class FuncBackendImpl implements Backend<FuncExpr<?>> {
 
     @SuppressWarnings("unchecked")
     @Override
-    public NumberCast<FuncExpr<?>, FuncExpr<?>> getNumberCast(Class<? extends Number> toType,
-                                                              Class<? extends Number> fromType) {
-        return (NumberCast<FuncExpr<?>, FuncExpr<?>>) numberCastMap.get(asList(toType, fromType));
+    public NumberCast getNumberCast(Class<? extends Number> toType, Class<? extends Number> fromType) {
+        return numberCastMap.get(asList(toType, fromType));
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public SequenceRange<FuncExpr<?>, FuncExpr<?>> getSequenceRange(Class<? extends Number> elementType) {
-        return (SequenceRange) FuncSequenceRange.INSTANCE;
+    public SequenceRange getSequenceRange(Class<? extends Number> elementType) {
+        return FuncSequenceRange.INSTANCE;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public SequenceReduce<FuncExpr<?>, FuncExpr<?>, FuncExpr<?>> getSequenceReduce(Class<?> returnType) {
+    public SequenceReduce getSequenceReduce(Class<?> returnType) {
         return FuncSequenceReduce.INSTANCE;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public SequenceMap<FuncExpr<?>, FuncExpr<?>, FuncExpr<?>> getSequenceMap(Class<?> returnElementType,
-                                                                             Class<?> elementType) {
+    public SequenceMap getSequenceMap(Class<?> returnElementType, Class<?> elementType) {
         return FuncSequenceMap.INSTANCE;
     }
 }

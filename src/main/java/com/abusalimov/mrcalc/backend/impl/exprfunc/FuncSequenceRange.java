@@ -8,11 +8,11 @@ import com.abusalimov.mrcalc.runtime.Sequence;
  *
  * @author Eldar Abusalimov
  */
-public class FuncSequenceRange implements SequenceRange<FuncExpr<Sequence<Long>>, FuncExpr<Long>> {
+public class FuncSequenceRange implements SequenceRange<Func<Sequence<Long>>, Func<Long>> {
     public static final FuncSequenceRange INSTANCE = new FuncSequenceRange();
 
     @Override
-    public FuncExpr<Sequence<Long>> range(FuncExpr<Long> startOperand, FuncExpr<Long> endOperand) {
+    public Func<Sequence<Long>> range(Func<Long> startOperand, Func<Long> endOperand) {
         return (runtime, args) -> {
             long start = startOperand.eval(runtime, args);
             long end = endOperand.eval(runtime, args);

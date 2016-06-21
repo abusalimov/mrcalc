@@ -1,29 +1,22 @@
 package com.abusalimov.mrcalc.backend;
 
 /**
- * The backend is responsible for assembling expressions into callable functions.
+ * The backend is responsible for creating callable functions from basic expressions.
  *
  * @param <E> the type of expressions used by the backend implementation
+ * @param <F> the internal type of assembled functions used by the backend implementation
  * @author Eldar Abusalimov
  */
-public interface Backend<E> {
+public interface Backend<E, F> {
     /**
-     * Returns an {@link ArgumentLoad} instance capable for creating expressions loading an argument of the given
-     * parameter type.
+     * Creates a new function assembler for a function with given signature.
      *
-     * @param parameterType the type of the value to be loaded from the argument
-     * @return the {@link ArgumentLoad} instance
+     * @param returnType     the return type of the function to be assembled
+     * @param parameterTypes the types of parameters taken by the function to be assembled
+     * @param <R>            the return type
+     * @return the new {@link FunctionAssembler} instance
      */
-    ArgumentLoad<E> getArgumentLoad(Class<?> parameterType);
-
-    /**
-     * Gets an {@link ObjectMath} instance suitable for assembling expressions of the given type.
-     *
-     * @param returnType the required class of expressions being assembled
-     * @param <T>        the class type argument
-     * @return the {@link ObjectMath} instance
-     */
-    <T> ObjectMath<T, E> getObjectMath(Class<T> returnType);
+    <R> FunctionAssembler<R, E, F> createFunctionAssembler(Class<R> returnType, Class<?>... parameterTypes);
 
     /**
      * Gets a {@link NumberMath} instance suitable for assembling expressions of the given numeric type.
@@ -70,4 +63,5 @@ public interface Backend<E> {
      * @return the {@link SequenceMap} instance
      */
     SequenceMap<E, E, E> getSequenceMap(Class<?> returnElementType, Class<?> elementType);
+
 }

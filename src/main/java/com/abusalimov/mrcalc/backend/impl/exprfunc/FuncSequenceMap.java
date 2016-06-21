@@ -9,11 +9,11 @@ import com.abusalimov.mrcalc.runtime.Sequence;
  * @param <T> the type of a sequence elements
  * @author Eldar Abusalimov
  */
-public class FuncSequenceMap<T> implements SequenceMap<FuncExpr<Sequence<T>>, FuncExpr<Sequence<T>>, FuncExpr<T>> {
+public class FuncSequenceMap<T> implements SequenceMap<Func<Sequence<T>>, Func<Sequence<?>>, Func<T>> {
     public static final FuncSequenceMap INSTANCE = new FuncSequenceMap();
 
     @Override
-    public FuncExpr<Sequence<T>> map(FuncExpr<Sequence<T>> sequenceExpr, FuncExpr<T> lambda) {
+    public Func<Sequence<T>> map(Func<Sequence<?>> sequenceExpr, Func<T> lambda) {
         return (runtime, args) -> {
             Sequence<?> sequence = sequenceExpr.eval(runtime, args);
             return runtime.mapToObject(sequence, x -> lambda.eval(runtime, new Object[]{x}));

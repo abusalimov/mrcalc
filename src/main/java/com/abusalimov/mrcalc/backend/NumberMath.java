@@ -3,13 +3,13 @@ package com.abusalimov.mrcalc.backend;
 /**
  * The backend class for assembling numeric expressions.
  * <p>
- * Provides extended set of factory methods for creating expressions implementing the numeric math.
+ * Provides factory methods for creating expressions implementing the numeric math.
  *
  * @param <T> the base numeric type operated on by the expressions constructed using this factory
  * @param <E> the main expression type used by the implementation
  * @author Eldar Abusalimov
  */
-public interface NumberMath<T extends Number, E> extends ObjectMath<T, E> {
+public interface NumberMath<T extends Number, E> {
     /**
      * Creates an expression yielding the specified constant.
      *

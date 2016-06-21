@@ -309,5 +309,10 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
             Variable variable = getVariable(name);
             return argIndexMap.getOrDefault(variable, -1);
         }
+
+        @Override
+        public List<Variable> getReferencedVariables() {
+            return new ArrayList<>(argIndexMap.keySet());
+        }
     }
 }

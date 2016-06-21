@@ -15,10 +15,4 @@ public class FuncObjectMath<T> implements ObjectMath<T, FuncExpr<T>> {
     public Evaluable<?> toEvaluable(FuncExpr<T> expr) {
         return expr;
     }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public FuncExpr<T> load(int slot) {
-        return (runtime, args) -> (T) args[slot];
-    }
 }

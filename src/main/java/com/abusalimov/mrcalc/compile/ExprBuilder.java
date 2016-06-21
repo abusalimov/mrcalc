@@ -67,7 +67,7 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
     @Override
     public E doVisit(VarRefNode node, ExprTypeInfo eti) {
         String name = node.getName();
-        return getObjectMath(node, eti).load(eti.getReferencedVariableIndex(name));
+        return getArgumentLoad(node, eti).load(eti.getReferencedVariableIndex(name));
     }
 
     @Override
@@ -129,6 +129,14 @@ public class ExprBuilder<E> implements NodeArgVisitor<E, ExprTypeInfo> {
         E lambda = buildChild(eti, node.getLambda());
 
         return getSequenceReduce(node, eti).reduce(sequence, neutral, lambda);
+    }
+
+    private ArgumentLoad<E> getArgumentLoad(ExprNode node, ExprTypeInfo eti) {
+        return getArgumentLoad(eti.getExprType(node));
+    }
+
+    private ArgumentLoad<E> getArgumentLoad(Type exprType) {
+        return backend.getArgumentLoad(exprType.getTypeClass());
     }
 
     private <T> ObjectMath<T, E> getObjectMath(ExprNode node, ExprTypeInfo eti) {

@@ -22,12 +22,4 @@ public interface ObjectMath<T, E> {
      * @return the callable function evaluating the expression
      */
     Evaluable<?> toEvaluable(E expr);
-
-    /**
-     * Creates an expression accessing a variable at the specified index.
-     *
-     * @param slot the variable index
-     * @return the expression loading a value of the specified variable
-     */
-    E load(int slot);
 }

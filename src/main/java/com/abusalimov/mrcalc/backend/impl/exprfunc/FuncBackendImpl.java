@@ -34,6 +34,11 @@ public class FuncBackendImpl implements Backend<FuncExpr<?>> {
         numberCastMap.put(asList(toType, fromType), cast);
     }
 
+    @Override
+    public ArgumentLoad<FuncExpr<?>> getArgumentLoad(Class<?> parameterType) {
+        return (slot) -> (runtime, args) -> args[slot];
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T> ObjectMath<T, FuncExpr<?>> getObjectMath(Class<T> returnType) {

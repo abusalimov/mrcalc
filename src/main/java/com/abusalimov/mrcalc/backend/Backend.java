@@ -8,6 +8,15 @@ package com.abusalimov.mrcalc.backend;
  */
 public interface Backend<E> {
     /**
+     * Returns an {@link ArgumentLoad} instance capable for creating expressions loading an argument of the given
+     * parameter type.
+     *
+     * @param parameterType the type of the value to be loaded from the argument
+     * @return the {@link ArgumentLoad} instance
+     */
+    ArgumentLoad<E> getArgumentLoad(Class<?> parameterType);
+
+    /**
      * Gets an {@link ObjectMath} instance suitable for assembling expressions of the given type.
      *
      * @param returnType the required class of expressions being assembled

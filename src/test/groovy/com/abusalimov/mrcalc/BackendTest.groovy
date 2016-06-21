@@ -60,7 +60,7 @@ class BackendTest<E> {
     }
 
     def iLoad(int n) {
-        integerMath.load(n)
+        backend.getArgumentLoad(long).load(n)
     }
 
     def iConst(long l) {
@@ -68,7 +68,7 @@ class BackendTest<E> {
     }
 
     def fLoad(int n) {
-        floatMath.load(n)
+        backend.getArgumentLoad(double).load(n)
     }
 
     def fConst(double d) {
@@ -84,7 +84,7 @@ class BackendTest<E> {
 
     @Test
     void "test load variable"() {
-        def load = integerMath.load(0)
+        def load = iLoad(0)
         def fn = integerMath.toEvaluable(load)
         assert 0 == fn(runtime, 0L)
         assert 7 == fn(runtime, 7L)

@@ -30,6 +30,7 @@ public class CodeTextPane extends JTextPane {
         this.outputTextArea = outputTextArea;
         getStyledDocument().addDocumentListener(new HighlightListener(calcExecutor));
         ToolTipManager.sharedInstance().registerComponent(this);
+        SwingUtilities.invokeLater(this::requestFocus);
     }
 
     @Override

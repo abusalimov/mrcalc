@@ -3,12 +3,12 @@ package com.abusalimov.mrcalc.backend;
 /**
  * Provides a single method for assembling a numeric conversion between certain types.
  *
+ * @param <E> the target type of the conversion
  * @param <F> the source type parameter of the numeric conversion performed by the expressions created using this
  *            factory
- * @param <E> the target type of the conversion
  * @author Eldar Abusalimov
  */
-public interface NumberCast<F, E> {
+public interface NumberCast<E, F> {
     /**
      * Wraps the specified expression to make it yield a value of another numeric type.
      *

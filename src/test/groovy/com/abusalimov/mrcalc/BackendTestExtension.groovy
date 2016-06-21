@@ -1,6 +1,8 @@
 package com.abusalimov.mrcalc
 
 import com.abusalimov.mrcalc.backend.FunctionAssembler
+import com.abusalimov.mrcalc.backend.NumberCast
+import com.abusalimov.mrcalc.backend.NumberMath
 import com.abusalimov.mrcalc.runtime.Evaluable
 import com.abusalimov.mrcalc.runtime.Runtime
 
@@ -18,12 +20,35 @@ class BackendTestExtension {
         self.toEvaluable(self.assemble(expr));
     }
 
-    static <E> E iLoad(final FunctionAssembler<?, E, ?> self, int slot) {
+    static <E> E lLoad(final FunctionAssembler<?, E, ?> self, int slot) {
         self.getArgumentLoad(long).load(slot)
     }
 
-    static <E> E fLoad(final FunctionAssembler<?, E, ?> self, int slot) {
+    static <E> E dLoad(final FunctionAssembler<?, E, ?> self, int slot) {
         self.getArgumentLoad(double).load(slot)
     }
 
+    static <R, E, F> NumberMath<Long, E> getlMath(final FunctionAssembler<R, E, F> self) {
+        self.getNumberMath(Long.TYPE)
+    }
+
+    static <R, E, F> NumberMath<Double, E> getdMath(final FunctionAssembler<R, E, F> self) {
+        self.getNumberMath(Double.TYPE)
+    }
+
+    static <R, E, F> NumberCast<E, E> getL2d(final FunctionAssembler<R, E, F> self) {
+        self.getNumberCast(double, long)
+    }
+
+    static <R, E, F> NumberCast<E, E> getD2l(final FunctionAssembler<R, E, F> self) {
+        self.getNumberCast(long, double)
+    }
+
+    static <R, E, F> E lConst(final FunctionAssembler<R, E, F> self, long l) {
+        self.lMath.constant(l)
+    }
+
+    static <R, E, F> E dConst(final FunctionAssembler<R, E, F> self, double d) {
+        self.dMath.constant(d)
+    }
 }

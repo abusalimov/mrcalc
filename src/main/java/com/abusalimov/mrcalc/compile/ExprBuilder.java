@@ -151,12 +151,10 @@ public class ExprBuilder<E, F> implements NodeArgVisitor<E, ExprBuilder.Function
      * @param <F> the internal type of assembled functions used by the backend
      */
     static class FunctionContext<R, E, F> {
-        private final Backend<E, F> backend;
         private final ExprTypeInfo exprTypeInfo;
         private final FunctionAssembler<R, E, F> functionAssembler;
 
         public FunctionContext(Backend<E, F> backend, ExprTypeInfo exprTypeInfo) {
-            this.backend = backend;
             this.exprTypeInfo = exprTypeInfo;
 
             @SuppressWarnings("unchecked") Class<R> returnType = (Class<R>) getExprType().getTypeClass();
@@ -198,7 +196,7 @@ public class ExprBuilder<E, F> implements NodeArgVisitor<E, ExprBuilder.Function
 
         @SuppressWarnings("unchecked")
         public <T extends Number> NumberMath<T, E> getNumberMath(Type exprType) {
-            return backend.getNumberMath((Class<T>) exprType.getTypeClass());
+            return functionAssembler.getNumberMath((Class<T>) exprType.getTypeClass());
         }
 
         public NumberCast<E, E> getNumberCast(ExprNode toNode, ExprNode fromNode) {
@@ -213,7 +211,7 @@ public class ExprBuilder<E, F> implements NodeArgVisitor<E, ExprBuilder.Function
                 return expr -> expr;
             }
 
-            return backend.getNumberCast(toPrimitive.getTypeClass(), fromPrimitive.getTypeClass());
+            return functionAssembler.getNumberCast(toPrimitive.getTypeClass(), fromPrimitive.getTypeClass());
         }
 
         public SequenceRange<E, E> getSequenceRange(ExprNode boundaryNode) {
@@ -222,7 +220,7 @@ public class ExprBuilder<E, F> implements NodeArgVisitor<E, ExprBuilder.Function
 
         public SequenceRange<E, E> getSequenceRange(Type elementType) {
             PrimitiveType elementPrimitive = (PrimitiveType) elementType;
-            return backend.getSequenceRange(elementPrimitive.getTypeClass());
+            return functionAssembler.getSequenceRange(elementPrimitive.getTypeClass());
         }
 
         public SequenceReduce<E, E, E> getSequenceReduce(ExprNode returnNode) {
@@ -230,7 +228,7 @@ public class ExprBuilder<E, F> implements NodeArgVisitor<E, ExprBuilder.Function
         }
 
         public SequenceReduce<E, E, E> getSequenceReduce(Type returnType) {
-            return backend.getSequenceReduce(returnType.getTypeClass());
+            return functionAssembler.getSequenceReduce(returnType.getTypeClass());
         }
 
         public SequenceMap<E, E, E> getSequenceMap(ExprNode returnNode, ExprNode sequenceNode) {
@@ -238,7 +236,7 @@ public class ExprBuilder<E, F> implements NodeArgVisitor<E, ExprBuilder.Function
         }
 
         public SequenceMap<E, E, E> getSequenceMap(Type returnType, Type sequenceType) {
-            return backend.getSequenceMap(getSequenceElementType(returnType).getTypeClass(),
+            return functionAssembler.getSequenceMap(getSequenceElementType(returnType).getTypeClass(),
                     getSequenceElementType(sequenceType).getTypeClass());
         }
 

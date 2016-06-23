@@ -5,7 +5,7 @@ import com.abusalimov.mrcalc.backend.Expr
 import com.abusalimov.mrcalc.backend.NumberMath
 import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
 import com.abusalimov.mrcalc.runtime.Evaluable
-import com.abusalimov.mrcalc.runtime.Runtime
+import com.abusalimov.mrcalc.runtime.StreamRuntime
 import org.junit.Before
 import org.junit.Test
 
@@ -17,7 +17,7 @@ import static groovy.test.GroovyAssert.shouldFail
 @SuppressWarnings("GroovyAssignabilityCheck")
 class BackendTest<E extends Expr> {
     static {
-        def runtime = new Runtime()
+        def runtime = new StreamRuntime()
         Evaluable.metaClass.apply = { Object... args -> eval(runtime, args) }
         Evaluable.metaClass.call = { Object... args -> apply(args) }
     }

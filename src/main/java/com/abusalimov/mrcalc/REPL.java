@@ -11,6 +11,7 @@ import com.abusalimov.mrcalc.parse.Parser;
 import com.abusalimov.mrcalc.parse.SyntaxErrorException;
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl;
 import com.abusalimov.mrcalc.runtime.Runtime;
+import com.abusalimov.mrcalc.runtime.StreamRuntime;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class REPL {
         parser = new ANTLRParserImpl();
         Backend<?> exprBuilderFactory = new FuncBackendImpl();
         compiler = new Compiler(exprBuilderFactory);
-        Runtime runtime = new Runtime();
+        Runtime runtime = new StreamRuntime();
         interpreter = new Interpreter(runtime, System.out);
     }
 

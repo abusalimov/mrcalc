@@ -12,13 +12,13 @@ import java.util.function.*;
  */
 public interface Runtime {
     /**
-     * Creates a new {@link LongSequence} filled by integers between the specified boundaries.
+     * Creates a new {@link Sequence.OfLong} filled by integers between the specified boundaries.
      *
      * @param startInclusive the start boundary of the range (inclusive)
      * @param endExclusive   the end boundary of the range (exclusive)
-     * @return the new {@link LongSequence} instance
+     * @return the new {@link Sequence.OfLong} instance
      */
-    LongSequence createLongRange(long startInclusive, long endExclusive);
+    Sequence.OfLong createLongRange(long startInclusive, long endExclusive);
 
     /**
      * Performs a reduction on the elements of the given sequence, using the provided identity value and an associative
@@ -33,8 +33,8 @@ public interface Runtime {
      * @param operator the accumulator function: {@code E, E -> E}
      * @param <E>      a type of the values, involved into the reduction as well as the return type
      * @return the result of the reduction
-     * @see #reduceLong(LongSequence, long, LongBinaryOperator) for reduction of the primitive longs
-     * @see #reduceDouble(DoubleSequence, double, DoubleBinaryOperator) for reduction of the primitive doubles
+     * @see #reduceLong(Sequence.OfLong, long, LongBinaryOperator) for reduction of the primitive longs
+     * @see #reduceDouble(Sequence.OfDouble, double, DoubleBinaryOperator) for reduction of the primitive doubles
      */
     <E> E reduce(Sequence<E> sequence, E identity, BinaryOperator<E> operator);
 
@@ -47,7 +47,7 @@ public interface Runtime {
      * @param operator the accumulator function: {@code long, long -> long}
      * @return the result of the reduction
      */
-    long reduceLong(LongSequence sequence, long identity, LongBinaryOperator operator);
+    long reduceLong(Sequence.OfLong sequence, long identity, LongBinaryOperator operator);
 
     /**
      * Performs a reduction on the elements of the given sequence of primitive doubles, using the provided double
@@ -58,7 +58,7 @@ public interface Runtime {
      * @param operator the accumulator function: {@code double, double -> double}
      * @return the result of the reduction
      */
-    double reduceDouble(DoubleSequence sequence, double identity, DoubleBinaryOperator operator);
+    double reduceDouble(Sequence.OfDouble sequence, double identity, DoubleBinaryOperator operator);
 
     /**
      * Returns a sequence consisting of the results of applying the given function to the elements of the specified
@@ -72,8 +72,8 @@ public interface Runtime {
      * @param <E>      the element type of the source sequence
      * @param <R>      the element type of the destination sequence
      * @return the new sequence of objects
-     * @see #mapLongToObject(LongSequence, LongFunction) for mapping sequences of primitive longs
-     * @see #mapDoubleToObject(DoubleSequence, DoubleFunction) for mapping sequences of primitive doubles
+     * @see #mapLongToObject(Sequence.OfLong, LongFunction) for mapping sequences of primitive longs
+     * @see #mapDoubleToObject(Sequence.OfDouble, DoubleFunction) for mapping sequences of primitive doubles
      */
     <E, R> Sequence<R> mapToObject(Sequence<E> sequence, Function<? super E, ? extends R> mapper);
 
@@ -86,7 +86,7 @@ public interface Runtime {
      * @param <R>      the element type of the destination sequence
      * @return the sequence of objects
      */
-    <R> Sequence<R> mapLongToObject(LongSequence sequence, LongFunction<? extends R> mapper);
+    <R> Sequence<R> mapLongToObject(Sequence.OfLong sequence, LongFunction<? extends R> mapper);
 
     /**
      * Returns a sequence consisting of the results of applying the given function to the elements of the specified
@@ -97,7 +97,7 @@ public interface Runtime {
      * @param <R>      the element type of the destination sequence
      * @return the sequence of objects
      */
-    <R> Sequence<R> mapDoubleToObject(DoubleSequence sequence, DoubleFunction<? extends R> mapper);
+    <R> Sequence<R> mapDoubleToObject(Sequence.OfDouble sequence, DoubleFunction<? extends R> mapper);
 
     /**
      * Returns a sequence of primitive longs consisting of the results of applying the given function to the elements of
@@ -111,10 +111,10 @@ public interface Runtime {
      * @param mapper   the function to apply for each element: {@code E -> long}
      * @param <E>      the element type of the source sequence
      * @return the sequence of primitive longs
-     * @see #mapLongToLong(LongSequence, LongUnaryOperator) for mapping sequences of primitive longs
-     * @see #mapDoubleToLong(DoubleSequence, DoubleToLongFunction) for mapping sequences of primitive doubles
+     * @see #mapLongToLong(Sequence.OfLong, LongUnaryOperator) for mapping sequences of primitive longs
+     * @see #mapDoubleToLong(Sequence.OfDouble, DoubleToLongFunction) for mapping sequences of primitive doubles
      */
-    <E> LongSequence mapToLong(Sequence<E> sequence, ToLongFunction<? super E> mapper);
+    <E> Sequence.OfLong mapToLong(Sequence<E> sequence, ToLongFunction<? super E> mapper);
 
     /**
      * Returns a sequence of primitive longs consisting of the results of applying the given function to the elements of
@@ -124,7 +124,7 @@ public interface Runtime {
      * @param mapper   the function to apply for each element: {@code long -> long}
      * @return the sequence of primitive longs
      */
-    LongSequence mapLongToLong(LongSequence sequence, LongUnaryOperator mapper);
+    Sequence.OfLong mapLongToLong(Sequence.OfLong sequence, LongUnaryOperator mapper);
 
     /**
      * Returns a sequence of primitive longs consisting of the results of applying the given function to the elements of
@@ -134,7 +134,7 @@ public interface Runtime {
      * @param mapper   the function to apply for each element: {@code double -> long}
      * @return the sequence of primitive longs
      */
-    LongSequence mapDoubleToLong(DoubleSequence sequence, DoubleToLongFunction mapper);
+    Sequence.OfLong mapDoubleToLong(Sequence.OfDouble sequence, DoubleToLongFunction mapper);
 
     /**
      * Returns a sequence of primitive doubles consisting of the results of applying the given function to the elements
@@ -148,10 +148,10 @@ public interface Runtime {
      * @param mapper   the function to apply for each element: {@code E -> double}
      * @param <E>      the element type of the source sequence
      * @return the sequence of primitive doubles
-     * @see #mapLongToDouble(LongSequence, LongToDoubleFunction) for mapping sequences of primitive longs
-     * @see #mapDoubleToDouble(DoubleSequence, DoubleUnaryOperator) for mapping sequences of primitive doubles
+     * @see #mapLongToDouble(Sequence.OfLong, LongToDoubleFunction) for mapping sequences of primitive longs
+     * @see #mapDoubleToDouble(Sequence.OfDouble, DoubleUnaryOperator) for mapping sequences of primitive doubles
      */
-    <E> DoubleSequence mapToDouble(Sequence<E> sequence, ToDoubleFunction<? super E> mapper);
+    <E> Sequence.OfDouble mapToDouble(Sequence<E> sequence, ToDoubleFunction<? super E> mapper);
 
     /**
      * Returns a sequence of primitive doubles consisting of the results of applying the given function to the elements
@@ -161,7 +161,7 @@ public interface Runtime {
      * @param mapper   the function to apply for each element: {@code long -> double}
      * @return the sequence of primitive doubles
      */
-    DoubleSequence mapLongToDouble(LongSequence sequence, LongToDoubleFunction mapper);
+    Sequence.OfDouble mapLongToDouble(Sequence.OfLong sequence, LongToDoubleFunction mapper);
 
     /**
      * Returns a sequence of primitive doubles consisting of the results of applying the given function to the elements
@@ -171,5 +171,5 @@ public interface Runtime {
      * @param mapper   the function to apply for each element: {@code double -> double}
      * @return the sequence of primitive doubles
      */
-    DoubleSequence mapDoubleToDouble(DoubleSequence sequence, DoubleUnaryOperator mapper);
+    Sequence.OfDouble mapDoubleToDouble(Sequence.OfDouble sequence, DoubleUnaryOperator mapper);
 }

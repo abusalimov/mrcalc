@@ -1,7 +1,5 @@
 package com.abusalimov.mrcalc.runtime.impl.stream;
 
-import com.abusalimov.mrcalc.runtime.DoubleSequence;
-import com.abusalimov.mrcalc.runtime.LongSequence;
 import com.abusalimov.mrcalc.runtime.Runtime;
 import com.abusalimov.mrcalc.runtime.Sequence;
 
@@ -46,12 +44,12 @@ public class StreamRuntime implements Runtime {
     }
 
     @Override
-    public long reduceLong(LongSequence sequence, long identity, LongBinaryOperator operator) {
+    public long reduceLong(Sequence.OfLong sequence, long identity, LongBinaryOperator operator) {
         return longStream(sequence).reduce(identity, operator);
     }
 
     @Override
-    public double reduceDouble(DoubleSequence sequence, double identity, DoubleBinaryOperator operator) {
+    public double reduceDouble(Sequence.OfDouble sequence, double identity, DoubleBinaryOperator operator) {
         return doubleStream(sequence).reduce(identity, operator);
     }
 
@@ -63,13 +61,13 @@ public class StreamRuntime implements Runtime {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R> Sequence<R> mapLongToObject(LongSequence sequence, LongFunction<? extends R> mapper) {
+    public <R> Sequence<R> mapLongToObject(Sequence.OfLong sequence, LongFunction<? extends R> mapper) {
         return new ObjectArraySequence(longStream(sequence).mapToObj(mapper).toArray());
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R> Sequence<R> mapDoubleToObject(DoubleSequence sequence, DoubleFunction<? extends R> mapper) {
+    public <R> Sequence<R> mapDoubleToObject(Sequence.OfDouble sequence, DoubleFunction<? extends R> mapper) {
         return new ObjectArraySequence(doubleStream(sequence).mapToObj(mapper).toArray());
     }
 
@@ -79,12 +77,12 @@ public class StreamRuntime implements Runtime {
     }
 
     @Override
-    public LongArraySequence mapLongToLong(LongSequence sequence, LongUnaryOperator mapper) {
+    public LongArraySequence mapLongToLong(Sequence.OfLong sequence, LongUnaryOperator mapper) {
         return new LongArraySequence(longStream(sequence).map(mapper).toArray());
     }
 
     @Override
-    public LongArraySequence mapDoubleToLong(DoubleSequence sequence, DoubleToLongFunction mapper) {
+    public LongArraySequence mapDoubleToLong(Sequence.OfDouble sequence, DoubleToLongFunction mapper) {
         return new LongArraySequence(doubleStream(sequence).mapToLong(mapper).toArray());
     }
 
@@ -94,12 +92,12 @@ public class StreamRuntime implements Runtime {
     }
 
     @Override
-    public DoubleArraySequence mapLongToDouble(LongSequence sequence, LongToDoubleFunction mapper) {
+    public DoubleArraySequence mapLongToDouble(Sequence.OfLong sequence, LongToDoubleFunction mapper) {
         return new DoubleArraySequence(longStream(sequence).mapToDouble(mapper).toArray());
     }
 
     @Override
-    public DoubleArraySequence mapDoubleToDouble(DoubleSequence sequence, DoubleUnaryOperator mapper) {
+    public DoubleArraySequence mapDoubleToDouble(Sequence.OfDouble sequence, DoubleUnaryOperator mapper) {
         return new DoubleArraySequence(doubleStream(sequence).map(mapper).toArray());
     }
 
@@ -107,11 +105,11 @@ public class StreamRuntime implements Runtime {
         return StreamSupport.stream(sequence.spliterator(), parallel);
     }
 
-    protected LongStream longStream(LongSequence sequence) {
+    protected LongStream longStream(Sequence.OfLong sequence) {
         return StreamSupport.longStream(sequence.spliterator(), parallel);
     }
 
-    protected DoubleStream doubleStream(DoubleSequence sequence) {
+    protected DoubleStream doubleStream(Sequence.OfDouble sequence) {
         return StreamSupport.doubleStream(sequence.spliterator(), parallel);
     }
 

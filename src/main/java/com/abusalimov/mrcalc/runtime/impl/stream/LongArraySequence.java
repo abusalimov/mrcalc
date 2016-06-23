@@ -1,6 +1,6 @@
 package com.abusalimov.mrcalc.runtime.impl.stream;
 
-import com.abusalimov.mrcalc.runtime.LongSequence;
+import com.abusalimov.mrcalc.runtime.Sequence;
 
 import java.util.AbstractList;
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import java.util.Spliterator;
  *
  * @author Eldar Abusalimov
  */
-public class LongArraySequence extends AbstractList<Long> implements LongSequence {
+public class LongArraySequence extends AbstractList<Long> implements Sequence.OfLong {
     private final long[] a;
 
     /**

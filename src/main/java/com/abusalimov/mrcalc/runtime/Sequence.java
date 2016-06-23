@@ -13,4 +13,20 @@ import java.util.Spliterator;
 public interface Sequence<E> extends List<E>, RandomAccess {
     @Override
     Spliterator<E> spliterator();
+
+    /**
+     * A Sequence specialized to primitive longs.
+     */
+    interface OfLong extends Sequence<Long> {
+        @Override
+        Spliterator.OfLong spliterator();
+    }
+
+    /**
+     * A Sequence specialized to primitive doubles.
+     */
+    interface OfDouble extends Sequence<Double> {
+        @Override
+        Spliterator.OfDouble spliterator();
+    }
 }

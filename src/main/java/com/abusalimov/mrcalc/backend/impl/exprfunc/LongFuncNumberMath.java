@@ -1,7 +1,6 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.NumberMath;
-import com.abusalimov.mrcalc.runtime.LongSequence;
 import com.abusalimov.mrcalc.runtime.Sequence;
 
 /**
@@ -18,7 +17,7 @@ public class LongFuncNumberMath extends FuncObjectMath<Long>
         return (runtime, args) -> {
             long start = startOperand.eval(runtime, args);
             long end = endOperand.eval(runtime, args);
-            LongSequence longSequence = runtime.createLongRange(start, end + 1);
+            Sequence.OfLong longSequence = runtime.createLongRange(start, end + 1);
             return runtime.mapLongToObject(longSequence, value -> value);  /* Box primitive longs. */
         };
     }

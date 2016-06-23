@@ -1,6 +1,5 @@
 package com.abusalimov.mrcalc.runtime.impl.stream;
 
-import com.abusalimov.mrcalc.runtime.DoubleSequence;
 import com.abusalimov.mrcalc.runtime.Sequence;
 
 import java.util.AbstractList;
@@ -13,7 +12,7 @@ import java.util.Spliterator;
  *
  * @author Eldar Abusalimov
  */
-public class DoubleArraySequence extends AbstractList<Double> implements DoubleSequence {
+public class DoubleArraySequence extends AbstractList<Double> implements Sequence.OfDouble {
     private final double[] a;
 
     /**

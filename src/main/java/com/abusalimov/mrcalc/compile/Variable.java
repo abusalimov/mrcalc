@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.compile;
 
+import com.abusalimov.mrcalc.compile.type.PrimitiveType;
 import com.abusalimov.mrcalc.compile.type.Type;
 
 import java.util.Objects;
@@ -36,8 +37,7 @@ public class Variable {
     /**
      * Return the type inferred for this variable.
      *
-     * @return a non-{@code null} type (this may be
-     * {@link com.abusalimov.mrcalc.compile.type.Primitive#UNKNOWN} though)
+     * @return a non-{@code null} type (this may be {@link PrimitiveType#UNKNOWN} though)
      */
     public Type getType() {
         return type;

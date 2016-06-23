@@ -7,8 +7,8 @@ import com.abusalimov.mrcalc.ast.NodeArgVisitor;
 import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
-import com.abusalimov.mrcalc.compile.type.Primitive;
-import com.abusalimov.mrcalc.compile.type.Sequence;
+import com.abusalimov.mrcalc.compile.type.PrimitiveType;
+import com.abusalimov.mrcalc.compile.type.SequenceType;
 import com.abusalimov.mrcalc.compile.type.Type;
 import com.abusalimov.mrcalc.diagnostic.DiagnosticListener;
 
@@ -19,20 +19,20 @@ import java.util.*;
  * <p>
  * Rules that are used to infer a type of an expression are simple and straightforward:
  * <ul>
- * <li> Literal constants are {@link Primitive} scalars: either {@link Primitive#INTEGER} or {@link Primitive#FLOAT};
+ * <li> Literal constants are {@link PrimitiveType} scalars: either {@link PrimitiveType#INTEGER} or {@link PrimitiveType#FLOAT};
  *
  * <li> References to a global variable obviously yield a type of that variable. The type inferrer relies on an
  *      externally provided mapping of typed variables;
  *
  * <li> Unary operation expression has a primitive type of the sole operand;
  *
- * <li> Binary operation expression type is inferred from the operands using {@link Primitive#promote(List) promotion}
- *      rules by widening the operand types to a common primitive type. For example, adding an {@link Primitive#INTEGER}
- *      and a {@link Primitive#FLOAT} together yields a {@link Primitive#FLOAT} as the most wide types of two;
+ * <li> Binary operation expression type is inferred from the operands using {@link PrimitiveType#promote(List) promotion}
+ *      rules by widening the operand types to a common primitive type. For example, adding an {@link PrimitiveType#INTEGER}
+ *      and a {@link PrimitiveType#FLOAT} together yields a {@link PrimitiveType#FLOAT} as the most wide types of two;
  *
- * <li> Ranges yield a {@link Sequence} of {@link Primitive#INTEGER}s;
+ * <li> Ranges yield a {@link SequenceType} of {@link PrimitiveType#INTEGER}s;
  *
- * <li> A call to the map() function yields a {@link Sequence} of a return type of its lambda applied to an element of a
+ * <li> A call to the map() function yields a {@link SequenceType} of a return type of its lambda applied to an element of a
  *      sequence passed in: {@code map([T], (T -> R)) -> [R]};
  *
  * <li> A call to the reduce() function yields a type of the sequence element, which also must be exactly the same as
@@ -89,7 +89,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
     protected Type inferLambdaType(ExprTypeInfo parentExprTypeInfo, String funcName, LambdaNode lambda,
                                    Type... argTypes) {
         if (!checkLambdaArity(lambda, argTypes.length, funcName)) {
-            return Primitive.UNKNOWN;
+            return PrimitiveType.UNKNOWN;
         }
         List<Variable> argVariableMap = createArgList(lambda.getArgNames(), argTypes);
 
@@ -125,7 +125,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         if (variable == null) {
             emitNodeDiagnostic(node,
                     String.format("Undefined variable '%s'", node.getName()));
-            return Primitive.UNKNOWN;
+            return PrimitiveType.UNKNOWN;
         }
 
         return variable.getType();
@@ -133,12 +133,12 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
 
     @Override
     public Type doVisit(IntegerLiteralNode node, ExprTypeInfo exprTypeInfo) {
-        return Primitive.INTEGER;
+        return PrimitiveType.INTEGER;
     }
 
     @Override
     public Type doVisit(FloatLiteralNode node, ExprTypeInfo exprTypeInfo) {
-        return Primitive.FLOAT;
+        return PrimitiveType.FLOAT;
     }
 
     @Override
@@ -146,14 +146,14 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         Type leftType = visit(node.getOperandA(), exprTypeInfo);
         Type rightType = visit(node.getOperandB(), exprTypeInfo);
 
-        if (!(leftType instanceof Primitive && rightType instanceof Primitive)) {
+        if (!(leftType instanceof PrimitiveType && rightType instanceof PrimitiveType)) {
             emitNodeDiagnostic(node,
                     String.format("Operator '%s' cannot be applied to '%s' and '%s'",
                             node.getOp().getSign(), leftType, rightType));
-            return Primitive.UNKNOWN;
+            return PrimitiveType.UNKNOWN;
         }
 
-        return Primitive.promote((Primitive) leftType, (Primitive) rightType);
+        return PrimitiveType.promote((PrimitiveType) leftType, (PrimitiveType) rightType);
     }
 
     @Override
@@ -163,21 +163,21 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
 
     @Override
     public Type doVisit(RangeNode node, ExprTypeInfo exprTypeInfo) {
-        Type elementType = Primitive.INTEGER;
+        Type elementType = PrimitiveType.INTEGER;
 
         for (Node child : node.getChildren()) {
             Type childType = visit(child, exprTypeInfo);
-            if (childType != Primitive.INTEGER) {
+            if (childType != PrimitiveType.INTEGER) {
                 /* Avoid cascade reporting in case of inner expression errors. */
-                if (childType != Primitive.UNKNOWN) {
+                if (childType != PrimitiveType.UNKNOWN) {
                     emitNodeDiagnostic(child,
                             String.format("Range cannot have '%s' as its boundary", childType));
                 }
-                elementType = Primitive.UNKNOWN;
+                elementType = PrimitiveType.UNKNOWN;
             }
         }
 
-        return Sequence.of(elementType);
+        return SequenceType.of(elementType);
     }
 
     @Override
@@ -187,7 +187,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
 
         Type lambdaType = inferLambdaType(exprTypeInfo, "map()", node.getLambda(), sequenceElementType);
 
-        return Sequence.of(lambdaType);
+        return SequenceType.of(lambdaType);
     }
 
     @Override
@@ -201,21 +201,21 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         Type retType = lambdaType;
 
         if (!neutralType.equals(sequenceElementType)) {
-            if (neutralType != Primitive.UNKNOWN && sequenceElementType != Primitive.UNKNOWN) {
+            if (neutralType != PrimitiveType.UNKNOWN && sequenceElementType != PrimitiveType.UNKNOWN) {
                 emitNodeDiagnostic(node.getNeutral(),
                         String.format("Neutral element type '%s' is incompatible with sequence element type '%s'",
                                       neutralType, sequenceElementType));
             }
-            retType = Primitive.UNKNOWN;
+            retType = PrimitiveType.UNKNOWN;
         }
 
         if (!lambdaType.equals(sequenceElementType)) {
-            if (lambdaType != Primitive.UNKNOWN && sequenceElementType != Primitive.UNKNOWN) {
+            if (lambdaType != PrimitiveType.UNKNOWN && sequenceElementType != PrimitiveType.UNKNOWN) {
                 emitNodeDiagnostic(node.getLambda(),
                         String.format("Lambda return type '%s' is incompatible with sequence element type '%s'",
                                       lambdaType, sequenceElementType));
             }
-            retType = Primitive.UNKNOWN;
+            retType = PrimitiveType.UNKNOWN;
         }
 
         return retType;
@@ -247,14 +247,14 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
     }
 
     private Type checkSequenceType(Type type, ExprNode sequence, String funcName) {
-        if (!(type instanceof Sequence)) {
-            if (type != Primitive.UNKNOWN) {
+        if (!(type instanceof SequenceType)) {
+            if (type != PrimitiveType.UNKNOWN) {
                 emitNodeDiagnostic(sequence,
                         String.format("%s cannot be applied to a scalar '%s'", funcName, type));
             }
-            return Primitive.UNKNOWN;
+            return PrimitiveType.UNKNOWN;
         }
-        return ((Sequence) type).getElementType();
+        return ((SequenceType) type).getElementType();
     }
 
     private List<Variable> createArgList(List<String> argNames, Type... argTypes) {

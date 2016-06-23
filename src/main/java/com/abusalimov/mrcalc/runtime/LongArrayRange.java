@@ -5,13 +5,13 @@ package com.abusalimov.mrcalc.runtime;
  *
  * @author Eldar Abusalimov
  */
-public class LongRange extends LongSequence {
+public class LongArrayRange extends LongArraySequence {
     /**
      * Creates a new range starting from zero.
      *
      * @param endExclusive the end boundary of the range (exclusive), which is also the length of the range
      */
-    public LongRange(long endExclusive) {
+    public LongArrayRange(long endExclusive) {
         this(0, endExclusive);
     }
 
@@ -21,7 +21,7 @@ public class LongRange extends LongSequence {
      * @param startInclusive the start boundary of the range (inclusive)
      * @param endExclusive   the end boundary of the range (exclusive)
      */
-    public LongRange(long startInclusive, long endExclusive) {
+    public LongArrayRange(long startInclusive, long endExclusive) {
         super(createArray(startInclusive, endExclusive));
     }
 

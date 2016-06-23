@@ -31,8 +31,8 @@ public class StreamRuntime implements Runtime {
     }
 
     @Override
-    public LongSequence createLongRange(long startInclusive, long endExclusive) {
-        return new LongRange(startInclusive, endExclusive);
+    public LongArraySequence createLongRange(long startInclusive, long endExclusive) {
+        return new LongArrayRange(startInclusive, endExclusive);
     }
 
     @Override
@@ -53,49 +53,49 @@ public class StreamRuntime implements Runtime {
     @Override
     @SuppressWarnings("unchecked")
     public <E, R> Sequence<R> mapToObject(Sequence<E> sequence, Function<? super E, ? extends R> mapper) {
-        return new ObjectSequence(objectStream(sequence).map(mapper).toArray());
+        return new ObjectArraySequence(objectStream(sequence).map(mapper).toArray());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <R> Sequence<R> mapLongToObject(LongSequence sequence, LongFunction<? extends R> mapper) {
-        return new ObjectSequence(longStream(sequence).mapToObj(mapper).toArray());
+        return new ObjectArraySequence(longStream(sequence).mapToObj(mapper).toArray());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <R> Sequence<R> mapDoubleToObject(DoubleSequence sequence, DoubleFunction<? extends R> mapper) {
-        return new ObjectSequence(doubleStream(sequence).mapToObj(mapper).toArray());
+        return new ObjectArraySequence(doubleStream(sequence).mapToObj(mapper).toArray());
     }
 
     @Override
-    public <E> LongSequence mapToLong(Sequence<E> sequence, ToLongFunction<? super E> mapper) {
-        return new LongSequence(objectStream(sequence).mapToLong(mapper).toArray());
+    public <E> LongArraySequence mapToLong(Sequence<E> sequence, ToLongFunction<? super E> mapper) {
+        return new LongArraySequence(objectStream(sequence).mapToLong(mapper).toArray());
     }
 
     @Override
-    public LongSequence mapLongToLong(LongSequence sequence, LongUnaryOperator mapper) {
-        return new LongSequence(longStream(sequence).map(mapper).toArray());
+    public LongArraySequence mapLongToLong(LongSequence sequence, LongUnaryOperator mapper) {
+        return new LongArraySequence(longStream(sequence).map(mapper).toArray());
     }
 
     @Override
-    public LongSequence mapDoubleToLong(DoubleSequence sequence, DoubleToLongFunction mapper) {
-        return new LongSequence(doubleStream(sequence).mapToLong(mapper).toArray());
+    public LongArraySequence mapDoubleToLong(DoubleSequence sequence, DoubleToLongFunction mapper) {
+        return new LongArraySequence(doubleStream(sequence).mapToLong(mapper).toArray());
     }
 
     @Override
-    public <E> DoubleSequence mapToDouble(Sequence<E> sequence, ToDoubleFunction<? super E> mapper) {
-        return new DoubleSequence(objectStream(sequence).mapToDouble(mapper).toArray());
+    public <E> DoubleArraySequence mapToDouble(Sequence<E> sequence, ToDoubleFunction<? super E> mapper) {
+        return new DoubleArraySequence(objectStream(sequence).mapToDouble(mapper).toArray());
     }
 
     @Override
-    public DoubleSequence mapLongToDouble(LongSequence sequence, LongToDoubleFunction mapper) {
-        return new DoubleSequence(longStream(sequence).mapToDouble(mapper).toArray());
+    public DoubleArraySequence mapLongToDouble(LongSequence sequence, LongToDoubleFunction mapper) {
+        return new DoubleArraySequence(longStream(sequence).mapToDouble(mapper).toArray());
     }
 
     @Override
-    public DoubleSequence mapDoubleToDouble(DoubleSequence sequence, DoubleUnaryOperator mapper) {
-        return new DoubleSequence(doubleStream(sequence).map(mapper).toArray());
+    public DoubleArraySequence mapDoubleToDouble(DoubleSequence sequence, DoubleUnaryOperator mapper) {
+        return new DoubleArraySequence(doubleStream(sequence).map(mapper).toArray());
     }
 
     protected <E> Stream<E> objectStream(Sequence<E> sequence) {

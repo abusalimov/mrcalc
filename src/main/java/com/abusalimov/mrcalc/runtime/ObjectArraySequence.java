@@ -6,12 +6,14 @@ import java.util.Objects;
 import java.util.Spliterator;
 
 /**
+ * Implementation of generic sequence backed by an array of {@link Object}s.
+ *
  * @author Eldar Abusalimov
  */
-public class ObjectSequence<E> extends AbstractList<E> implements Sequence<E> {
+public class ObjectArraySequence<E> extends AbstractList<E> implements Sequence<E> {
     private final E[] a;
 
-    public ObjectSequence(E[] array) {
+    public ObjectArraySequence(E[] array) {
         a = Objects.requireNonNull(array);
     }
 

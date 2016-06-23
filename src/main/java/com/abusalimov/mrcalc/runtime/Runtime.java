@@ -6,6 +6,8 @@ import java.util.function.*;
  * The runtime provides the necessary support functions (mainly for map() / reduce()) used for evaluating an expression.
  * It also serves as a factory for certain types of objects, like {@link #createLongRange(long, long) ranges}.
  *
+ * The {@link Runtime} implementation only accepts
+ *
  * @author Eldar Abusalimov
  */
 public interface Runtime {

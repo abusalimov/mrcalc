@@ -1,4 +1,4 @@
-package com.abusalimov.mrcalc.runtime;
+package com.abusalimov.mrcalc.runtime.impl.stream;
 
 /**
  * A simple and naive implementation of range of longs.

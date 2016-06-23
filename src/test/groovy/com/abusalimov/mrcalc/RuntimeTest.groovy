@@ -1,7 +1,7 @@
 package com.abusalimov.mrcalc
 
 import com.abusalimov.mrcalc.runtime.Runtime
-import com.abusalimov.mrcalc.runtime.StreamRuntime
+import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
 import org.junit.Before
 import org.junit.Test
 

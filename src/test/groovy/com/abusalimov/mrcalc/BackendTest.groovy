@@ -5,7 +5,7 @@ import com.abusalimov.mrcalc.backend.Expr
 import com.abusalimov.mrcalc.backend.NumberMath
 import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
 import com.abusalimov.mrcalc.runtime.Evaluable
-import com.abusalimov.mrcalc.runtime.StreamRuntime
+import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
 import org.junit.Before
 import org.junit.Test
 

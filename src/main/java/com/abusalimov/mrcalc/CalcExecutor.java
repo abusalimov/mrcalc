@@ -11,7 +11,7 @@ import com.abusalimov.mrcalc.parse.Parser;
 import com.abusalimov.mrcalc.parse.SyntaxErrorException;
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl;
 import com.abusalimov.mrcalc.runtime.Runtime;
-import com.abusalimov.mrcalc.runtime.StreamRuntime;
+import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime;
 
 import java.io.OutputStream;
 import java.io.PrintStream;

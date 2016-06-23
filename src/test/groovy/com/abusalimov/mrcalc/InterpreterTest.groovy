@@ -6,7 +6,7 @@ import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
 import com.abusalimov.mrcalc.runtime.Runtime
-import com.abusalimov.mrcalc.runtime.StreamRuntime
+import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test

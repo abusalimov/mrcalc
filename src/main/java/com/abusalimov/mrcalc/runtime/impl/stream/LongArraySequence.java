@@ -1,4 +1,6 @@
-package com.abusalimov.mrcalc.runtime;
+package com.abusalimov.mrcalc.runtime.impl.stream;
+
+import com.abusalimov.mrcalc.runtime.LongSequence;
 
 import java.util.AbstractList;
 import java.util.Arrays;

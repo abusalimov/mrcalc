@@ -1,4 +1,9 @@
-package com.abusalimov.mrcalc.runtime;
+package com.abusalimov.mrcalc.runtime.impl.stream;
+
+import com.abusalimov.mrcalc.runtime.DoubleSequence;
+import com.abusalimov.mrcalc.runtime.LongSequence;
+import com.abusalimov.mrcalc.runtime.Runtime;
+import com.abusalimov.mrcalc.runtime.Sequence;
 
 import java.util.function.*;
 import java.util.stream.DoubleStream;

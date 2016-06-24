@@ -82,7 +82,7 @@ public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
      *
      * @author Eldar Abusalimov
      */
-    protected interface NumberOpStackStub extends StackManipulation, StackStub {
+    protected interface NumberOpStackStub<T extends Number> extends StackManipulation, StackStub {
 
         @Override
         default Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
@@ -115,12 +115,29 @@ public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
          *
          * @return the size change of the stack after executing the instruction
          */
-        int getOperandSizeImpact();
+        default int getOperandSizeImpact() {
+            return getOperandStackImpact() * StackSize.of(getOperandType()).getSize();
+        }
+
+        /**
+         * Returns the impact of the operation represented by the number of operands pushed or popped, regardless the
+         * {@link StackSize} of the operands.
+         *
+         * @return the change of the stack in number of operands after executing the instruction
+         */
+        int getOperandStackImpact();
+
+        /**
+         * Returns the type of the operands.
+         *
+         * @return the type of the operands
+         */
+        Class<T> getOperandType();
 
         /**
          * Stack stubs of instructions for math operation on longs.
          */
-        enum ForLong implements NumberOpStackStub {
+        enum ForLong implements NumberOpStackStub<Long> {
             ADD(Opcodes.LADD, -1),
             SUB(Opcodes.LSUB, -1),
             MUL(Opcodes.LMUL, -1),
@@ -136,8 +153,13 @@ public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
             }
 
             @Override
-            public int getOperandSizeImpact() {
-                return operandStackImpact * StackSize.of(long.class).getSize();
+            public Class<Long> getOperandType() {
+                return long.class;
+            }
+
+            @Override
+            public int getOperandStackImpact() {
+                return operandStackImpact;
             }
 
             @Override

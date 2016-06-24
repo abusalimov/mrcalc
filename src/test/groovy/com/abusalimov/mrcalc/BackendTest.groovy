@@ -1,7 +1,7 @@
 package com.abusalimov.mrcalc
 
 import com.abusalimov.mrcalc.backend.Backend
-import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
+import com.abusalimov.mrcalc.backend.impl.bytebuddy.BytebuddyBackendImpl
 import com.abusalimov.mrcalc.runtime.Runtime
 import com.abusalimov.mrcalc.runtime.Sequence
 import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
@@ -20,7 +20,7 @@ class BackendTest<E, F> {
 
     @Before
     void setUp() {
-        backend = new FuncBackendImpl<>() as Backend<E, F>
+        backend = new BytebuddyBackendImpl<>() as Backend<E, F>
     }
 
     def createFasm(Class<?> returnType, List<? extends Class<?>> parameterTypes) {

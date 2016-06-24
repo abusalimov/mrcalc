@@ -9,7 +9,7 @@ import java.util.List;
  *
  * @author Eldar Abusalimov
  */
-public enum Primitive implements Type {
+public enum PrimitiveType implements Type {
     INTEGER("integer", Long.class),
     FLOAT("float", Double.class),
 
@@ -22,7 +22,7 @@ public enum Primitive implements Type {
     private final String name;
     private final Class<? extends Number> typeClass;
 
-    Primitive(String name, Class<? extends Number> typeClass) {
+    PrimitiveType(String name, Class<? extends Number> typeClass) {
         this.name = name;
         this.typeClass = typeClass;
     }
@@ -34,7 +34,7 @@ public enum Primitive implements Type {
      * @return the most wide type
      * @see #promote(List)
      */
-    public static Primitive promote(Primitive... types) {
+    public static PrimitiveType promote(PrimitiveType... types) {
         return promote(Arrays.asList(types));
     }
 
@@ -46,15 +46,14 @@ public enum Primitive implements Type {
      * @param types the list of types to promote
      * @return the the most wide type of the specified types, or {@link #UNKNOWN} in case the list is empty
      */
-    public static Primitive promote(List<Primitive> types) {
+    public static PrimitiveType promote(List<PrimitiveType> types) {
         if (types.size() > 0) {
             return Collections.max(types);
         }
         return UNKNOWN;
     }
 
-    @Override
-    public Primitive getPrimitive() {
+    public PrimitiveType getPrimitiveType() {
         return this;
     }
 

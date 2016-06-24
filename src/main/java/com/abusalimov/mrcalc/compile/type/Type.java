@@ -7,12 +7,12 @@ package com.abusalimov.mrcalc.compile.type;
  */
 public interface Type {
     /**
-     * Returns the {@link Primitive} itself for primitives, or the primitive type of the innermost element in case of
+     * Returns the {@link PrimitiveType} itself for primitives, or the primitive type of the innermost element in case of
      * sequence types.
      *
      * @return the underlying scalar type
      */
-    Primitive getPrimitive();
+    PrimitiveType getPrimitiveType();
 
     /**
      * Returns a Java class corresponding to this type.

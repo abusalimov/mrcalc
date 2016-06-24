@@ -2,7 +2,7 @@ package com.abusalimov.mrcalc.compile;
 
 import com.abusalimov.mrcalc.ast.ExprHolderNode;
 import com.abusalimov.mrcalc.ast.expr.ExprNode;
-import com.abusalimov.mrcalc.compile.type.Primitive;
+import com.abusalimov.mrcalc.compile.type.PrimitiveType;
 import com.abusalimov.mrcalc.compile.type.Type;
 
 import java.util.*;
@@ -58,14 +58,14 @@ public class ExprTypeInfo {
     }
 
     /**
-     * Tells whether all sub-expressions have valid types (i.e. neither of that is {@link Primitive#UNKNOWN}), and each
+     * Tells whether all sub-expressions have valid types (i.e. neither of that is {@link PrimitiveType#UNKNOWN}), and each
      * {@link #getChild(ExprHolderNode) child} is also complete.
      *
      * @return true if the expression has valid types inferred for each its sub-expression, false otherwise
      */
     public boolean isComplete() {
         return (!exprTypeMap.isEmpty() &&
-                exprTypeMap.values().stream().allMatch(type -> type.getPrimitive() != Primitive.UNKNOWN) &&
+                exprTypeMap.values().stream().allMatch(type -> type.getPrimitiveType() != PrimitiveType.UNKNOWN) &&
                 childMap.values().stream().allMatch(ExprTypeInfo::isComplete));
     }
 

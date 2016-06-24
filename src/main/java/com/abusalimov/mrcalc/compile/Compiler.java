@@ -8,11 +8,12 @@ import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.backend.Backend;
+import com.abusalimov.mrcalc.runtime.Evaluable;
+import com.abusalimov.mrcalc.runtime.Runtime;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -53,7 +54,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     }
 
     /**
-     * Compiles an AST root into a list of {@link Stmt#exec(Map) executable} statements.
+     * Compiles an AST root into a list of {@link Stmt#exec(Runtime, Map) executable} statements.
      * <p>
      * Calling this method is almost identical to invoking {@link #compile(StmtNode)} multiple times, except that all
      * diagnostics reported, if any, are composed into a single {@link CompileErrorException exception} instance.
@@ -149,7 +150,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     protected Stmt compileInternal(ExprHolderNode node, String outputVariableName) {
         ExprTypeInfo exprTypeInfo = inferTypeInfo(node);
 
-        Function<Object[], ?> exprFunction = exprTypeInfo.isComplete() ? buildExprFunction(exprTypeInfo) : null;
+        Evaluable<?> exprFunction = exprTypeInfo.isComplete() ? buildExprFunction(exprTypeInfo) : null;
 
         List<Variable> inputVariables = exprTypeInfo.getReferencedVariables();
         Variable outputVariable = new Variable(outputVariableName, exprTypeInfo.getExprType());
@@ -176,7 +177,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
      * @return a callable
      * @throws IllegalArgumentException if the exprTypeInfo is {@link ExprTypeInfo#isComplete() incomplete}
      */
-    protected Function<Object[], ?> buildExprFunction(ExprTypeInfo exprTypeInfo) {
+    protected Evaluable<?> buildExprFunction(ExprTypeInfo exprTypeInfo) {
         return exprBuilder.buildFunction(exprTypeInfo);
     }
 

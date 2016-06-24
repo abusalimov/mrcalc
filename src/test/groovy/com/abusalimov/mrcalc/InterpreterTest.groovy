@@ -5,6 +5,8 @@ import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
 import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
+import com.abusalimov.mrcalc.runtime.Runtime
+import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
@@ -18,6 +20,7 @@ class InterpreterTest {
     private Parser parser
     private Backend backend
     private Compiler compiler
+    private Runtime runtime
     private Interpreter interpreter
 
     @Before
@@ -25,7 +28,8 @@ class InterpreterTest {
         parser = new ANTLRParserImpl()
         backend = new FuncBackendImpl()
         compiler = new Compiler(backend)
-        interpreter = new Interpreter()
+        runtime = new StreamRuntime()
+        interpreter = new Interpreter(runtime)
     }
 
     def eval(String s) {

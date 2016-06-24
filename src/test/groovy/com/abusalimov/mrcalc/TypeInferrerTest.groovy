@@ -4,8 +4,8 @@ import com.abusalimov.mrcalc.ast.ExprHolderNode
 import com.abusalimov.mrcalc.compile.CompileErrorException
 import com.abusalimov.mrcalc.compile.TypeInferrer
 import com.abusalimov.mrcalc.compile.Variable
-import com.abusalimov.mrcalc.compile.type.Primitive
-import com.abusalimov.mrcalc.compile.type.Sequence
+import com.abusalimov.mrcalc.compile.type.PrimitiveType
+import com.abusalimov.mrcalc.compile.type.SequenceType
 import com.abusalimov.mrcalc.compile.type.Type
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
@@ -49,37 +49,37 @@ class TypeInferrerTest {
 
     @Test
     void "infers direct type of literals"() {
-        assert Primitive.INTEGER == infer("0")
-        assert Primitive.INTEGER == infer("1")
-        assert Primitive.INTEGER == infer("(1+2)")
-        assert Primitive.FLOAT == infer("1.0")
+        assert PrimitiveType.INTEGER == infer("0")
+        assert PrimitiveType.INTEGER == infer("1")
+        assert PrimitiveType.INTEGER == infer("(1+2)")
+        assert PrimitiveType.FLOAT == infer("1.0")
     }
 
     @Test
     void "infers proper types from variable references"() {
-        assert Primitive.INTEGER == infer("foo", ["foo": Primitive.INTEGER])
-        assert Primitive.FLOAT == infer("a^2", ["a": Primitive.FLOAT])
+        assert PrimitiveType.INTEGER == infer("foo", ["foo": PrimitiveType.INTEGER])
+        assert PrimitiveType.FLOAT == infer("a^2", ["a": PrimitiveType.FLOAT])
     }
 
     @Test
     void "infers type of simple expressions"() {
-        assert Primitive.FLOAT == infer("0*0.0")
-        assert Primitive.FLOAT == infer("1.0+0")
-        assert Primitive.INTEGER == infer("1/2")
-        assert Primitive.FLOAT == infer("1./2")
-        assert Primitive.FLOAT == infer("1^(2.)")
-        assert Primitive.FLOAT == infer("foo+boo", ["foo": Primitive.INTEGER, "boo": Primitive.FLOAT])
-        assert Primitive.FLOAT == infer("foo+boo", ["foo": Primitive.FLOAT, "boo": Primitive.FLOAT])
-        assert Primitive.INTEGER == infer("foo+boo", ["foo": Primitive.INTEGER, "boo": Primitive.INTEGER])
+        assert PrimitiveType.FLOAT == infer("0*0.0")
+        assert PrimitiveType.FLOAT == infer("1.0+0")
+        assert PrimitiveType.INTEGER == infer("1/2")
+        assert PrimitiveType.FLOAT == infer("1./2")
+        assert PrimitiveType.FLOAT == infer("1^(2.)")
+        assert PrimitiveType.FLOAT == infer("foo+boo", ["foo": PrimitiveType.INTEGER, "boo": PrimitiveType.FLOAT])
+        assert PrimitiveType.FLOAT == infer("foo+boo", ["foo": PrimitiveType.FLOAT, "boo": PrimitiveType.FLOAT])
+        assert PrimitiveType.INTEGER == infer("foo+boo", ["foo": PrimitiveType.INTEGER, "boo": PrimitiveType.INTEGER])
 
         assert shouldDiagnose("cannot be applied") {
-            infer("map({1,2}, x -> 1) + seq", ["seq": Sequence.of(Primitive.INTEGER)])
+            infer("map({1,2}, x -> 1) + seq", ["seq": SequenceType.of(PrimitiveType.INTEGER)])
         }
         assert shouldDiagnose("cannot be applied") {
-            infer("map({1,2}, x -> 1) + num", ["num": Primitive.INTEGER])
+            infer("map({1,2}, x -> 1) + num", ["num": PrimitiveType.INTEGER])
         }
         assert shouldDiagnose("cannot be applied") {
-            infer("10 + seq", ["seq": Sequence.of(Primitive.INTEGER)])
+            infer("10 + seq", ["seq": SequenceType.of(PrimitiveType.INTEGER)])
         }
     }
 
@@ -99,13 +99,13 @@ class TypeInferrerTest {
         def vars = ["ints"  : infer("map({1,2}, a -> a^2)"),
                     "floats": infer("map({1,2}, a -> a+2.0)")]
 
-        assert Sequence.of(Primitive.INTEGER) == vars.ints
-        assert Sequence.of(Primitive.FLOAT) == vars.floats
-        assert Primitive.INTEGER == infer("reduce(ints, 0, a b -> a+b)", vars)
-        assert Primitive.FLOAT == infer("reduce(floats, 0.0, a b -> a+b)", vars)
+        assert SequenceType.of(PrimitiveType.INTEGER) == vars.ints
+        assert SequenceType.of(PrimitiveType.FLOAT) == vars.floats
+        assert PrimitiveType.INTEGER == infer("reduce(ints, 0, a b -> a+b)", vars)
+        assert PrimitiveType.FLOAT == infer("reduce(floats, 0.0, a b -> a+b)", vars)
         assert shouldDiagnose("incompatible") { infer("reduce(ints, 0.0, a b -> a+b)", vars) }
         assert shouldDiagnose("incompatible") { infer("reduce(floats, 0, a b -> a+b)", vars) }
-        assert Primitive.FLOAT == infer("reduce(ints, 0, a b -> a+b) + reduce(floats, 0.0, a b -> a+b)", vars)
+        assert PrimitiveType.FLOAT == infer("reduce(ints, 0, a b -> a+b) + reduce(floats, 0.0, a b -> a+b)", vars)
     }
 
     @Test
@@ -113,11 +113,11 @@ class TypeInferrerTest {
         def vars = ["ints"  : infer("map({1,2}, x -> map({1,2}, x -> map({1,2}, x -> map({1,2}, x -> 1))))"),
                     "floats": infer("map({1,2}, x -> map({1,2}, x -> map({1,2}, x -> map({1,2}, x -> 1.0))))")]
 
-        assert Sequence.of(Sequence.of(Sequence.of(Sequence.of(Primitive.INTEGER)))) == vars.ints
-        assert Sequence.of(Sequence.of(Sequence.of(Sequence.of(Primitive.FLOAT)))) == vars.floats
-//        assert Primitive.INTEGER == infer("reduce(ints, 0,  x y -> x + reduce(y, 0,  x y -> x + reduce(y, 0,  x y -> x + reduce(y, 0,  x y -> x + y))))", vars)
-//        assert Primitive.FLOAT == infer("reduce(ints,   0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + y))))", vars)
-//        assert Primitive.FLOAT == infer("reduce(floats, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + y))))", vars)
+        assert SequenceType.of(SequenceType.of(SequenceType.of(SequenceType.of(PrimitiveType.INTEGER)))) == vars.ints
+        assert SequenceType.of(SequenceType.of(SequenceType.of(SequenceType.of(PrimitiveType.FLOAT)))) == vars.floats
+//        assert PrimitiveType.INTEGER == infer("reduce(ints, 0,  x y -> x + reduce(y, 0,  x y -> x + reduce(y, 0,  x y -> x + reduce(y, 0,  x y -> x + y))))", vars)
+//        assert PrimitiveType.FLOAT == infer("reduce(ints,   0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + y))))", vars)
+//        assert PrimitiveType.FLOAT == infer("reduce(floats, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + reduce(y, 0., x y -> x + y))))", vars)
         assert shouldDiagnose("incompatible") {
             infer("reduce(floats, 0, x y -> x + reduce(y, 0, x y -> x + reduce(y, 0, x y -> x + reduce(y, 0, x y -> x + y))))", vars)
         }
@@ -154,10 +154,10 @@ class TypeInferrerTest {
 
     @Test
     void "undefined variables"() {
-        assert shouldDiagnose("undefined") { infer("a+b", ["aa": Primitive.INTEGER, "bb": Primitive.INTEGER]) }
+        assert shouldDiagnose("undefined") { infer("a+b", ["aa": PrimitiveType.INTEGER, "bb": PrimitiveType.INTEGER]) }
         assert shouldDiagnose("undefined") { infer("map(a, x -> x)") }
         assert shouldDiagnose("undefined") { infer("reduce(a, 0., x y -> x+y)") }
         assert shouldDiagnose("undefined") { infer("map({1, 2}, x -> y)") }
-        assert shouldDiagnose("undefined") { infer("map({1, 2}, x -> y)", ["y": Primitive.INTEGER]) }
+        assert shouldDiagnose("undefined") { infer("map({1, 2}, x -> y)", ["y": PrimitiveType.INTEGER]) }
     }
 }

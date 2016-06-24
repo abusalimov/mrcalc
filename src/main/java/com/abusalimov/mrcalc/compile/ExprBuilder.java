@@ -6,11 +6,11 @@ import com.abusalimov.mrcalc.ast.NodeArgVisitor;
 import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.expr.literal.LiteralNode;
 import com.abusalimov.mrcalc.backend.*;
-import com.abusalimov.mrcalc.compile.type.Primitive;
+import com.abusalimov.mrcalc.compile.type.PrimitiveType;
 import com.abusalimov.mrcalc.compile.type.Type;
+import com.abusalimov.mrcalc.runtime.Evaluable;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * Expression builder turns a valid expression into a callable function.
@@ -41,7 +41,7 @@ public class ExprBuilder<E extends Expr> implements NodeArgVisitor<E, ExprTypeIn
      * @throws IllegalArgumentException if the {@code ExprTypeInfo} provided is {@link ExprTypeInfo#isComplete()
      *                                  incomplete}
      */
-    public Function<Object[], ?> buildFunction(ExprTypeInfo eti) {
+    public Evaluable<?> buildFunction(ExprTypeInfo eti) {
         if (!eti.isComplete()) {
             throw new IllegalArgumentException("Incomplete ExprTypeInfo");
         }
@@ -110,7 +110,7 @@ public class ExprBuilder<E extends Expr> implements NodeArgVisitor<E, ExprTypeIn
         E startOperand = visit(node.getStart(), eti);
         E endOperand = visit(node.getEnd(), eti);
 
-        return getNumberMath(Primitive.INTEGER).range(startOperand, endOperand);
+        return getNumberMath(PrimitiveType.INTEGER).range(startOperand, endOperand);
     }
 
     @Override
@@ -153,17 +153,17 @@ public class ExprBuilder<E extends Expr> implements NodeArgVisitor<E, ExprTypeIn
     }
 
     private NumberCast<E, E> getNumberCast(Type toType, Type fromType) {
-        if (!(toType instanceof Primitive && fromType instanceof Primitive)) {
+        if (!(toType instanceof PrimitiveType && fromType instanceof PrimitiveType)) {
             throw new IllegalArgumentException("Nodes of primitive types expected");
         }
-        Primitive toPrimitive = (Primitive) toType;
-        Primitive fromPrimitive = (Primitive) fromType;
+        PrimitiveType toPrimitiveType = (PrimitiveType) toType;
+        PrimitiveType fromPrimitiveType = (PrimitiveType) fromType;
 
-        if (fromPrimitive == toPrimitive) {
+        if (fromPrimitiveType == toPrimitiveType) {
             return expr -> expr;
         }
 
-        return backend.getNumberCast(toPrimitive.getTypeClass(), fromPrimitive.getTypeClass());
+        return backend.getNumberCast(toPrimitiveType.getTypeClass(), fromPrimitiveType.getTypeClass());
     }
 
     @Override

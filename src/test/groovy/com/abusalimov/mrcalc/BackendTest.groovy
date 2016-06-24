@@ -56,11 +56,27 @@ class BackendTest<E, F> {
     }
 
     @Test
-    void "test add of two variables"() {
+    void "test add of two long variables"() {
         def fasm = createFasm(long, long, long)
         def iAdd = fasm(fasm.lMath.add(fasm.lLoad(0), fasm.lLoad(1)))
         assert 7L == iAdd(runtime, 3L, 4L)
         assert 150L == iAdd(runtime, 100L, 50L)
+    }
+
+    @Test
+    void "test add of two double variables"() {
+        def fasm = createFasm(double, double, double)
+        def dAdd = fasm(fasm.dMath.add(fasm.dLoad(0), fasm.dLoad(1)))
+        assert 3.0D.isCloseTo(dAdd(runtime, 1.0D, 2.0D))
+        assert (-1.0D).isCloseTo(dAdd(runtime, 1.0D, -2.0D))
+    }
+
+    @Test
+    void "test add of double and casted long variables"() {
+        def fasm = createFasm(double, double, long)
+        def add = fasm(fasm.dMath.add(fasm.dLoad(0), fasm.l2d.cast(fasm.lLoad(1))))
+        assert 5.0D.isCloseTo(add(runtime, 1.0D, 4L))
+        assert (-37.5D).isCloseTo(add(runtime, 12.5D, -50L))
     }
 
     @Test

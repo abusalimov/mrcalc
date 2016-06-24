@@ -46,7 +46,7 @@ class InterpreterTest {
     }
 
     @Test
-    void "calculates simple math expressions"() {
+    void "calculates simple integer math expressions"() {
         assert 1L == eval("0 + 1")
         assert 27L == eval("(1+2)^3")
         assert 42L == eval("1 + 5*8 + 1")
@@ -55,6 +55,15 @@ class InterpreterTest {
         assert 256L == eval("(2^2)^2^2")
         assert 65536L == eval("2^(2^2^2)")
         shouldFail ArithmeticException, { eval "1/0" }
+    }
+
+    @Test
+    void "calculates simple math expressions with mixed types"() {
+        assert 1D.isCloseTo(eval(".0 + 1"))
+        assert 2D.isCloseTo(eval("(1+3)^.5"))
+        assert 1.5D.isCloseTo(eval("(1+5)^-1.0 * (8+1)"))
+        assert 4D.isCloseTo(eval("2^(2^2^.5)"))
+        assert Double.POSITIVE_INFINITY == eval("1/.0")
     }
 
     @Test

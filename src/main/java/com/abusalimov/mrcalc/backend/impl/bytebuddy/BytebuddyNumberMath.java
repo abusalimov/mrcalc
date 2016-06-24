@@ -5,6 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.implementation.bytecode.constant.DoubleConstant;
 import net.bytebuddy.implementation.bytecode.constant.LongConstant;
 import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
@@ -12,13 +13,13 @@ import net.bytebuddy.jar.asm.Opcodes;
 import java.util.function.Function;
 
 /**
- * Implements basic number operation for abstract operands. Subclasses should only provide a {@link StackStub}s
- * corresponding to the certain operation by its name.
+ * Implements number operations for each number type.
  *
  * @author Eldar Abusalimov
  */
 public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
-    LONG(LongConstant::forValue, NumberOpStackStub.ForLong::valueOf);
+    LONG(LongConstant::forValue, NumberOpStackStub.ForLong::valueOf),
+    DOUBLE(DoubleConstant::forValue, NumberOpStackStub.ForDouble::valueOf);
 
     private final Function<Number, StackManipulation> constantProvider;
     private final Function<String, StackStub> opStackStubProvider;
@@ -31,8 +32,8 @@ public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
     }
 
     public static <T extends Number> BytebuddyNumberMath forType(Class<T> type) {
-        if (type == long.class) {
-            return LONG;
+        if (type.isPrimitive()) {
+            return BytebuddyNumberMath.valueOf(type.getName().toUpperCase());
         } else {
             throw new UnsupportedOperationException("Unknown Number class " + type);
         }
@@ -167,5 +168,40 @@ public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
                 return opcode;
             }
         }
+
+        /**
+         * Stack stubs of instructions for math operation on doubles.
+         */
+        enum ForDouble implements NumberOpStackStub {
+            ADD(Opcodes.DADD, -1),
+            SUB(Opcodes.DSUB, -1),
+            MUL(Opcodes.DMUL, -1),
+            DIV(Opcodes.DDIV, -1),
+            NEG(Opcodes.DNEG, 0);
+
+            private final int opcode;
+            private final int operandStackImpact;
+
+            ForDouble(int opcode, int operandStackImpact) {
+                this.opcode = opcode;
+                this.operandStackImpact = operandStackImpact;
+            }
+
+            @Override
+            public Class<Double> getOperandType() {
+                return double.class;
+            }
+
+            @Override
+            public int getOperandStackImpact() {
+                return operandStackImpact;
+            }
+
+            @Override
+            public int getOpcode() {
+                return opcode;
+            }
+        }
+
     }
 }

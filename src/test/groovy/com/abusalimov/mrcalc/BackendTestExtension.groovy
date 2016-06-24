@@ -36,6 +36,14 @@ class BackendTestExtension {
         self.getNumberMath(Double.TYPE)
     }
 
+    static <R, E, F> E lConst(final FunctionAssembler<R, E, F> self, long l) {
+        self.lMath.constant(l)
+    }
+
+    static <R, E, F> E dConst(final FunctionAssembler<R, E, F> self, double d) {
+        self.dMath.constant(d)
+    }
+
     static <R, E, F> NumberCast<E, E> getL2d(final FunctionAssembler<R, E, F> self) {
         self.getNumberCast(double, long)
     }
@@ -44,11 +52,11 @@ class BackendTestExtension {
         self.getNumberCast(long, double)
     }
 
-    static <R, E, F> E lConst(final FunctionAssembler<R, E, F> self, long l) {
-        self.lMath.constant(l)
+    static <E, F> E call(final NumberCast<E, F> self, F from) {
+        self.cast(from)
     }
 
-    static <R, E, F> E dConst(final FunctionAssembler<R, E, F> self, double d) {
-        self.dMath.constant(d)
+    static boolean isCloseTo(Double self, Object other) {
+        other instanceof Double && (Math.abs(self - other) < 1e-10)
     }
 }

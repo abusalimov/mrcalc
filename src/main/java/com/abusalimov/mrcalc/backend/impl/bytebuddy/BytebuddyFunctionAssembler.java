@@ -22,9 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -32,13 +30,6 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * @author Eldar Abusalimov
  */
 public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, StackStub, Class<?>> {
-    private static final Map<Class<?>, NumberMath<? extends Number, StackStub>> numberMathMap = new HashMap<>();
-
-    static {
-        numberMathMap.put(Long.TYPE, BytebuddyLongMath.INSTANCE);
-//        numberMathMap.put(Double.TYPE, DoubleFuncNumberMath.INSTANCE);
-    }
-
     private final Class<R> returnType;
     private final Class<?>[] parameterTypes;
 
@@ -49,7 +40,6 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
 
     protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<?> getImplementationDefinition() {
         return new ByteBuddy()
-//                .with(ClassFileVersion.JAVA_V6)
                 .subclass(BaseFunction.class)
                 .defineMethod("applyExpr", returnType, Opcodes.ACC_PUBLIC)
                 .withParameters((Type[]) parameterTypes);
@@ -125,13 +115,10 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         };
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends Number> NumberMath<T, StackStub> getNumberMath(Class<T> returnType) {
-        @SuppressWarnings("unchecked") Map<Class<T>, NumberMath<T, StackStub>> mathMap = (Map) numberMathMap;
-        return mathMap.computeIfAbsent(
-                Objects.requireNonNull(returnType, "returnType"), aClass -> {
-                    throw new UnsupportedOperationException("Unknown Number class " + aClass);
-                });
+        return (NumberMath<T, StackStub>) BytebuddyNumberMath.forType(returnType);
     }
 
     @Override

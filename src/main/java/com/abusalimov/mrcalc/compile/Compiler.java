@@ -39,7 +39,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
     private final Map<String, Variable> globalVariableMap = new LinkedHashMap<>();
 
     private final TypeInferrer typeInferrer;
-    private final ExprBuilder<?> exprBuilder;
+    private final ExprBuilder exprBuilder;
 
     private int syntheticVariableCounter;
 
@@ -48,7 +48,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
      *
      * @param backend the backend implementation
      */
-    public Compiler(Backend<?> backend) {
+    public Compiler(Backend<?, ?> backend) {
         typeInferrer = new TypeInferrer();
         exprBuilder = new ExprBuilder<>(backend);
     }

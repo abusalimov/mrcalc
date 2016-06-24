@@ -32,7 +32,7 @@ public class REPL {
 
     public REPL() {
         parser = new ANTLRParserImpl();
-        Backend<?> exprBuilderFactory = new FuncBackendImpl();
+        Backend exprBuilderFactory = new FuncBackendImpl();
         compiler = new Compiler(exprBuilderFactory);
         Runtime runtime = new StreamRuntime();
         interpreter = new Interpreter(runtime, System.out);

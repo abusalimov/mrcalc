@@ -3,15 +3,21 @@ package com.abusalimov.mrcalc.backend;
 /**
  * The backend class for assembling numeric expressions.
  * <p>
- * Provides extended set of factory methods for creating expressions implementing the numeric math.
+ * Provides factory methods for creating expressions implementing the numeric math.
  *
  * @param <T> the base numeric type operated on by the expressions constructed using this factory
  * @param <E> the main expression type used by the implementation
- * @param <F> the auxiliary expression type used to emphasize the distinction with the base expression type and ensure
- *            type safety. This is likely to identical to the E type upon generic instantiation
  * @author Eldar Abusalimov
  */
-public interface NumberMath<T extends Number, E extends Expr, F extends Expr> extends ObjectMath<T, E, F> {
+public interface NumberMath<T extends Number, E> {
+    /**
+     * Creates an expression yielding the specified constant.
+     *
+     * @param literal the constant to return from the expression
+     * @return the expression returning the constant value
+     */
+    E constant(T literal);
+
     /* The basic Math operations, the semantics should be obvious. */
 
     /** Expression adding the results of evaluating two operand expressions together. */
@@ -31,14 +37,4 @@ public interface NumberMath<T extends Number, E extends Expr, F extends Expr> ex
 
     /** Expression negating the result of evaluating the operand expression. */
     E neg(E operand);
-
-    /**
-     * Creates an expression yielding a range object with its boundaries calculated by evaluating the specified start
-     * and stop expressions.
-     *
-     * @param start the expression yielding a value of the start boundary of the range
-     * @param end   the expression yielding a value of the end boundary of the range
-     * @return the expression creating a new range sequence
-     */
-    F range(E start, E end);
 }

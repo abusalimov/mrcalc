@@ -10,8 +10,8 @@ import java.util.List;
  * @author Eldar Abusalimov
  */
 public enum PrimitiveType implements Type {
-    INTEGER("integer", Long.class),
-    FLOAT("float", Double.class),
+    INTEGER("integer", Long.TYPE),
+    FLOAT("float", Double.TYPE),
 
     /**
      * The UNKNOWN type is a special case. It is used as a placeholder when the proper type of the expression can't be

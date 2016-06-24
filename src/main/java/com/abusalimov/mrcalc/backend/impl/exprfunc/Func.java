@@ -1,6 +1,5 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
-import com.abusalimov.mrcalc.backend.Expr;
 import com.abusalimov.mrcalc.runtime.Evaluable;
 
 /**
@@ -9,5 +8,5 @@ import com.abusalimov.mrcalc.runtime.Evaluable;
  * @param <T> the return type of the function (used for more strict type checking)
  * @author Eldar Abusalimov
  */
-interface FuncExpr<T> extends Evaluable<T>, Expr {
+interface Func<T> extends Evaluable<T> {
 }

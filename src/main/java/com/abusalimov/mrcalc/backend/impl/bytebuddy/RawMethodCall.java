@@ -15,30 +15,42 @@ import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Extends the {@link MethodCall} class with a method for unpacking the arguments from an array argument of the
- * enclosing method.
- * <p>
- * <pre>
- *     Foo instrumentedMethod(Bar[] args) {
- *         return invokedMethod(args[0], args[1], ...);
- *     }
- * </pre>
+ * Extends the {@link MethodCall} class with few necessary methods and constructors.
  *
  * @author Eldar Abusalimov
  */
-public class ArgumentUnpackingMethodCall extends MethodCall {
+public class RawMethodCall extends MethodCall {
+
+    /**
+     * Creates a new method call without a specified target.
+     *
+     * @param method The method to use.
+     */
+    protected RawMethodCall(Method method) {
+        this(new MethodDescription.ForLoadedMethod(method));
+    }
+
+    /**
+     * Creates a new method call without a specified target.
+     *
+     * @param methodDescription The method description to use.
+     */
+    protected RawMethodCall(MethodDescription methodDescription) {
+        this(new MethodLocator.ForExplicitMethod(methodDescription));
+    }
 
     /**
      * Creates a new method call without a specified target.
      *
      * @param methodLocator The method locator to use.
      */
-    protected ArgumentUnpackingMethodCall(MethodLocator methodLocator) {
+    protected RawMethodCall(MethodLocator methodLocator) {
         this(methodLocator,
                 TargetHandler.ForStackTopOperand.INSTANCE,
                 Collections.emptyList(),
@@ -60,15 +72,14 @@ public class ArgumentUnpackingMethodCall extends MethodCall {
      * @param assigner           The assigner to use.
      * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected ArgumentUnpackingMethodCall(MethodLocator methodLocator, MethodCall.TargetHandler targetHandler,
-                                          List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
-                                          MethodInvoker methodInvoker,
-                                          MethodCall.TerminationHandler terminationHandler,
-                                          Assigner assigner,
-                                          Assigner.Typing typing) {
+    protected RawMethodCall(MethodLocator methodLocator, MethodCall.TargetHandler targetHandler,
+                            List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
+                            MethodInvoker methodInvoker,
+                            MethodCall.TerminationHandler terminationHandler,
+                            Assigner assigner,
+                            Assigner.Typing typing) {
         super(methodLocator, targetHandler, argumentLoaders, methodInvoker, terminationHandler, assigner, typing);
     }
-
 
     /**
      * Invokes the given constructor in order to create an instance.
@@ -90,7 +101,7 @@ public class ArgumentUnpackingMethodCall extends MethodCall {
         if (!methodDescription.isConstructor()) {
             throw new IllegalArgumentException("Not a constructor: " + methodDescription);
         }
-        return new ArgumentUnpackingMethodCall(new MethodLocator.ForExplicitMethod(methodDescription),
+        return new RawMethodCall(new MethodLocator.ForExplicitMethod(methodDescription),
                 MethodCall.TargetHandler.ForConstructingInvocation.INSTANCE,
                 Collections.emptyList(),
                 MethodInvoker.ForContextualInvocation.INSTANCE,
@@ -99,16 +110,21 @@ public class ArgumentUnpackingMethodCall extends MethodCall {
                 Assigner.Typing.STATIC);
     }
 
-
     /**
      * Defines a method call that unpacks the array found in the specified parameter of the instrumented method and
      * passes its elements as arguments to the invoked method.
+     * <p>
+     * <pre>
+     *     Foo instrumentedMethod(Bar[] args) {
+     *         return invokedMethod(args[0], args[1], ...);
+     *     }
+     * </pre>
      *
      * @param parameterIndex       the index of the parameter containing the array of argument values
      * @param argumentsArrayLength how many arguments to unpack from the array
      * @return a new {@link MethodCall} instance
      */
-    public ArgumentUnpackingMethodCall withArgumentsArray(int parameterIndex, int argumentsArrayLength) {
+    public RawMethodCall withArgumentsArray(int parameterIndex, int argumentsArrayLength) {
         if (parameterIndex < 0) {
             throw new IllegalArgumentException("Negative parameter index: " + parameterIndex);
         }
@@ -119,7 +135,7 @@ public class ArgumentUnpackingMethodCall extends MethodCall {
         ArgumentLoader.Factory argumentLoader = new ArgumentLoader.ForArgumentsArray.FromInstrumentedMethodArgument(
                 parameterIndex, argumentsArrayLength);
 
-        return new ArgumentUnpackingMethodCall(methodLocator,
+        return new RawMethodCall(methodLocator,
                 targetHandler,
                 CompoundList.of(this.argumentLoaders, argumentLoader),
                 methodInvoker,
@@ -238,32 +254,6 @@ public class ArgumentUnpackingMethodCall extends MethodCall {
      */
     protected interface TargetHandler extends MethodCall.TargetHandler {
 
-        /**
-         * Invokes a method in order to construct a new instance.
-         */
-        class ForTargetInvocation implements MethodCall.TargetHandler {
-            private final StackManipulation target;
-
-            public ForTargetInvocation(StackManipulation target) {
-                this.target = target;
-            }
-
-            @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod,
-                                             TypeDescription instrumentedType, Assigner assigner,
-                                             Assigner.Typing typing) {
-                if (invokedMethod.isStatic()) {
-                    return StackManipulation.Trivial.INSTANCE;
-                }
-                return target;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
-            }
-        }
-
         enum ForStackTopOperand implements MethodCall.TargetHandler {
             INSTANCE;
 
@@ -271,7 +261,6 @@ public class ArgumentUnpackingMethodCall extends MethodCall {
             public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod,
                                              TypeDescription instrumentedType, Assigner assigner,
                                              Assigner.Typing typing) {
-//                return StackManipulation.Trivial.INSTANCE;
                 return new StackOperandTrivialManipulation(Object.class);
             }
 
@@ -300,12 +289,36 @@ public class ArgumentUnpackingMethodCall extends MethodCall {
             }
         }
 
+        /**
+         * Invokes a method in order to construct a new instance.
+         */
+        class ForTargetInvocation implements MethodCall.TargetHandler {
+            private final StackManipulation target;
 
+            public ForTargetInvocation(StackManipulation target) {
+                this.target = target;
+            }
+
+            @Override
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod,
+                                             TypeDescription instrumentedType, Assigner assigner,
+                                             Assigner.Typing typing) {
+                if (invokedMethod.isStatic()) {
+                    return StackManipulation.Trivial.INSTANCE;
+                }
+                return target;
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+        }
     }
 
     /**
-     * A termination handler is responsible to handle the return value of a method that is invoked via a
-     * {@link net.bytebuddy.implementation.MethodCall}.
+     * A termination handler is responsible to handle the return value of a method that is invoked via a {@link
+     * net.bytebuddy.implementation.MethodCall}.
      */
     protected interface TerminationHandler extends MethodCall.TerminationHandler {
 
@@ -317,7 +330,8 @@ public class ArgumentUnpackingMethodCall extends MethodCall {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod,
+                                             Assigner assigner, Assigner.Typing typing) {
                 return StackManipulation.Trivial.INSTANCE;
             }
 

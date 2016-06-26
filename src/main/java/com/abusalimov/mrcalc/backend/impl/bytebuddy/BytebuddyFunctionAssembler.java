@@ -85,13 +85,13 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
-        MethodCall exprConstructorCall = ArgumentUnpackingMethodCall.construct(constructor).withArgument(0);
+        MethodCall exprConstructorCall = RawMethodCall.construct(constructor).withArgument(0);
 
         DynamicType.Unloaded<Evaluable> dynamicType = new ByteBuddy()
                 .subclass(Evaluable.class)
                 .method(named("eval"))
                 .intercept(new Implementation.Compound(exprConstructorCall,
-                        new ArgumentUnpackingMethodCall(new MethodCall.MethodLocator.ForExplicitMethod(evalMethod))
+                        new RawMethodCall(evalMethod)
                                 .withArgumentsArray(1, evalMethod.getParameters().size())
                                 .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC)))
                 .make();

@@ -99,7 +99,7 @@ public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
         }
 
         @Override
-        default StackManipulation eval(MethodDescription instrumentedMethod) {
+        default StackManipulation eval(Target implementationTarget, MethodDescription instrumentedMethod) {
             return this;
         }
 

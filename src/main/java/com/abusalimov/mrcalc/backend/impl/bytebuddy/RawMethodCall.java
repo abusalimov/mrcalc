@@ -1,31 +1,45 @@
 package com.abusalimov.mrcalc.backend.impl.bytebuddy;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayAccess;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Extends the {@link MethodCall} class with few necessary methods and constructors.
  *
  * @author Eldar Abusalimov
  */
-public class RawMethodCall extends MethodCall {
+public class RawMethodCall extends MethodCall implements StackStub {
+
+    private static final Field RUNTIME_FIELD;
+
+    static {
+        try {
+            RUNTIME_FIELD = BytebuddyFunctionAssembler.BaseFunction.class.getField("runtime");
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Creates a new method call without a specified target.
@@ -33,7 +47,13 @@ public class RawMethodCall extends MethodCall {
      * @param method The method to use.
      */
     protected RawMethodCall(Method method) {
-        this(new MethodDescription.ForLoadedMethod(method));
+        this(new MethodDescription.ForLoadedMethod(method),
+                TargetHandler.ForStackTopOperand.INSTANCE,
+                Collections.emptyList(),
+                MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
+                TerminationHandler.ForMethodReturn.INSTANCE,
+                Assigner.DEFAULT,
+                Assigner.Typing.STATIC);
     }
 
     /**
@@ -42,7 +62,13 @@ public class RawMethodCall extends MethodCall {
      * @param methodDescription The method description to use.
      */
     protected RawMethodCall(MethodDescription methodDescription) {
-        this(new MethodLocator.ForExplicitMethod(methodDescription));
+        this(new MethodLocator.ForExplicitMethod(methodDescription),
+                TargetHandler.ForStackTopOperand.INSTANCE,
+                Collections.emptyList(),
+                MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
+                TerminationHandler.ForMethodReturn.INSTANCE,
+                Assigner.DEFAULT,
+                Assigner.Typing.STATIC);
     }
 
     /**
@@ -58,6 +84,50 @@ public class RawMethodCall extends MethodCall {
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 Assigner.DEFAULT,
                 Assigner.Typing.STATIC);
+    }
+
+    /**
+     * Creates a new method call without a specified target.
+     *
+     * @param method             The method to use.
+     * @param targetHandler      The target handler to use.
+     * @param argumentLoaders    The argument loader to load arguments onto the operand stack in their application
+     *                           order.
+     * @param methodInvoker      The method invoker to use.
+     * @param terminationHandler The termination handler to use.
+     * @param assigner           The assigner to use.
+     * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
+     */
+    protected RawMethodCall(Method method, MethodCall.TargetHandler targetHandler,
+                            List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
+                            MethodInvoker methodInvoker,
+                            MethodCall.TerminationHandler terminationHandler,
+                            Assigner assigner,
+                            Assigner.Typing typing) {
+        this(new MethodDescription.ForLoadedMethod(method),
+                targetHandler, argumentLoaders, methodInvoker, terminationHandler, assigner, typing);
+    }
+
+    /**
+     * Creates a new method call without a specified target.
+     *
+     * @param methodDescription  The method description to use.
+     * @param targetHandler      The target handler to use.
+     * @param argumentLoaders    The argument loader to load arguments onto the operand stack in their application
+     *                           order.
+     * @param methodInvoker      The method invoker to use.
+     * @param terminationHandler The termination handler to use.
+     * @param assigner           The assigner to use.
+     * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
+     */
+    protected RawMethodCall(MethodDescription methodDescription, MethodCall.TargetHandler targetHandler,
+                            List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
+                            MethodInvoker methodInvoker,
+                            MethodCall.TerminationHandler terminationHandler,
+                            Assigner assigner,
+                            Assigner.Typing typing) {
+        this(new MethodLocator.ForExplicitMethod(methodDescription),
+                targetHandler, argumentLoaders, methodInvoker, terminationHandler, assigner, typing);
     }
 
     /**
@@ -110,6 +180,26 @@ public class RawMethodCall extends MethodCall {
                 Assigner.Typing.STATIC);
     }
 
+    public static RawMethodCall invokeRuntime(Method method, StackManipulation... arguments) {
+        return new RawMethodCall(method,
+                new TargetHandler.ForSuperInstanceField(new FieldDescription.ForLoadedField(RUNTIME_FIELD)),
+                Collections.singletonList(new ArgumentLoader.ForStackManipulations(arguments)),
+                MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
+                TerminationHandler.ForStub.INSTANCE,
+                Assigner.DEFAULT,
+                Assigner.Typing.STATIC);
+    }
+
+//    public static RawMethodCall invokeRuntime(Method method, int arguments) {
+//        return new RawMethodCall(method,
+//                new MethodCall.TargetHandler.ForInstanceField("runtime", TypeDefinition.Sort.describe(Runtime.class)),
+//                Collections.singletonList(new ArgumentLoader.ForStackTopOperand(arguments)),
+//                MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
+//                TerminationHandler.ForStub.INSTANCE,
+//                Assigner.DEFAULT,
+//                Assigner.Typing.STATIC);
+//    }
+
     /**
      * Defines a method call that unpacks the array found in the specified parameter of the instrumented method and
      * passes its elements as arguments to the invoked method.
@@ -144,6 +234,35 @@ public class RawMethodCall extends MethodCall {
                 typing);
     }
 
+    @Override
+    public ByteCodeAppender appender(Target implementationTarget) {
+        return new StackStub.Appender(implementationTarget, this);
+    }
+
+    @Override
+    public StackManipulation eval(Target implementationTarget, MethodDescription instrumentedMethod) {
+        MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
+        List<MethodCall.ArgumentLoader> argumentLoaders = new ArrayList<>(RawMethodCall.this.argumentLoaders.size());
+        for (MethodCall.ArgumentLoader.Factory argumentLoader : RawMethodCall.this.argumentLoaders) {
+            argumentLoaders.addAll(argumentLoader.make(implementationTarget.getInstrumentedType(), instrumentedMethod));
+        }
+        ParameterList<?> parameters = invokedMethod.getParameters();
+        Iterator<? extends ParameterDescription> parameterIterator = parameters.iterator();
+        if (parameters.size() != argumentLoaders.size()) {
+            throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
+        }
+        List<StackManipulation> argumentInstructions = argumentLoaders.stream()
+                .map(argumentLoader -> argumentLoader.resolve(parameterIterator.next(), assigner, typing))
+                .collect(Collectors.toList());
+        return new StackManipulation.Compound(
+                targetHandler.resolve(invokedMethod, instrumentedMethod, implementationTarget.getInstrumentedType(),
+                        assigner, typing),
+                new StackManipulation.Compound(argumentInstructions),
+                methodInvoker.invoke(invokedMethod, implementationTarget),
+                terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, typing)
+        );
+    }
+
     /**
      * Extends the {@link MethodCall.ArgumentLoader} to get access to the protected members.
      */
@@ -156,6 +275,52 @@ public class RawMethodCall extends MethodCall {
             @Override
             default InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
+            }
+        }
+
+        /**
+         * Produces no-op ArgumentLoaders assuming that the necessary arguments are already on stack.
+         */
+        class ForStackManipulations implements ArgumentLoader.Factory {
+            private final List<StackManipulation> stackManipulations;
+
+            public ForStackManipulations(StackManipulation... stackManipulations) {
+                this(Arrays.asList(stackManipulations));
+            }
+
+            public ForStackManipulations(List<StackManipulation> stackManipulations) {
+                this.stackManipulations = stackManipulations;
+            }
+
+            @Override
+            public List<MethodCall.ArgumentLoader> make(TypeDescription instrumentedType,
+                                                        MethodDescription instrumentedMethod) {
+                return stackManipulations.stream()
+                        .map(stackManipulation -> (ArgumentLoader) (target, assigner, typing) -> stackManipulation)
+                        .collect(Collectors.toList());
+            }
+        }
+
+        /**
+         * Produces no-op ArgumentLoaders assuming that the necessary arguments are already on stack.
+         */
+        class ForStackTopOperand implements ArgumentLoader.Factory {
+            private final int arguments;
+
+            public ForStackTopOperand() {
+                this(1);
+            }
+
+            public ForStackTopOperand(int arguments) {
+                this.arguments = arguments;
+            }
+
+            @Override
+            public List<MethodCall.ArgumentLoader> make(TypeDescription instrumentedType,
+                                                        MethodDescription instrumentedMethod) {
+                ArgumentLoader trivialArgumentLoader = (target, assigner, typing) ->
+                        new StackOperandTrivialManipulation(target.getType().getStackSize());
+                return Collections.nCopies(arguments, trivialArgumentLoader);
             }
         }
 
@@ -268,24 +433,49 @@ public class RawMethodCall extends MethodCall {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType;
             }
+        }
 
-            protected static class StackOperandTrivialManipulation implements StackManipulation {
+        /**
+         * Creates a target handler that stores the instance to invoke a method on in an instance field.
+         */
+        class ForSuperInstanceField implements TargetHandler {
+            private FieldDescription fieldDescription;
 
-                private final int size;
+            public ForSuperInstanceField(FieldDescription fieldDescription) {
+                this.fieldDescription = fieldDescription;
+            }
 
-                public StackOperandTrivialManipulation(Class<?> operandType) {
-                    size = StackSize.of(operandType).getSize();
-                }
+            @Override
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod,
+                                             TypeDescription instrumentedType, Assigner assigner,
+                                             Assigner.Typing typing) {
+                return new StackManipulation.Compound(
+                        invokedMethod.isStatic()
+                                ? StackManipulation.Trivial.INSTANCE
+                                : MethodVariableAccess.REFERENCE.loadOffset(0),
+                        FieldAccess.forField(fieldDescription).getter());
+            }
 
-                @Override
-                public boolean isValid() {
-                    return true;
-                }
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
 
-                @Override
-                public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
-                    return new Size(0, size);
-                }
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass()) &&
+                                        fieldDescription.equals(((ForSuperInstanceField) other).fieldDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return fieldDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.TargetHandler.ForInstanceField{" +
+                       "fieldDescription=" + fieldDescription + '}';
             }
         }
 
@@ -338,4 +528,28 @@ public class RawMethodCall extends MethodCall {
         }
     }
 
+    /**
+     * No-op stack manipulation that just reports the the specified size.
+     */
+    protected static class StackOperandTrivialManipulation implements StackManipulation {
+        private final int size;
+
+        public StackOperandTrivialManipulation(StackSize stackSize) {
+            size = stackSize.getSize();
+        }
+
+        public StackOperandTrivialManipulation(Class<?> operandType) {
+            this(StackSize.of(operandType));
+        }
+
+        @Override
+        public boolean isValid() {
+            return true;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext) {
+            return new Size(0, size);
+        }
+    }
 }

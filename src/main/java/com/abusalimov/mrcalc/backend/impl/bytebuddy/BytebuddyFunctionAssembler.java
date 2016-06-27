@@ -41,15 +41,18 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<?> getImplementationDefinition() {
         return new ByteBuddy()
                 .subclass(BaseFunction.class)
+//                .defineField("runtime", Runtime.class, Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL)
+//                .constructor(ElementMatchers.takesArguments(1))
+//                .intercept(FieldAccessor.ofField("runtime"))
+//                .intercept(MethodDelegation.toInstanceField(Runtime.class, "runtime"))
                 .defineMethod("applyExpr", returnType, Opcodes.ACC_PUBLIC)
                 .withParameters((Type[]) parameterTypes);
     }
 
     @Override
     public Class<?> assemble(StackStub expr) {
-
         DynamicType.Unloaded<?> dynamicType = getImplementationDefinition()
-                .intercept(new Implementation.Simple(new StackStub.Appender(expr, getMethodReturn())))
+                .intercept(new StackStub.Compound(expr, getMethodReturn()))
                 .make();
         try {
             Map<TypeDescription, File> typeDescriptionFileMap = dynamicType
@@ -65,7 +68,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     }
 
     protected StackStub getMethodReturn() {
-        return instrumentedMethod ->
+        return (implementationTarget, instrumentedMethod) ->
                 MethodReturn.returning(instrumentedMethod.getReturnType().asErasure());
     }
 
@@ -103,13 +106,11 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         } catch (InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-
-
     }
 
     @Override
     public ArgumentLoad<StackStub> getArgumentLoad(Class<?> parameterType) {
-        return slot -> instrumentedMethod -> {
+        return slot -> (implementationTarget, instrumentedMethod) -> {
             ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(slot);
             return MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset());
         };
@@ -132,7 +133,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
 
     @Override
     public SequenceRange<StackStub, StackStub> getSequenceRange(Class<? extends Number> elementType) {
-        throw new RuntimeException("NIY getSequenceRange");
+        return BytebuddySequenceRange.forType(elementType);
     }
 
     @Override
@@ -168,14 +169,10 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     }
 
     public static abstract class BaseFunction {
-        private final Runtime runtime;
+        public final Runtime runtime;
 
         public BaseFunction(Runtime runtime) {
             this.runtime = runtime;
-        }
-
-        public Runtime getRuntime() {
-            return runtime;
         }
     }
 }

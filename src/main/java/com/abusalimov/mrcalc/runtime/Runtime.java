@@ -21,6 +21,17 @@ public interface Runtime {
     Sequence.OfLong createLongRange(long startInclusive, long endExclusive);
 
     /**
+     * Creates a new {@link Sequence.OfLong} filled by integers between the specified boundaries.
+     *
+     * @param startInclusive the start boundary of the range (inclusive)
+     * @param endInclusive   the end boundary of the range (inclusive)
+     * @return the new {@link Sequence.OfLong} instance
+     */
+    default Sequence.OfLong createLongRangeInclusive(long startInclusive, long endInclusive) {
+        return createLongRange(startInclusive, endInclusive + 1);
+    }
+
+    /**
      * Performs a reduction on the elements of the given sequence, using the provided identity value and an associative
      * accumulation function, and returns the reduced value.
      * <p>

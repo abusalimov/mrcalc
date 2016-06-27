@@ -1,15 +1,18 @@
 package com.abusalimov.mrcalc.backend.impl.bytebuddy;
 
 import com.abusalimov.mrcalc.backend.NumberMath;
+import com.abusalimov.mrcalc.runtime.Runtime;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.implementation.bytecode.constant.DoubleConstant;
 import net.bytebuddy.implementation.bytecode.constant.LongConstant;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
 
+import java.lang.reflect.Method;
 import java.util.function.Function;
 
 /**
@@ -18,17 +21,20 @@ import java.util.function.Function;
  * @author Eldar Abusalimov
  */
 public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
-    LONG(LongConstant::forValue, NumberOpStackStub.ForLong::valueOf),
-    DOUBLE(DoubleConstant::forValue, NumberOpStackStub.ForDouble::valueOf);
+    LONG(LongConstant::forValue, NumberOpStackStub.ForLong::valueOf, RuntimeNumberOpStackStub.ForLong::valueOf),
+    DOUBLE(DoubleConstant::forValue, NumberOpStackStub.ForDouble::valueOf, RuntimeNumberOpStackStub.ForDouble::valueOf);
 
     private final Function<Number, StackManipulation> constantProvider;
     private final Function<String, StackStub> opStackStubProvider;
+    private final Function<String, StackStub> runtimeOpStackStubProvider;
 
     <T extends Number> BytebuddyNumberMath(Function<T, StackManipulation> constantProvider,
-                                           Function<String, StackStub> opStackStubProvider) {
+                                           Function<String, StackStub> opStackStubProvider,
+                                           Function<String, StackStub> runtimeOpStackStubProvider) {
         //noinspection unchecked
         this.constantProvider = (Function<Number, StackManipulation>) constantProvider;
         this.opStackStubProvider = opStackStubProvider;
+        this.runtimeOpStackStubProvider = runtimeOpStackStubProvider;
     }
 
     public static <T extends Number> BytebuddyNumberMath forType(Class<T> type) {
@@ -66,7 +72,7 @@ public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
 
     @Override
     public StackStub pow(StackStub leftOperand, StackStub rightOperand) {
-        throw new RuntimeException("NIY pow");
+        return new StackStub.Compound(leftOperand, rightOperand, runtimeOpStackStubProvider.apply("POW"));
     }
 
     @Override
@@ -200,6 +206,87 @@ public enum BytebuddyNumberMath implements NumberMath<Number, StackStub> {
             @Override
             public int getOpcode() {
                 return opcode;
+            }
+        }
+
+    }
+
+    /**
+     * Implementation of the number power operations.
+     *
+     * @author Eldar Abusalimov
+     */
+    protected interface RuntimeNumberOpStackStub<T extends Number> extends StackStub {
+        @Override
+        default StackManipulation eval(Target implementationTarget, MethodDescription instrumentedMethod) {
+            Method method;
+            try {
+                method = Runtime.Util.class
+                        .getMethod(getRuntimeMethodName(), getOperandType(), getOperandType());
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+            return MethodInvocation
+                    .invoke(new MethodDescription.ForLoadedMethod(method));
+        }
+
+        /**
+         * Returns the instruction opcode to emit.
+         *
+         * @return the {@link Opcodes opcode}
+         */
+        String getRuntimeMethodName();
+
+        /**
+         * Returns the type of the operands.
+         *
+         * @return the type of the operands
+         */
+        Class<T> getOperandType();
+
+        /**
+         * Stack stubs of instructions for math operation on longs.
+         */
+        enum ForLong implements RuntimeNumberOpStackStub<Long> {
+            POW("powLong");
+
+            private final String runtimeMethodName;
+
+            ForLong(String runtimeMethodName) {
+                this.runtimeMethodName = runtimeMethodName;
+            }
+
+            @Override
+            public String getRuntimeMethodName() {
+                return runtimeMethodName;
+            }
+
+            @Override
+            public Class<Long> getOperandType() {
+                return long.class;
+            }
+        }
+
+        /**
+         * Stack stubs of instructions for math operation on doubles.
+         */
+        enum ForDouble implements RuntimeNumberOpStackStub<Double> {
+            POW("powDouble");
+
+            private final String runtimeMethodName;
+
+            ForDouble(String runtimeMethodName) {
+                this.runtimeMethodName = runtimeMethodName;
+            }
+
+            @Override
+            public String getRuntimeMethodName() {
+                return runtimeMethodName;
+            }
+
+            @Override
+            public Class<Double> getOperandType() {
+                return double.class;
             }
         }
 

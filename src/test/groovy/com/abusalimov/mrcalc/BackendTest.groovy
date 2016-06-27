@@ -88,11 +88,24 @@ class BackendTest<E, F> {
     }
 
     @Test
-    void "test pow of two variables"() {
+    void "test pow of two long variables"() {
         def fasm = createFasm(long, long, long)
         def iPow = fasm(fasm.lMath.pow(fasm.lLoad(0), fasm.lLoad(1)))
+        assert 1L == iPow(runtime, 42L, 0L)
         assert 27L == iPow(runtime, 3L, 3L)
         assert 32L == iPow(runtime, 2L, 5L)
+        shouldFail ArithmeticException, { iPow(runtime, 0L, -1L) }
+    }
+
+    @Test
+    void "test pow of two double variables"() {
+        def fasm = createFasm(double, double, double)
+        def dPow = fasm(fasm.dMath.pow(fasm.dLoad(0), fasm.dLoad(1)))
+        assert 1D == dPow(runtime, 42D, 0D)
+        assert 27D == dPow(runtime, 3D, 3D)
+        assert 32D == dPow(runtime, 2D, 5D)
+        assert Double.NaN == dPow(runtime, -1D, 0.5D)
+        assert Double.POSITIVE_INFINITY == dPow(runtime, 0D, -1D)
     }
 
     @Ignore

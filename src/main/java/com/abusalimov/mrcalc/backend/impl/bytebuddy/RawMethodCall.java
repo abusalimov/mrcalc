@@ -236,7 +236,7 @@ public class RawMethodCall extends MethodCall implements StackStub {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new StackStub.Appender(implementationTarget, this);
+        return StackStub.super.appender(implementationTarget);
     }
 
     @Override

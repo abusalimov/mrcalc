@@ -31,11 +31,8 @@ public enum BytebuddySequenceRange implements SequenceRange<StackStub, StackStub
 
     @Override
     public StackStub range(StackStub start, StackStub end) {
-        return (implementationTarget, instrumentedMethod) -> {
-            RawMethodCall rawMethodCall = RawMethodCall.invokeRuntime(factoryMethod,
-                    start.eval(implementationTarget, instrumentedMethod),
-                    end.eval(implementationTarget, instrumentedMethod));
-            return rawMethodCall.eval(implementationTarget, instrumentedMethod);
-        };
+        return new StackStub.Compound(start, end)
+                .withEvalCompositor(
+                        stackManipulations -> RawMethodCall.invokeRuntime(factoryMethod, stackManipulations));
     }
 }

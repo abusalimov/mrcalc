@@ -68,7 +68,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     }
 
     protected StackStub getMethodReturn() {
-        return (implementationTarget, instrumentedMethod) ->
+        return (StackStub.ForMethod) instrumentedMethod ->
                 MethodReturn.returning(instrumentedMethod.getReturnType().asErasure());
     }
 
@@ -110,7 +110,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
 
     @Override
     public ArgumentLoad<StackStub> getArgumentLoad(Class<?> parameterType) {
-        return slot -> (implementationTarget, instrumentedMethod) -> {
+        return slot -> (StackStub.ForMethod) instrumentedMethod -> {
             ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(slot);
             return MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset());
         };

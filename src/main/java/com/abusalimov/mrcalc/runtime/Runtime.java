@@ -183,4 +183,41 @@ public interface Runtime {
      * @return the sequence of primitive doubles
      */
     Sequence.OfDouble mapDoubleToDouble(Sequence.OfDouble sequence, DoubleUnaryOperator mapper);
+
+    /**
+     * Provides the power math operation methods required since Java doesn't have a builtin one.
+     */
+    final class Util {
+        /**
+         * The private constructor.
+         */
+        private Util() {
+        }
+
+        /**
+         * Computes the result of raising the first argument to the power of the second argument.
+         *
+         * @param a the base
+         * @param b the exponent
+         * @return a ^ b
+         */
+        public static long powLong(long a, long b) {
+            double ret = Math.pow(a, b);
+            if (!Double.isFinite(ret)) {
+                throw new ArithmeticException(a + " ^ " + b);
+            }
+            return (long) ret;
+        }
+
+        /**
+         * Computes the result of raising the first argument to the power of the second argument.
+         *
+         * @param a the base
+         * @param b the exponent
+         * @return a ^ b
+         */
+        public static double powDouble(double a, double b) {
+            return Math.pow(a, b);
+        }
+    }
 }

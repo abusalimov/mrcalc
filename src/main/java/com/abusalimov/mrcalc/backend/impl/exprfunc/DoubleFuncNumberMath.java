@@ -1,6 +1,7 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.NumberMath;
+import com.abusalimov.mrcalc.runtime.Runtime;
 
 /**
  * Implements numeric math on boxed {@link Double}s.
@@ -33,7 +34,8 @@ public class DoubleFuncNumberMath extends AbstractFuncNumberMath<Double>
 
     @Override
     public Func<Double> pow(Func<Double> leftOperand, Func<Double> rightOperand) {
-        return (runtime, args) -> Math.pow(leftOperand.eval(runtime, args), rightOperand.eval(runtime, args));
+        return (runtime, args) -> Runtime.Util
+                .powDouble(leftOperand.eval(runtime, args), rightOperand.eval(runtime, args));
     }
 
     @Override

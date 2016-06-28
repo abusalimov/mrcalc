@@ -2,7 +2,7 @@ package com.abusalimov.mrcalc;
 
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.backend.Backend;
-import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl;
+import com.abusalimov.mrcalc.backend.impl.bytebuddy.BytebuddyBackendImpl;
 import com.abusalimov.mrcalc.compile.CompileErrorException;
 import com.abusalimov.mrcalc.compile.Compiler;
 import com.abusalimov.mrcalc.compile.Stmt;
@@ -43,7 +43,7 @@ public class CalcExecutor {
 
     private void run(String sourceCode, OutputStream outputStream) {
         Parser parser = new ANTLRParserImpl();
-        Backend backend = new FuncBackendImpl();
+        Backend backend = new BytebuddyBackendImpl();
         Compiler compiler = new Compiler(backend);
         Runtime runtime = new StreamRuntime();
         PrintStream printStream = new PrintStream(outputStream);

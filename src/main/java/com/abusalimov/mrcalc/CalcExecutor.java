@@ -35,6 +35,7 @@ import java.util.function.Supplier;
 public class CalcExecutor {
     private ExecutorService executor;
     private BackendImplSwitch backendImplSwitch = BackendImplSwitch.DEFAULT;
+    private boolean isParallel = true;
     private boolean executionInProgress;
     private List<Consumer<Boolean>> listeners = new LinkedList<>();
 
@@ -96,7 +97,7 @@ public class CalcExecutor {
 
     private void run(List<Stmt> stmts, Supplier<OutputStream> outputStreamSupplier,
                      DiagnosticListener diagnosticListener) {
-        Runtime runtime = new StreamRuntime();
+        Runtime runtime = new StreamRuntime(isParallel);
         Interpreter interpreter = new Interpreter(runtime);
 
         fireExecutionListeners(true);
@@ -130,6 +131,14 @@ public class CalcExecutor {
     protected void fireExecutionListeners(boolean executionInProgress) {
         this.executionInProgress = executionInProgress;
         listeners.forEach(listener -> listener.accept(executionInProgress));
+    }
+
+    public boolean isParallel() {
+        return isParallel;
+    }
+
+    public void setParallel(boolean isParallel) {
+        this.isParallel = isParallel;
     }
 
     /**

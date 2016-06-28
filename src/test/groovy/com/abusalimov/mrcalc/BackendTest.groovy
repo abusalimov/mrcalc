@@ -114,8 +114,8 @@ class BackendTest<E, F> {
     @Test
     void "test ranges"() {
         def fasm = createFasm(Sequence)
-        assert [0L, 1L, 2L, 3L] == fasm.call(fasm.getSequenceRange(long).range(fasm.lConst(0), fasm.lConst(3))).call(runtime)
-        assert [] == fasm.call(fasm.getSequenceRange(long).range(fasm.lConst(3), fasm.lConst(0))).call(runtime)
+        assert [0L, 1L, 2L, 3L] == fasm.call(fasm.getSequenceRange(long).range(fasm.lConst(0), fasm.lConst(3))).eval(runtime)
+        assert [] == fasm.call(fasm.getSequenceRange(long).range(fasm.lConst(3), fasm.lConst(0))).eval(runtime)
 //        shouldFail ClassCastException, {
 //            createFasm(com.abusalimov.mrcalc.runtime.Sequence).call(fasm.getSequenceRange(long).range(fasm.lConst(0), fasm.dConst(2))).call(runtime)
 //        }
@@ -127,7 +127,7 @@ class BackendTest<E, F> {
 
         def iReduceLambda = fasm.lambda(createFasm(long, long, long)) { fasm.lMath.add(fasm.lLoad(0), fasm.lLoad(1)) }
         def iReduce = fasm.getSequenceReduce(long).reduce(fasm.getSequenceRange(long).range(fasm.lConst(-5), fasm.lConst(1)), fasm.lConst(0), iReduceLambda)
-        assert -14L == fasm(iReduce).call(runtime)
+        assert -14L == fasm(iReduce).eval(runtime)
     }
 
     @Test
@@ -141,7 +141,7 @@ class BackendTest<E, F> {
             fasm.dMath.mul(fasm.dLoad(0), fasm.dLoad(1))
         }
         def fReduce = fasm.getSequenceReduce(double).reduce(fasm.getArgumentLoad(Sequence.OfDouble).load(0), fasm.dConst(1), fReduceLambda)
-        assert -120.0d == fasm(fReduce).call(runtime, sequenceOfDouble)
+        assert -120.0d == fasm(fReduce).eval(runtime, sequenceOfDouble)
     }
 
     @Test
@@ -150,11 +150,11 @@ class BackendTest<E, F> {
 
         def iMapLambda = fasm.lambda(createFasm(long, long)) { fasm.lMath.pow(fasm.lLoad(0), fasm.lConst(2)) }
         def iMap = fasm.getSequenceMap(long, long).map(fasm.getSequenceRange(long).range(fasm.lConst(0), fasm.lConst(3)), iMapLambda)
-        assert [0L, 1L, 4L, 9L] == fasm(iMap).call(runtime)
+        assert [0L, 1L, 4L, 9L] == fasm(iMap).eval(runtime)
 
         def iMapNegLambda = fasm.lambda(createFasm(long, long)) { fasm.lMath.neg(fasm.lLoad(0)) }
         def iMapNeg = fasm.getSequenceMap(long, long).map(iMap, iMapNegLambda)
-        assert [0L, -1L, -4L, -9L] == fasm(iMapNeg).call(runtime)
+        assert [0L, -1L, -4L, -9L] == fasm(iMapNeg).eval(runtime)
     }
 
     @Test
@@ -165,11 +165,11 @@ class BackendTest<E, F> {
             fasm.dMath.mul(fasm.l2d.cast(fasm.lLoad(0)), fasm.dConst(1.0))
         }
         def fMap = fasm.getSequenceMap(double, long).map(fasm.getSequenceRange(long).range(fasm.lConst(0), fasm.lConst(4)), fMapLambda)
-        assert [0.0d, 1.0d, 2.0d, 3.0d, 4.0d] == fasm(fMap).call(runtime)
+        assert [0.0d, 1.0d, 2.0d, 3.0d, 4.0d] == fasm(fMap).eval(runtime)
 
         def fMapSubLambda = fasm.lambda(createFasm(double, double)) { fasm.dMath.sub(fasm.dLoad(0), fasm.dConst(5)) }
         def fMapSub = fasm.getSequenceMap(double, double).map(fMap, fMapSubLambda)
-        assert [-5.0d, -4.0d, -3.0d, -2.0d, -1.0d] == fasm(fMapSub).call(runtime)
+        assert [-5.0d, -4.0d, -3.0d, -2.0d, -1.0d] == fasm(fMapSub).eval(runtime)
     }
 
     @Test
@@ -182,18 +182,18 @@ class BackendTest<E, F> {
         def fBadLambda1 = fasm.lambda(createFasm(double, long)) {
             fasm.dMath.div(fasm.l2d.cast(fasm.lLoad(0)), fasm.dConst(0.0))
         }
-        assert [] == createFasm(Sequence).call(fasm.getSequenceMap(double, long).map(emptyRange, fBadLambda1)).call(runtime)
+        assert [] == createFasm(Sequence).call(fasm.getSequenceMap(double, long).map(emptyRange, fBadLambda1)).eval(runtime)
 
         def fBadLambda2 = fasm.lambda(createFasm(double, double, double)) {
             fasm.dMath.add(fasm.dLoad(0), fasm.dMath.div(fasm.dLoad(0), fasm.dConst(0.0)))
         }
-        assert 1.0d == createFasm(double).call(fasm.getSequenceReduce(double).reduce(emptyRange, fasm.dConst(1.0), fBadLambda2)).call(runtime)
+        assert 1.0d == createFasm(double).call(fasm.getSequenceReduce(double).reduce(emptyRange, fasm.dConst(1.0), fBadLambda2)).eval(runtime)
 
         def iBadLambda = fasm.lambda(createFasm(long, long)) { fasm.lMath.div(fasm.lLoad(0), fasm.lConst(0)) }
-        assert [] == createFasm(Sequence).call(fasm.getSequenceMap(long, long).map(emptyRange, iBadLambda)).call(runtime)
+        assert [] == createFasm(Sequence).call(fasm.getSequenceMap(long, long).map(emptyRange, iBadLambda)).eval(runtime)
         shouldFail ArithmeticException, {
-            createFasm(Sequence).call(fasm.getSequenceMap(long, long).map(nonEmptyRange, iBadLambda)).call(runtime)
+            createFasm(Sequence).call(fasm.getSequenceMap(long, long).map(nonEmptyRange, iBadLambda)).eval(runtime)
         }
-        assert 1L == createFasm(long).call(fasm.getSequenceReduce(long).reduce(emptyRange, fasm.lConst(1), fasm.lMath.add(fasm.lLoad(0), iBadLambda))).call(runtime)
+        assert 1L == createFasm(long).call(fasm.getSequenceReduce(long).reduce(emptyRange, fasm.lConst(1), fasm.lMath.add(fasm.lLoad(0), iBadLambda))).eval(runtime)
     }
 }

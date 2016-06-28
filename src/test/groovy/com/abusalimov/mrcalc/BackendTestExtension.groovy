@@ -13,8 +13,7 @@ import com.abusalimov.mrcalc.runtime.Runtime
  */
 class BackendTestExtension {
     static <R> R call(final Evaluable<R> self, Runtime runtime, Object... args) {
-        def eval = self.eval(runtime, args)
-        eval
+        self.eval(runtime, args)
     }
 
     static <R, E, F> Evaluable<R> call(final FunctionAssembler<R, E, F> self, E expr) {

@@ -86,6 +86,9 @@ class InterpreterTest {
     void "can compute map"() {
         assert [1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L] == eval("map({1,9}, x -> 1)")
         assert [1L, 4L, 9L, 16L, 25L, 36L, 49L, 64L, 81L] == eval("map({1,9}, x -> x*x)")
+
+        assert [1D, 2D, 3D, 4D, 5D, 6D, 7D, 8D, 9D] == eval("var dSeq = map({1,9}, x -> x + .0)")
+        assert [2D, 4D, 6D, 8D, 10D, 12D, 14D, 16D, 18D] == eval("map(dSeq, x -> x + x)")
     }
 
     @Ignore("NIY")

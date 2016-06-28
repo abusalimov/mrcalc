@@ -214,7 +214,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     @Override
     public SequenceMap<StackStub, StackStub, StackStub> getSequenceMap(Class<?> returnElementType,
                                                                        Class<?> elementType) {
-        throw new RuntimeException("NIY getSequenceMap");
+        return BytebuddySequenceMap.forType(returnElementType, elementType);
     }
 
     public static class ForInterface<R> extends BytebuddyFunctionAssembler<R> {

@@ -1,6 +1,7 @@
 package com.abusalimov.mrcalc
 
 import com.abusalimov.mrcalc.backend.Backend
+import com.abusalimov.mrcalc.backend.FunctionAssembler
 import com.abusalimov.mrcalc.backend.impl.bytebuddy.BytebuddyBackendImpl
 import com.abusalimov.mrcalc.runtime.Runtime
 import com.abusalimov.mrcalc.runtime.Sequence
@@ -23,23 +24,23 @@ class BackendTest<E, F> {
         backend = new BytebuddyBackendImpl<>() as Backend<E, F>
     }
 
-    def createFasm(Class<?> returnType, Class<?>... parameterTypes) {
-        return backend.createFunctionAssembler(returnType, parameterTypes)
+    public <R> FunctionAssembler<R, E, F> createFasm(Class<R> returnType, Class<?>... parameterTypes) {
+        backend.createFunctionAssembler(returnType, parameterTypes)
     }
 
     @Test
     void "test constant"() {
         def fasm = createFasm(long)
         def fn = fasm.call(fasm.lConst(42L))
-        assert 42 == fn(runtime)
+        assert 42L == fn(runtime)
     }
 
     @Test
     void "test load variable"() {
         def fasm = createFasm(long, long)
         def fn = fasm(fasm.lLoad(0))
-        assert 0 == fn(runtime, 0L)
-        assert 7 == fn(runtime, 7L)
+        assert 0L == fn(runtime, 0L)
+        assert 7L == fn(runtime, 7L)
     }
 
     @Test
@@ -145,7 +146,7 @@ class BackendTest<E, F> {
 
     @Test
     void "test map on long sequences"() {
-        def fasm = createFasm(long)
+        def fasm = createFasm(Sequence.OfLong)
 
         def iMapLambda = fasm.lambda(createFasm(long, long)) { fasm.lMath.pow(fasm.lLoad(0), fasm.lConst(2)) }
         def iMap = fasm.getSequenceMap(long, long).map(fasm.getSequenceRange(long).range(fasm.lConst(0), fasm.lConst(3)), iMapLambda)
@@ -158,7 +159,7 @@ class BackendTest<E, F> {
 
     @Test
     void "test map on double sequences"() {
-        def fasm = createFasm(double)
+        def fasm = createFasm(Sequence.OfDouble)
 
         def fMapLambda = fasm.lambda(createFasm(double, long)) {
             fasm.dMath.mul(fasm.l2d.cast(fasm.lLoad(0)), fasm.dConst(1.0))

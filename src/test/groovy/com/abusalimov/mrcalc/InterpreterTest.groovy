@@ -2,6 +2,7 @@ package com.abusalimov.mrcalc
 
 import com.abusalimov.mrcalc.backend.Backend
 import com.abusalimov.mrcalc.backend.impl.bytebuddy.BytebuddyBackendImpl
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
 import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
@@ -10,24 +11,38 @@ import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 import static groovy.test.GroovyAssert.shouldFail
+
 /**
+ * Integration tests including tests for the Interpreter.
+ *
  * @author Eldar Abusalimov
  */
+@RunWith(Parameterized.class)
 class InterpreterTest {
     private Parser parser
-    private Backend backend
     private Compiler compiler
-    private Runtime runtime
+    private Backend backend
+    private Runtime runtime = new StreamRuntime()
     private Interpreter interpreter
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        [[new FuncBackendImpl()] as Object[],
+         [new BytebuddyBackendImpl<>()] as Object[]]
+    }
+
+    InterpreterTest(Backend backend) {
+        this.backend = backend
+    }
 
     @Before
     void setUp() {
         parser = new ANTLRParserImpl()
-        backend = new BytebuddyBackendImpl()
         compiler = new Compiler(backend)
-        runtime = new StreamRuntime()
         interpreter = new Interpreter(runtime)
     }
 

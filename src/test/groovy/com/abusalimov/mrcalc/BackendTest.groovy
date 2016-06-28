@@ -3,24 +3,34 @@ package com.abusalimov.mrcalc
 import com.abusalimov.mrcalc.backend.Backend
 import com.abusalimov.mrcalc.backend.FunctionAssembler
 import com.abusalimov.mrcalc.backend.impl.bytebuddy.BytebuddyBackendImpl
+import com.abusalimov.mrcalc.backend.impl.exprfunc.FuncBackendImpl
 import com.abusalimov.mrcalc.runtime.Runtime
 import com.abusalimov.mrcalc.runtime.Sequence
 import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
-import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 import static groovy.test.GroovyAssert.shouldFail
 
 /**
+ * Unit tests for Backend implementation.
+ *
  * @author Eldar Abusalimov
  */
+@RunWith(Parameterized.class)
 class BackendTest<E, F> {
     private Runtime runtime = new StreamRuntime()
     private Backend<E, F> backend
 
-    @Before
-    void setUp() {
-        backend = new BytebuddyBackendImpl<>() as Backend<E, F>
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        [[new FuncBackendImpl()] as Object[],
+         [new BytebuddyBackendImpl<>()] as Object[]]
+    }
+
+    BackendTest(Backend<E, F> backend) {
+        this.backend = backend
     }
 
     public <R> FunctionAssembler<R, E, F> createFasm(Class<R> returnType, Class<?>... parameterTypes) {

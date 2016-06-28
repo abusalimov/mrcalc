@@ -7,7 +7,6 @@ import com.abusalimov.mrcalc.runtime.Runtime
 import com.abusalimov.mrcalc.runtime.Sequence
 import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
 import static groovy.test.GroovyAssert.shouldFail
@@ -96,29 +95,11 @@ class BackendTest<E, F> {
         assert Double.POSITIVE_INFINITY == dPow(runtime, 0D, -1D)
     }
 
-    @Ignore
-    @Test
-    void "test cast"() {
-        def fasm = createFasm(long)
-        shouldFail ClassCastException, {
-            fasm.call(fasm.dMath.mul(fasm.lConst(10), fasm.dConst(2))).call(runtime)
-        }
-        assert 20.0d == fasm.call(fasm.dMath.mul(fasm.l2d.cast(fasm.lConst(10)), fasm.dConst(2))).call(runtime)
-
-        shouldFail ClassCastException, {
-            fasm.call(fasm.lMath.mul(fasm.lConst(10), fasm.dConst(2))).call(runtime)
-        }
-        assert 20L == fasm.call(fasm.lMath.mul(fasm.lConst(10), fasm.d2l.cast(fasm.dConst(2)))).call(runtime)
-    }
-
     @Test
     void "test ranges"() {
         def fasm = createFasm(Sequence)
         assert [0L, 1L, 2L, 3L] == fasm.call(fasm.getSequenceRange(long).range(fasm.lConst(0), fasm.lConst(3))).eval(runtime)
         assert [] == fasm.call(fasm.getSequenceRange(long).range(fasm.lConst(3), fasm.lConst(0))).eval(runtime)
-//        shouldFail ClassCastException, {
-//            createFasm(com.abusalimov.mrcalc.runtime.Sequence).call(fasm.getSequenceRange(long).range(fasm.lConst(0), fasm.dConst(2))).call(runtime)
-//        }
     }
 
     @Test

@@ -10,6 +10,7 @@ import java.util.function.*;
  *
  * @author Eldar Abusalimov
  */
+@SuppressWarnings("unused")  // may be used through reflection / dynamically generated code
 public interface Runtime {
     /**
      * Creates a new {@link Sequence.OfLong} filled by integers between the specified boundaries.

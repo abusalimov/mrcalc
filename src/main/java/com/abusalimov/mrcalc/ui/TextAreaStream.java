@@ -19,6 +19,7 @@ public class TextAreaStream extends OutputStream {
     public TextAreaStream(JTextArea textArea) {
         buffer = new StringBuilder(MAX_BUFFER_SIZE);
         this.textArea = textArea;
+        textArea.setText("");
     }
 
     @Override

@@ -108,7 +108,6 @@ public class CodeTextPane extends JTextPane {
 
         private void handleEvent() {
             clearHighlight();
-            outputTextArea.setText("");
 
             try {
                 String sourceCodeText = getDocument().getText(0, getDocument().getLength());

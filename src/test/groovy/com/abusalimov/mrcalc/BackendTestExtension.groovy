@@ -21,6 +21,13 @@ class BackendTestExtension {
         self.toEvaluable(self.assemble(expr));
     }
 
+    static <R, E, F> E lambda(final FunctionAssembler<R, E, F> self, FunctionAssembler<?, E, F> fasm,
+                              Closure<E> closure) {
+        def expr = closure()
+        def func = fasm.assemble(expr)
+        self.lambda(func)
+    }
+
     static <E> E lLoad(final FunctionAssembler<?, E, ?> self, int slot) {
         self.getArgumentLoad(long).load(slot)
     }

@@ -11,13 +11,13 @@ import java.lang.reflect.Method;
 public enum BytebuddySequenceRange implements SequenceRange<StackStub, StackStub> {
     LONG("createLongRangeInclusive", long.class);
 
-    private final Method factoryMethod;
+    private final Method runtimeMethod;
 
-    BytebuddySequenceRange(String factoryMethodName, Class<? extends Number> boundaryType) {
+    BytebuddySequenceRange(String runtimeMethodName, Class<? extends Number> boundaryType) {
         try {
-            this.factoryMethod = Runtime.class.getDeclaredMethod(factoryMethodName, boundaryType, boundaryType);
+            this.runtimeMethod = Runtime.class.getDeclaredMethod(runtimeMethodName, boundaryType, boundaryType);
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException(String.format("Couldn't find Runtime method '%s'", factoryMethodName), e);
+            throw new RuntimeException(String.format("Couldn't find Runtime method '%s'", runtimeMethodName), e);
         }
     }
 
@@ -33,6 +33,6 @@ public enum BytebuddySequenceRange implements SequenceRange<StackStub, StackStub
     public StackStub range(StackStub start, StackStub end) {
         return new StackStub.Compound(start, end)
                 .withEvalCompositor(
-                        stackManipulations -> RawMethodCall.invokeRuntime(factoryMethod, stackManipulations));
+                        stackManipulations -> RawMethodCall.invokeRuntime(runtimeMethod, stackManipulations));
     }
 }

@@ -54,11 +54,11 @@ public class ExprBuilder<E, F> implements NodeArgVisitor<E, ExprBuilder.Function
         return fctx.getFunctionAssembler().toEvaluable(func);
     }
 
-    protected E buildChild(FunctionContext parent, ExprHolderNode node) {
+    protected E buildChild(FunctionContext<?, E, F> parent, ExprHolderNode node) {
         ExprTypeInfo eti = parent.getExprTypeInfo().getChild(node);
         FunctionContext<?, E, F> fctx = new FunctionContext<>(backend, eti);
         F func = build(fctx);
-        return fctx.getFunctionAssembler().lambda(func);
+        return parent.getFunctionAssembler().lambda(func);
     }
 
     protected F build(FunctionContext<?, E, F> fctx) {

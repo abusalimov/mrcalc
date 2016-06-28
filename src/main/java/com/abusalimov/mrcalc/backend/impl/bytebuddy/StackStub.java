@@ -126,10 +126,10 @@ public interface StackStub extends Implementation {
         /**
          * Creates a new compound stack stub.
          *
-         * @param stackManipulation The stack manipulations to be composed in the order of their composition.
+         * @param StackStub The stack stubs to be composed in the order of their composition.
          */
-        public Compound(StackStub... stackManipulation) {
-            this(Arrays.asList(stackManipulation));
+        public Compound(StackStub... StackStub) {
+            this(Arrays.asList(StackStub));
         }
 
         /**

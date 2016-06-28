@@ -4,6 +4,7 @@ import com.abusalimov.mrcalc.backend.*;
 import com.abusalimov.mrcalc.runtime.Evaluable;
 import com.abusalimov.mrcalc.runtime.Runtime;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -11,49 +12,102 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.jar.asm.Opcodes;
+import net.bytebuddy.matcher.ElementMatchers;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * @author Eldar Abusalimov
  */
-public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, StackStub, Class<?>> {
+public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, StackStub,
+        DynamicType.Unloaded<BytebuddyFunctionAssembler.BaseFunction>> {
     private final Class<R> returnType;
     private final Class<?>[] parameterTypes;
+    private final List<DynamicType.Unloaded<BaseFunction>> lambdas = new ArrayList<>();
 
     public BytebuddyFunctionAssembler(Class<R> returnType, Class<?>[] parameterTypes) {
         this.returnType = returnType;
         this.parameterTypes = parameterTypes;
     }
 
-    protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<?> getImplementationDefinition() {
-        return new ByteBuddy()
-                .subclass(BaseFunction.class)
-//                .defineField("runtime", Runtime.class, Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL)
-//                .constructor(ElementMatchers.takesArguments(1))
-//                .intercept(FieldAccessor.ofField("runtime"))
-//                .intercept(MethodDelegation.toInstanceField(Runtime.class, "runtime"))
+    protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<BaseFunction> getDynamicBuilder() {
+        List<TypeDescription> lambdaTypeDescriptions = lambdas.stream()
+                .map(DynamicType::getTypeDescription)
+                .collect(Collectors.toList());
+
+        DynamicType.Builder<BaseFunction> builder = new ByteBuddy()
+                .subclass(BaseFunction.class);
+
+        for (TypeDescription lambdaTypeDescription : lambdaTypeDescriptions) {
+            builder = builder.defineField(
+                    getLambdaName(lambdaTypeDescription),
+                    lambdaTypeDescription,
+                    Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC);
+        }
+
+        List<StackStub> lambdaFieldInitializers = lambdaTypeDescriptions.stream()
+                .map(this::createLambdaInitializer)
+                .collect(Collectors.toList());
+        Implementation.Compound constructorImplementation = new Implementation.Compound(
+                lambdaFieldInitializers.toArray(new Implementation[0]));
+
+        return builder
+                .constructor(takesArguments(Runtime.class))
+                .intercept(SuperMethodCall.INSTANCE
+                        .andThen(new Implementation.Compound(constructorImplementation,
+                                new Implementation.Simple(MethodReturn.VOID))))
                 .defineMethod("applyExpr", returnType, Opcodes.ACC_PUBLIC)
                 .withParameters((Type[]) parameterTypes);
     }
 
+    protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<BaseFunction> getImplementationDefinition() {
+        return getDynamicBuilder();
+    }
+
+    private StackStub createLambdaInitializer(TypeDescription typeDescription) {
+        return new StackStub.Compound(
+                new StackStub.Simple(MethodVariableAccess.REFERENCE.loadOffset(0)),  // this
+
+                createConstructorCall(typeDescription),
+
+                (implementationTarget, instrumentedMethod) -> {
+                    TypeDescription instrumentedType = implementationTarget.getInstrumentedType();
+                    FieldDescription fieldDescription = getLambdaFieldDescription(instrumentedType, typeDescription);
+
+                    return FieldAccess.forField(fieldDescription).putter();
+                });
+    }
+
+    private StackStub createConstructorCall(TypeDescription typeDescription) {
+        return RawMethodCall
+                .construct(typeDescription.getDeclaredMethods()
+                        .filter(isConstructor().and(takesArguments(Runtime.class)))
+                        .getOnly())
+                .withArgument(0);
+    }
+
     @Override
-    public Class<?> assemble(StackStub expr) {
-        DynamicType.Unloaded<?> dynamicType = getImplementationDefinition()
+    public DynamicType.Unloaded<BaseFunction> assemble(StackStub expr) {
+        DynamicType.Unloaded<BaseFunction> dynamicType = getImplementationDefinition()
                 .intercept(new StackStub.Compound(expr, getMethodReturn()))
                 .make();
+        // XXX
         try {
             Map<TypeDescription, File> typeDescriptionFileMap = dynamicType
                     .saveIn(new File("/home/eldar/tmp/bytebuddy"));
@@ -62,9 +116,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
             e.printStackTrace();
         }
 
-        return dynamicType
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
+        return dynamicType.include(lambdas);
     }
 
     protected StackStub getMethodReturn() {
@@ -72,34 +124,52 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
                 MethodReturn.returning(instrumentedMethod.getReturnType().asErasure());
     }
 
-    @Override
-    public StackStub lambda(Class<?> function) {
-        throw new RuntimeException("NIY lambda");
+    private String getLambdaName(TypeDescription typeDescription) {
+        String typeName = typeDescription.getName();
+        int dollarIndex = typeName.lastIndexOf('$');
+        if (dollarIndex != -1) {
+            typeName = typeName.substring(dollarIndex);
+        }
+        return "lambda" + typeName;
     }
 
     @Override
-    public Evaluable<R> toEvaluable(Class<?> function) {
-        MethodDescription evalMethod = new TypeDescription.ForLoadedType(function)
-                .getDeclaredMethods().filter(nameStartsWith("apply")).getOnly();
+    public StackStub lambda(DynamicType.Unloaded<BaseFunction> function) {
+        lambdas.add(function);
+        TypeDescription typeDescription = function.getTypeDescription();
 
-        Constructor<?> constructor;
-        try {
-            constructor = function.getConstructor(Runtime.class);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-        MethodCall exprConstructorCall = RawMethodCall.construct(constructor).withArgument(0);
+        return (implementationTarget, instrumentedMethod) -> {
+            TypeDescription instrumentedType = implementationTarget.getInstrumentedType();
+            FieldDescription fieldDescription = getLambdaFieldDescription(instrumentedType, typeDescription);
+
+            return new StackManipulation.Compound(
+                    MethodVariableAccess.REFERENCE.loadOffset(0),  // this
+                    FieldAccess.forField(fieldDescription).getter());
+        };
+    }
+
+    protected FieldDescription getLambdaFieldDescription(TypeDescription instrumentedType,
+                                                         TypeDescription lambdaTypeDescription) {
+        return instrumentedType.getDeclaredFields().filter(named(getLambdaName(lambdaTypeDescription))).getOnly();
+    }
+
+    @Override
+    public Evaluable<R> toEvaluable(DynamicType.Unloaded<BaseFunction> function) {
+        MethodDescription evalMethod = function.getTypeDescription()
+                .getDeclaredMethods().filter(ElementMatchers.named("applyExpr")).getOnly();
+
+        StackStub constructorCall = createConstructorCall(function.getTypeDescription());
 
         DynamicType.Unloaded<Evaluable> dynamicType = new ByteBuddy()
                 .subclass(Evaluable.class)
                 .method(named("eval"))
-                .intercept(new Implementation.Compound(exprConstructorCall,
+                .intercept(new StackStub.Compound(constructorCall,
                         new RawMethodCall(evalMethod)
-                                .withArgumentsArray(1, evalMethod.getParameters().size())
-                                .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC)))
+                                .withArgumentsArray(1, evalMethod.getParameters().size())))
                 .make();
-        Class<? extends Evaluable> evaluableClass = dynamicType
-                .load(function.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+
+        Class<? extends Evaluable> evaluableClass = dynamicType.include(function)
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             return (Evaluable<R>) evaluableClass.newInstance();
@@ -138,7 +208,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
 
     @Override
     public SequenceReduce<StackStub, StackStub, StackStub> getSequenceReduce(Class<?> returnType) {
-        throw new RuntimeException("NIY getSequenceReduce");
+        return BytebuddySequenceReduce.forType(returnType);
     }
 
     @Override
@@ -160,9 +230,9 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         }
 
         @Override
-        protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<?> getImplementationDefinition() {
-            return new ByteBuddy()
-                    .subclass(BaseFunction.class)
+        protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<BaseFunction> getImplementationDefinition() {
+            return getDynamicBuilder()
+                    .intercept(MethodCall.invoke(method).withAllArguments())
                     .implement(methodInterface)
                     .method(is(method));
         }
@@ -175,4 +245,5 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
             this.runtime = runtime;
         }
     }
+
 }

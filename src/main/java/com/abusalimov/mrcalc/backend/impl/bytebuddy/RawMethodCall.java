@@ -53,7 +53,7 @@ public class RawMethodCall extends MethodCall implements StackStub {
                 MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 Assigner.DEFAULT,
-                Assigner.Typing.STATIC);
+                Assigner.Typing.DYNAMIC);
     }
 
     /**
@@ -68,7 +68,7 @@ public class RawMethodCall extends MethodCall implements StackStub {
                 MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 Assigner.DEFAULT,
-                Assigner.Typing.STATIC);
+                Assigner.Typing.DYNAMIC);
     }
 
     /**
@@ -157,7 +157,7 @@ public class RawMethodCall extends MethodCall implements StackStub {
      * @param constructor The constructor to invoke.
      * @return A method call that invokes the given constructor without providing any arguments.
      */
-    public static MethodCall construct(Constructor<?> constructor) {
+    public static RawMethodCall construct(Constructor<?> constructor) {
         return construct(new MethodDescription.ForLoadedConstructor(constructor));
     }
 
@@ -167,7 +167,7 @@ public class RawMethodCall extends MethodCall implements StackStub {
      * @param methodDescription A description of the constructor to invoke.
      * @return A method call that invokes the given constructor without providing any arguments.
      */
-    public static MethodCall construct(MethodDescription methodDescription) {
+    public static RawMethodCall construct(MethodDescription methodDescription) {
         if (!methodDescription.isConstructor()) {
             throw new IllegalArgumentException("Not a constructor: " + methodDescription);
         }
@@ -228,6 +228,25 @@ public class RawMethodCall extends MethodCall implements StackStub {
         return new RawMethodCall(methodLocator,
                 targetHandler,
                 CompoundList.of(this.argumentLoaders, argumentLoader),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                typing);
+    }
+
+    @Override
+    public RawMethodCall withArgument(int... index) {
+        List<MethodCall.ArgumentLoader.Factory> argumentLoaders = new ArrayList<>(
+                index.length);
+        for (int anIndex : index) {
+            if (anIndex < 0) {
+                throw new IllegalArgumentException("Negative index: " + anIndex);
+            }
+            argumentLoaders.add(new ArgumentLoader.ForMethodParameter.Factory(anIndex));
+        }
+        return new RawMethodCall(methodLocator,
+                targetHandler,
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -321,6 +340,36 @@ public class RawMethodCall extends MethodCall implements StackStub {
                 ArgumentLoader trivialArgumentLoader = (target, assigner, typing) ->
                         new StackOperandTrivialManipulation(target.getType().getStackSize());
                 return Collections.nCopies(arguments, trivialArgumentLoader);
+            }
+        }
+
+        /**
+         * Loads a parameter of the instrumented method onto the operand stack.
+         */
+        class ForMethodParameter extends MethodCall.ArgumentLoader.ForMethodParameter {
+
+            /**
+             * Creates an argument loader for a parameter of the instrumented method.
+             *
+             * @param index              The index of the parameter to be loaded onto the operand stack.
+             * @param instrumentedMethod The instrumented method.
+             */
+            protected ForMethodParameter(int index, MethodDescription instrumentedMethod) {
+                super(index, instrumentedMethod);
+            }
+
+            /**
+             * A factory for an argument loader that supplies a method parameter as an argument.
+             */
+            protected static class Factory extends MethodCall.ArgumentLoader.ForMethodParameter.Factory {
+                /**
+                 * Creates a factory for an argument loader that supplies a method parameter as an argument.
+                 *
+                 * @param index The index of the parameter to supply.
+                 */
+                protected Factory(int index) {
+                    super(index);
+                }
             }
         }
 

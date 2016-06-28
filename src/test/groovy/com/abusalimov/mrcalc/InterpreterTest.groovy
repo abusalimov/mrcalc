@@ -7,6 +7,7 @@ import com.abusalimov.mrcalc.compile.Compiler
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
 import com.abusalimov.mrcalc.runtime.Runtime
+import com.abusalimov.mrcalc.runtime.RuntimeErrorException
 import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
 import org.junit.Before
 import org.junit.Test
@@ -66,7 +67,7 @@ class InterpreterTest {
         assert 256L == eval("2^2^2^2")
         assert 256L == eval("(2^2)^2^2")
         assert 65536L == eval("2^(2^2^2)")
-        shouldFail ArithmeticException, { eval "1/0" }
+        shouldFail RuntimeErrorException, { eval "1/0" }
     }
 
     @Test

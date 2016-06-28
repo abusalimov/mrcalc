@@ -3,12 +3,11 @@ package com.abusalimov.mrcalc;
 import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.backend.Backend;
 import com.abusalimov.mrcalc.backend.impl.bytebuddy.BytebuddyBackendImpl;
-import com.abusalimov.mrcalc.compile.CompileErrorException;
 import com.abusalimov.mrcalc.compile.Compiler;
 import com.abusalimov.mrcalc.compile.Stmt;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticException;
 import com.abusalimov.mrcalc.parse.Parser;
-import com.abusalimov.mrcalc.parse.SyntaxErrorException;
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl;
 import com.abusalimov.mrcalc.runtime.Runtime;
 import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime;
@@ -52,7 +51,7 @@ public class CalcExecutor {
             ProgramNode node = parser.parse(sourceCode);
             List<Stmt> stmts = compiler.compile(node);
             interpreter.exec(stmts);
-        } catch (SyntaxErrorException | CompileErrorException e) {
+        } catch (DiagnosticException e) {
             if (callback != null)
                 callback.accept(e.getDiagnostics());
         }

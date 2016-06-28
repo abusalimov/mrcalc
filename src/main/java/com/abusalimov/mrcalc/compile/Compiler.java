@@ -155,7 +155,7 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
         List<Variable> inputVariables = exprTypeInfo.getReferencedVariables();
         Variable outputVariable = new Variable(outputVariableName, exprTypeInfo.getExprType());
 
-        return new Stmt(exprFunction, inputVariables, outputVariable);
+        return new Stmt(exprFunction, inputVariables, outputVariable, node.getExpr().getLocation());
     }
 
     /**

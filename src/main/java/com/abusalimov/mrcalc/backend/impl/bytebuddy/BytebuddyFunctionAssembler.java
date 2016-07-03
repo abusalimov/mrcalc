@@ -21,13 +21,10 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.jar.asm.Opcodes;
 import net.bytebuddy.matcher.ElementMatchers;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -107,14 +104,6 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         DynamicType.Unloaded<BaseFunction> dynamicType = getImplementationDefinition()
                 .intercept(new StackStub.Compound(expr, getMethodReturn()))
                 .make();
-        // XXX
-        try {
-            Map<TypeDescription, File> typeDescriptionFileMap = dynamicType
-                    .saveIn(new File("/home/eldar/tmp/bytebuddy"));
-            System.out.println(typeDescriptionFileMap);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         return dynamicType.include(lambdas);
     }

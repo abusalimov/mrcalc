@@ -28,6 +28,11 @@ number returns [Number value]
     : token=INT   {$value = Long.decode($token.text);}
     | token=FLOAT {$value = Double.valueOf($token.text);}
     ;
+    catch[NumberFormatException e] { throw new NoViableAltException(this, getInputStream(),
+                                                                    getInputStream().LT(-1),
+                                                                    getInputStream().LT(-1),
+                                                                    null,
+                                                                    _ctx); }
 
 STMT_DELIM : [\r\n;] ;
 

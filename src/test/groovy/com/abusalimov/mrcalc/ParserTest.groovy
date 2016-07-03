@@ -24,6 +24,8 @@ class ParserTest extends GroovyTestCase {
         assert null != parse("(1)")
         assert null != parse("(  (2 ))")
         assert null != parse(" ( ( ( 3 ) ) ) ")
+        assert null != parse("0000000000000000000000000000000000000000000000")
+
     }
 
     void testParsesValidOpExpressions() {
@@ -73,5 +75,6 @@ class ParserTest extends GroovyTestCase {
         shouldFail SyntaxErrorException, { parse "***" }
 
         shouldFail SyntaxErrorException, { parse "print" }
+        shouldFail SyntaxErrorException, { parse "1111111111111111111111111111111111111111111111" }
     }
 }

@@ -30,6 +30,74 @@ import java.util.stream.Collectors;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
+ * The function assembler that generates function classes dynamically using the ByteBuddy framework.
+ * <p>
+ * Each {@link #assemble(StackStub) assembled} function class extend a special {@link RuntimeFunction} class and has a
+ * single {@link RuntimeFunction#RuntimeFunction(Runtime) constructor} accepting an instance of {@link Runtime}. The
+ * constructor is responsible for initializing lambda functions referenced from the function, if any. Each {@link
+ * #lambda(DynamicType.Unloaded) lambda} function, in turn, is an appropriately {@link ForInterface#assemble(StackStub)
+ * assembled} class extending the very same {@link RuntimeFunction base} class and additionally implementing the proper
+ * {@link FunctionalInterface} accepted by the methods of the {@link Runtime} class.
+ * <p>
+ * The resulting {@link Evaluable} {@link #toEvaluable(DynamicType.Unloaded) constructed} using the function assembler
+ * takes the Runtime instance passed in as the first argument to the {@link Evaluable#eval(Runtime, Object...)} method
+ * and instantiates the appropriate function class providing it with the instance of Runtime. The function class
+ * instantiates the required lambda functions, which in turn instantiate their lambdas, if any, and so on. That is, upon
+ * invoking the actual function the whole tree of lambda function used across the expression is fully initialized.
+ * <p>
+ * Example:
+ * <pre>{@code
+ *     var id = 0
+ *     var seq = {0, 9}
+ *     print reduce(seq, id, a b -> a + b)
+ * }</pre>
+ * <p>
+ * The expression of the last statements gets compiled into roughly the following:
+ * <pre><code>
+ *     // Binds the packed variables to the expression arguments
+ *     public class EvaluableImpl implements Evaluable {
+ *         {@literal @Override}
+ *         public Object eval(Runtime runtime, Object... args) {
+ *             FunctionImpl$0 func = new FunctionImpl$0(runtime);  // instantiate the top-level function object
+ *
+ *             // unpack arguments from the variables context
+ *             Sequence.OfLong seq = (Sequence.OfLong) args[0];
+ *             long id = ((Long) args[1]).longValue();
+ *
+ *             long result = func.applyExpr(seq, id);  // evaluate the expression
+ *
+ *             return Long.valueOf(result);
+ *         }
+ *     }
+ *
+ *     // Implements {@literal seq id -> reduce(seq, id, a b -> a + b) }
+ *     public class FunctionImpl$0 extends RuntimeFunction {
+ *         private final FunctionImpl$1 lambda$1;
+ *
+ *         public FunctionImpl$0(Runtime runtime) {
+ *             super(runtime);
+ *             this.lambda$1 = new FunctionImpl$1(runtime);
+ *         }
+ *
+ *         public long applyExpr(Sequence.OfLong seq, long id) {
+ *             return this.runtime.reduceLong(seq, id, this.lambda$1);
+ *         }
+ *     }
+ *
+ *     // Implements {@literal a b -> a + b }
+ *     public class FunctionImpl$1 extends RuntimeFunction implements LongBinaryOperator {
+ *         public FunctionImpl$1(Runtime runtime) {
+ *             super(runtime);
+ *         }
+ *
+ *         {@literal @Override}
+ *         public long applyAsLong(long left, long right) {
+ *             return left + right;
+ *         }
+ *     }
+ * </code></pre>
+ *
+ * @param <R> the return type of the function constructed using this assembler, for additional type check
  * @author Eldar Abusalimov
  */
 public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, StackStub, DynamicType.Unloaded<RuntimeFunction>> {

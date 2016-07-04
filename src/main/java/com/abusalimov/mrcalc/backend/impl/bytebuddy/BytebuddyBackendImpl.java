@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.function.*;
 
 /**
- * The backend implementation TBD.
+ * The backend implementation that generates JVM bytecode using the ByteBuddy framework.
  *
  * @author Eldar Abusalimov
  */

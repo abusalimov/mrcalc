@@ -48,6 +48,6 @@ public class RuntimeMethodInvoke {
      * @return a {@link StackStub} invoking the method with the arguments
      */
     public StackStub invokeWithArguments(StackManipulation... arguments) {
-        return RawMethodCall.invokeRuntime(runtimeMethod, arguments);
+        return MethodCallStub.invokeRuntime(runtimeMethod, arguments);
     }
 }

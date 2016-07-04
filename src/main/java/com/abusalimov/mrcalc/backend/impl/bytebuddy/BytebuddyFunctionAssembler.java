@@ -81,7 +81,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         return new StackStub.Compound(
                 new StackStub.Simple(MethodVariableAccess.REFERENCE.loadOffset(0)),  // this
 
-                createConstructorCall(typeDescription),
+                MethodCallStub.constructWithRuntimeArgument(typeDescription),
 
                 (implementationTarget, instrumentedMethod) -> {
                     TypeDescription instrumentedType = implementationTarget.getInstrumentedType();
@@ -89,14 +89,6 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
 
                     return FieldAccess.forField(fieldDescription).putter();
                 });
-    }
-
-    private StackStub createConstructorCall(TypeDescription typeDescription) {
-        return RawMethodCall
-                .construct(typeDescription.getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(Runtime.class)))
-                        .getOnly())
-                .withArgument(0);
     }
 
     @Override
@@ -147,13 +139,13 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         MethodDescription evalMethod = function.getTypeDescription()
                 .getDeclaredMethods().filter(ElementMatchers.named("applyExpr")).getOnly();
 
-        StackStub constructorCall = createConstructorCall(function.getTypeDescription());
+        StackStub constructorCall = MethodCallStub.constructWithRuntimeArgument(function.getTypeDescription());
 
         DynamicType.Unloaded<Evaluable> dynamicType = new ByteBuddy()
                 .subclass(Evaluable.class)
                 .method(named("eval"))
                 .intercept(new StackStub.Compound(constructorCall,
-                        new RawMethodCall(evalMethod)
+                        new MethodCallStub(evalMethod)
                                 .withArgumentsArray(1, evalMethod.getParameters().size())))
                 .make();
 

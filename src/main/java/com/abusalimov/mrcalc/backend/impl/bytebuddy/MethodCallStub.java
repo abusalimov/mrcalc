@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.backend.impl.bytebuddy;
 
+import com.abusalimov.mrcalc.runtime.Runtime;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -18,19 +19,20 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.utility.CompoundList;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 /**
  * Extends the {@link MethodCall} class with few necessary methods and constructors.
  *
  * @author Eldar Abusalimov
  */
-public class RawMethodCall extends MethodCall implements StackStub {
-
+public class MethodCallStub extends MethodCall implements StackStub {
     private static final Field RUNTIME_FIELD;
 
     static {
@@ -44,24 +46,9 @@ public class RawMethodCall extends MethodCall implements StackStub {
     /**
      * Creates a new method call without a specified target.
      *
-     * @param method The method to use.
-     */
-    protected RawMethodCall(Method method) {
-        this(new MethodDescription.ForLoadedMethod(method),
-                TargetHandler.ForStackTopOperand.INSTANCE,
-                Collections.emptyList(),
-                MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
-                TerminationHandler.ForMethodReturn.INSTANCE,
-                Assigner.DEFAULT,
-                Assigner.Typing.DYNAMIC);
-    }
-
-    /**
-     * Creates a new method call without a specified target.
-     *
      * @param methodDescription The method description to use.
      */
-    protected RawMethodCall(MethodDescription methodDescription) {
+    protected MethodCallStub(MethodDescription methodDescription) {
         this(new MethodLocator.ForExplicitMethod(methodDescription),
                 TargetHandler.ForStackTopOperand.INSTANCE,
                 Collections.emptyList(),
@@ -69,21 +56,6 @@ public class RawMethodCall extends MethodCall implements StackStub {
                 TerminationHandler.ForMethodReturn.INSTANCE,
                 Assigner.DEFAULT,
                 Assigner.Typing.DYNAMIC);
-    }
-
-    /**
-     * Creates a new method call without a specified target.
-     *
-     * @param methodLocator The method locator to use.
-     */
-    protected RawMethodCall(MethodLocator methodLocator) {
-        this(methodLocator,
-                TargetHandler.ForStackTopOperand.INSTANCE,
-                Collections.emptyList(),
-                MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
-                TerminationHandler.ForMethodReturn.INSTANCE,
-                Assigner.DEFAULT,
-                Assigner.Typing.STATIC);
     }
 
     /**
@@ -98,12 +70,12 @@ public class RawMethodCall extends MethodCall implements StackStub {
      * @param assigner           The assigner to use.
      * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected RawMethodCall(Method method, MethodCall.TargetHandler targetHandler,
-                            List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
-                            MethodInvoker methodInvoker,
-                            MethodCall.TerminationHandler terminationHandler,
-                            Assigner assigner,
-                            Assigner.Typing typing) {
+    protected MethodCallStub(Method method, MethodCall.TargetHandler targetHandler,
+                             List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
+                             MethodInvoker methodInvoker,
+                             MethodCall.TerminationHandler terminationHandler,
+                             Assigner assigner,
+                             Assigner.Typing typing) {
         this(new MethodDescription.ForLoadedMethod(method),
                 targetHandler, argumentLoaders, methodInvoker, terminationHandler, assigner, typing);
     }
@@ -120,12 +92,12 @@ public class RawMethodCall extends MethodCall implements StackStub {
      * @param assigner           The assigner to use.
      * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected RawMethodCall(MethodDescription methodDescription, MethodCall.TargetHandler targetHandler,
-                            List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
-                            MethodInvoker methodInvoker,
-                            MethodCall.TerminationHandler terminationHandler,
-                            Assigner assigner,
-                            Assigner.Typing typing) {
+    protected MethodCallStub(MethodDescription methodDescription, MethodCall.TargetHandler targetHandler,
+                             List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
+                             MethodInvoker methodInvoker,
+                             MethodCall.TerminationHandler terminationHandler,
+                             Assigner assigner,
+                             Assigner.Typing typing) {
         this(new MethodLocator.ForExplicitMethod(methodDescription),
                 targetHandler, argumentLoaders, methodInvoker, terminationHandler, assigner, typing);
     }
@@ -142,23 +114,13 @@ public class RawMethodCall extends MethodCall implements StackStub {
      * @param assigner           The assigner to use.
      * @param typing             Indicates if dynamic type castings should be attempted for incompatible assignments.
      */
-    protected RawMethodCall(MethodLocator methodLocator, MethodCall.TargetHandler targetHandler,
-                            List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
-                            MethodInvoker methodInvoker,
-                            MethodCall.TerminationHandler terminationHandler,
-                            Assigner assigner,
-                            Assigner.Typing typing) {
+    protected MethodCallStub(MethodLocator methodLocator, MethodCall.TargetHandler targetHandler,
+                             List<MethodCall.ArgumentLoader.Factory> argumentLoaders,
+                             MethodInvoker methodInvoker,
+                             MethodCall.TerminationHandler terminationHandler,
+                             Assigner assigner,
+                             Assigner.Typing typing) {
         super(methodLocator, targetHandler, argumentLoaders, methodInvoker, terminationHandler, assigner, typing);
-    }
-
-    /**
-     * Invokes the given constructor in order to create an instance.
-     *
-     * @param constructor The constructor to invoke.
-     * @return A method call that invokes the given constructor without providing any arguments.
-     */
-    public static RawMethodCall construct(Constructor<?> constructor) {
-        return construct(new MethodDescription.ForLoadedConstructor(constructor));
     }
 
     /**
@@ -167,11 +129,11 @@ public class RawMethodCall extends MethodCall implements StackStub {
      * @param methodDescription A description of the constructor to invoke.
      * @return A method call that invokes the given constructor without providing any arguments.
      */
-    public static RawMethodCall construct(MethodDescription methodDescription) {
+    public static MethodCallStub construct(MethodDescription methodDescription) {
         if (!methodDescription.isConstructor()) {
             throw new IllegalArgumentException("Not a constructor: " + methodDescription);
         }
-        return new RawMethodCall(new MethodLocator.ForExplicitMethod(methodDescription),
+        return new MethodCallStub(new MethodLocator.ForExplicitMethod(methodDescription),
                 MethodCall.TargetHandler.ForConstructingInvocation.INSTANCE,
                 Collections.emptyList(),
                 MethodInvoker.ForContextualInvocation.INSTANCE,
@@ -180,8 +142,29 @@ public class RawMethodCall extends MethodCall implements StackStub {
                 Assigner.Typing.STATIC);
     }
 
-    public static RawMethodCall invokeRuntime(Method method, StackManipulation... arguments) {
-        return new RawMethodCall(method,
+    /**
+     * Invokes a constructor of the specified type that takes an instance of {@link Runtime} as the sole argument.
+     *
+     * @param typeDescription A description of the type, the constructor of which to invoke.
+     * @return A method call that invokes the given constructor passing through the sole argument to it.
+     */
+    public static MethodCallStub constructWithRuntimeArgument(TypeDescription typeDescription) {
+        MethodDescription constructorDescription = typeDescription.getDeclaredMethods()
+                .filter(isConstructor().and(takesArguments(Runtime.class)))
+                .getOnly();
+        return construct(constructorDescription)
+                .withArgumentLoader(new ArgumentLoader.ForMethodParameter.Factory(0));
+    }
+
+    /**
+     * Invokes a runtime method on the instance found in the "runtime" field of this instance.
+     *
+     * @param method    the runtime method being invoked
+     * @param arguments the arguments to pass
+     * @return a method call that invokes the given runtime method
+     */
+    public static MethodCallStub invokeRuntime(Method method, StackManipulation... arguments) {
+        return new MethodCallStub(method,
                 new TargetHandler.ForSuperInstanceField(new FieldDescription.ForLoadedField(RUNTIME_FIELD)),
                 Collections.singletonList(new ArgumentLoader.ForStackManipulations(arguments)),
                 MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
@@ -190,15 +173,31 @@ public class RawMethodCall extends MethodCall implements StackStub {
                 Assigner.Typing.STATIC);
     }
 
-//    public static RawMethodCall invokeRuntime(Method method, int arguments) {
-//        return new RawMethodCall(method,
-//                new MethodCall.TargetHandler.ForInstanceField("runtime", TypeDefinition.Sort.describe(Runtime.class)),
-//                Collections.singletonList(new ArgumentLoader.ForStackTopOperand(arguments)),
-//                MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
-//                TerminationHandler.ForStub.INSTANCE,
-//                Assigner.DEFAULT,
-//                Assigner.Typing.STATIC);
-//    }
+    /**
+     * Creates a copy of this instance with additional arguments array.
+     *
+     * @param argumentLoaders the arguments to add
+     * @return the new instance
+     */
+    protected MethodCallStub withArgumentLoader(MethodCall.ArgumentLoader.Factory... argumentLoaders) {
+        return withArgumentLoader(Arrays.asList(argumentLoaders));
+    }
+
+    /**
+     * Creates a copy of this instance with additional arguments list.
+     *
+     * @param argumentLoaders the arguments to add
+     * @return the new instance
+     */
+    protected MethodCallStub withArgumentLoader(List<MethodCall.ArgumentLoader.Factory> argumentLoaders) {
+        return new MethodCallStub(methodLocator,
+                targetHandler,
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
+                methodInvoker,
+                terminationHandler,
+                assigner,
+                typing);
+    }
 
     /**
      * Defines a method call that unpacks the array found in the specified parameter of the instrumented method and
@@ -214,7 +213,7 @@ public class RawMethodCall extends MethodCall implements StackStub {
      * @param argumentsArrayLength how many arguments to unpack from the array
      * @return a new {@link MethodCall} instance
      */
-    public RawMethodCall withArgumentsArray(int parameterIndex, int argumentsArrayLength) {
+    public MethodCallStub withArgumentsArray(int parameterIndex, int argumentsArrayLength) {
         if (parameterIndex < 0) {
             throw new IllegalArgumentException("Negative parameter index: " + parameterIndex);
         }
@@ -222,35 +221,8 @@ public class RawMethodCall extends MethodCall implements StackStub {
             throw new IllegalArgumentException("Negative arguments array length: " + argumentsArrayLength);
         }
 
-        ArgumentLoader.Factory argumentLoader = new ArgumentLoader.ForArgumentsArray.FromInstrumentedMethodArgument(
-                parameterIndex, argumentsArrayLength);
-
-        return new RawMethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoader),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
-    }
-
-    @Override
-    public RawMethodCall withArgument(int... index) {
-        List<MethodCall.ArgumentLoader.Factory> argumentLoaders = new ArrayList<>(
-                index.length);
-        for (int anIndex : index) {
-            if (anIndex < 0) {
-                throw new IllegalArgumentException("Negative index: " + anIndex);
-            }
-            argumentLoaders.add(new ArgumentLoader.ForMethodParameter.Factory(anIndex));
-        }
-        return new RawMethodCall(methodLocator,
-                targetHandler,
-                CompoundList.of(this.argumentLoaders, argumentLoaders),
-                methodInvoker,
-                terminationHandler,
-                assigner,
-                typing);
+        return withArgumentLoader(new ArgumentLoader.ForArgumentsArray.FromInstrumentedMethodArgument(parameterIndex,
+                argumentsArrayLength));
     }
 
     @Override
@@ -261,8 +233,8 @@ public class RawMethodCall extends MethodCall implements StackStub {
     @Override
     public StackManipulation eval(Target implementationTarget, MethodDescription instrumentedMethod) {
         MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
-        List<MethodCall.ArgumentLoader> argumentLoaders = new ArrayList<>(RawMethodCall.this.argumentLoaders.size());
-        for (MethodCall.ArgumentLoader.Factory argumentLoader : RawMethodCall.this.argumentLoaders) {
+        List<MethodCall.ArgumentLoader> argumentLoaders = new ArrayList<>(MethodCallStub.this.argumentLoaders.size());
+        for (MethodCall.ArgumentLoader.Factory argumentLoader : MethodCallStub.this.argumentLoaders) {
             argumentLoaders.addAll(argumentLoader.make(implementationTarget.getInstrumentedType(), instrumentedMethod));
         }
         ParameterList<?> parameters = invokedMethod.getParameters();
@@ -317,29 +289,6 @@ public class RawMethodCall extends MethodCall implements StackStub {
                 return stackManipulations.stream()
                         .map(stackManipulation -> (ArgumentLoader) (target, assigner, typing) -> stackManipulation)
                         .collect(Collectors.toList());
-            }
-        }
-
-        /**
-         * Produces no-op ArgumentLoaders assuming that the necessary arguments are already on stack.
-         */
-        class ForStackTopOperand implements ArgumentLoader.Factory {
-            private final int arguments;
-
-            public ForStackTopOperand() {
-                this(1);
-            }
-
-            public ForStackTopOperand(int arguments) {
-                this.arguments = arguments;
-            }
-
-            @Override
-            public List<MethodCall.ArgumentLoader> make(TypeDescription instrumentedType,
-                                                        MethodDescription instrumentedMethod) {
-                ArgumentLoader trivialArgumentLoader = (target, assigner, typing) ->
-                        new StackOperandTrivialManipulation(target.getType().getStackSize());
-                return Collections.nCopies(arguments, trivialArgumentLoader);
             }
         }
 
@@ -525,32 +474,6 @@ public class RawMethodCall extends MethodCall implements StackStub {
             public String toString() {
                 return "MethodCall.TargetHandler.ForInstanceField{" +
                        "fieldDescription=" + fieldDescription + '}';
-            }
-        }
-
-        /**
-         * Invokes a method in order to construct a new instance.
-         */
-        class ForTargetInvocation implements MethodCall.TargetHandler {
-            private final StackManipulation target;
-
-            public ForTargetInvocation(StackManipulation target) {
-                this.target = target;
-            }
-
-            @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod,
-                                             TypeDescription instrumentedType, Assigner assigner,
-                                             Assigner.Typing typing) {
-                if (invokedMethod.isStatic()) {
-                    return StackManipulation.Trivial.INSTANCE;
-                }
-                return target;
-            }
-
-            @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType) {
-                return instrumentedType;
             }
         }
     }

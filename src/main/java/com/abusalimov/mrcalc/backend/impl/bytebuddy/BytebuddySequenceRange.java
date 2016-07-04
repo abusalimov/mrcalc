@@ -1,9 +1,6 @@
 package com.abusalimov.mrcalc.backend.impl.bytebuddy;
 
 import com.abusalimov.mrcalc.backend.SequenceRange;
-import com.abusalimov.mrcalc.runtime.Runtime;
-
-import java.lang.reflect.Method;
 
 /**
  * @author Eldar Abusalimov
@@ -11,14 +8,10 @@ import java.lang.reflect.Method;
 public enum BytebuddySequenceRange implements SequenceRange<StackStub, StackStub> {
     LONG("createLongRangeInclusive", long.class);
 
-    private final Method runtimeMethod;
+    private final RuntimeMethodInvoke runtimeMethodInvoke;
 
     BytebuddySequenceRange(String runtimeMethodName, Class<? extends Number> boundaryType) {
-        try {
-            this.runtimeMethod = Runtime.class.getDeclaredMethod(runtimeMethodName, boundaryType, boundaryType);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(String.format("Couldn't find Runtime method '%s'", runtimeMethodName), e);
-        }
+        runtimeMethodInvoke = new RuntimeMethodInvoke(runtimeMethodName, boundaryType, boundaryType);
     }
 
     public static <T extends Number> BytebuddySequenceRange forType(Class<T> type) {
@@ -32,7 +25,6 @@ public enum BytebuddySequenceRange implements SequenceRange<StackStub, StackStub
     @Override
     public StackStub range(StackStub start, StackStub end) {
         return new StackStub.Compound(start, end)
-                .withEvalCompositor(
-                        stackManipulations -> RawMethodCall.invokeRuntime(runtimeMethod, stackManipulations));
+                .withEvalCompositor(runtimeMethodInvoke::invokeWithArguments);
     }
 }

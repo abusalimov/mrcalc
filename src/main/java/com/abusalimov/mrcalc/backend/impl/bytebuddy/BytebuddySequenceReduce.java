@@ -1,10 +1,8 @@
 package com.abusalimov.mrcalc.backend.impl.bytebuddy;
 
 import com.abusalimov.mrcalc.backend.SequenceReduce;
-import com.abusalimov.mrcalc.runtime.Runtime;
 import com.abusalimov.mrcalc.runtime.Sequence;
 
-import java.lang.reflect.Method;
 import java.util.function.BinaryOperator;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.LongBinaryOperator;
@@ -17,14 +15,10 @@ public enum BytebuddySequenceReduce implements SequenceReduce<StackStub, StackSt
     LONG("reduceLong", Sequence.OfLong.class, long.class, LongBinaryOperator.class),
     DOUBLE("reduceDouble", Sequence.OfDouble.class, double.class, DoubleBinaryOperator.class);
 
-    private final Method runtimeMethod;
+    private final RuntimeMethodInvoke runtimeMethodInvoke;
 
     BytebuddySequenceReduce(String runtimeMethodName, Class<?>... parameterTypes) {
-        try {
-            this.runtimeMethod = Runtime.class.getDeclaredMethod(runtimeMethodName, parameterTypes);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(String.format("Couldn't find Runtime method '%s'", runtimeMethodName), e);
-        }
+        runtimeMethodInvoke = new RuntimeMethodInvoke(runtimeMethodName, parameterTypes);
     }
 
     public static BytebuddySequenceReduce forType(Class<?> type) {
@@ -38,7 +32,6 @@ public enum BytebuddySequenceReduce implements SequenceReduce<StackStub, StackSt
     @Override
     public StackStub reduce(StackStub sequence, StackStub neutral, StackStub lambda) {
         return new StackStub.Compound(sequence, neutral, lambda)
-                .withEvalCompositor(
-                        stackManipulations -> RawMethodCall.invokeRuntime(runtimeMethod, stackManipulations));
+                .withEvalCompositor(runtimeMethodInvoke::invokeWithArguments);
     }
 }

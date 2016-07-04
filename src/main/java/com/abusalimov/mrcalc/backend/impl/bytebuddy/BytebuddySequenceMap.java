@@ -1,10 +1,8 @@
 package com.abusalimov.mrcalc.backend.impl.bytebuddy;
 
 import com.abusalimov.mrcalc.backend.SequenceMap;
-import com.abusalimov.mrcalc.runtime.Runtime;
 import com.abusalimov.mrcalc.runtime.Sequence;
 
-import java.lang.reflect.Method;
 import java.util.function.*;
 
 /**
@@ -38,34 +36,25 @@ public enum BytebuddySequenceMap {
         @Override
         default StackStub map(StackStub sequence, StackStub lambda) {
             return new StackStub.Compound(sequence, lambda)
-                    .withEvalCompositor(
-                            stackManipulations -> RawMethodCall.invokeRuntime(getRuntimeMethod(), stackManipulations));
+                    .withEvalCompositor(getRuntimeMethodInvoke()::invokeWithArguments);
         }
 
-        Method getRuntimeMethod();
-
-        default Method lookupRuntimeMethod(String runtimeMethodName, Class<?>... parameterTypes) {
-            try {
-                return Runtime.class.getDeclaredMethod(runtimeMethodName, parameterTypes);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(String.format("Couldn't find Runtime method '%s'", runtimeMethodName), e);
-            }
-        }
+        RuntimeMethodInvoke getRuntimeMethodInvoke();
 
         enum ToObject implements FromAny {
             OBJECT("mapToObject", Sequence.class, Function.class),
             LONG("mapLongToObject", Sequence.OfLong.class, LongFunction.class),
             DOUBLE("mapDoubleToObject", Sequence.OfDouble.class, DoubleFunction.class);
 
-            private final Method runtimeMethod;
+            private final RuntimeMethodInvoke runtimeMethodInvoke;
 
             ToObject(String runtimeMethodName, Class<?>... parameterTypes) {
-                this.runtimeMethod = lookupRuntimeMethod(runtimeMethodName, parameterTypes);
+                runtimeMethodInvoke = new RuntimeMethodInvoke(runtimeMethodName, parameterTypes);
             }
 
             @Override
-            public Method getRuntimeMethod() {
-                return runtimeMethod;
+            public RuntimeMethodInvoke getRuntimeMethodInvoke() {
+                return runtimeMethodInvoke;
             }
         }
 
@@ -74,15 +63,15 @@ public enum BytebuddySequenceMap {
             LONG("mapLongToLong", Sequence.OfLong.class, LongUnaryOperator.class),
             DOUBLE("mapDoubleToLong", Sequence.OfDouble.class, DoubleToLongFunction.class);
 
-            private final Method runtimeMethod;
+            private final RuntimeMethodInvoke runtimeMethodInvoke;
 
             ToLong(String runtimeMethodName, Class<?>... parameterTypes) {
-                this.runtimeMethod = lookupRuntimeMethod(runtimeMethodName, parameterTypes);
+                runtimeMethodInvoke = new RuntimeMethodInvoke(runtimeMethodName, parameterTypes);
             }
 
             @Override
-            public Method getRuntimeMethod() {
-                return runtimeMethod;
+            public RuntimeMethodInvoke getRuntimeMethodInvoke() {
+                return runtimeMethodInvoke;
             }
         }
 
@@ -91,15 +80,15 @@ public enum BytebuddySequenceMap {
             LONG("mapLongToDouble", Sequence.OfLong.class, LongToDoubleFunction.class),
             DOUBLE("mapDoubleToDouble", Sequence.OfDouble.class, DoubleUnaryOperator.class);
 
-            private final Method runtimeMethod;
+            private final RuntimeMethodInvoke runtimeMethodInvoke;
 
             ToDouble(String runtimeMethodName, Class<?>... parameterTypes) {
-                this.runtimeMethod = lookupRuntimeMethod(runtimeMethodName, parameterTypes);
+                runtimeMethodInvoke = new RuntimeMethodInvoke(runtimeMethodName, parameterTypes);
             }
 
             @Override
-            public Method getRuntimeMethod() {
-                return runtimeMethod;
+            public RuntimeMethodInvoke getRuntimeMethodInvoke() {
+                return runtimeMethodInvoke;
             }
         }
     }

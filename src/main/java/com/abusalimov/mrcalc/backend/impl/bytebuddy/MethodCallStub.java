@@ -37,7 +37,7 @@ public class MethodCallStub extends MethodCall implements StackStub {
 
     static {
         try {
-            RUNTIME_FIELD = BytebuddyFunctionAssembler.BaseFunction.class.getField("runtime");
+            RUNTIME_FIELD = RuntimeFunction.class.getDeclaredField("runtime");
         } catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
         }

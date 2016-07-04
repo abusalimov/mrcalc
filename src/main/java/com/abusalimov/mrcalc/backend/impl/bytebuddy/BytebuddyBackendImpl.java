@@ -14,7 +14,7 @@ import java.util.function.*;
  *
  * @author Eldar Abusalimov
  */
-public class BytebuddyBackendImpl implements Backend<StackStub, DynamicType.Unloaded<BytebuddyFunctionAssembler.BaseFunction>> {
+public class BytebuddyBackendImpl implements Backend<StackStub, DynamicType.Unloaded<RuntimeFunction>> {
     private static final Map<Method, Class<?>> functionInterfaceMethodMap = new LinkedHashMap<>();
 
     static {
@@ -82,9 +82,8 @@ public class BytebuddyBackendImpl implements Backend<StackStub, DynamicType.Unlo
     }
 
     @Override
-    public <R> FunctionAssembler<R, StackStub, DynamicType.Unloaded<BytebuddyFunctionAssembler.BaseFunction>> createFunctionAssembler(
-            Class<R> returnType,
-            Class<?>... parameterTypes) {
+    public <R> FunctionAssembler<R, StackStub, DynamicType.Unloaded<RuntimeFunction>> createFunctionAssembler(
+            Class<R> returnType, Class<?>... parameterTypes) {
         Method method = matchFunctionInterfaceMethod(returnType, parameterTypes);
         if (method != null) {
             return new BytebuddyFunctionAssembler.ForInterface<>(returnType, parameterTypes,

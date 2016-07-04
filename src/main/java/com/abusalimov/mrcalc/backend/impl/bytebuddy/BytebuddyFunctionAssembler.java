@@ -32,24 +32,23 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 /**
  * @author Eldar Abusalimov
  */
-public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, StackStub,
-        DynamicType.Unloaded<BytebuddyFunctionAssembler.BaseFunction>> {
+public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, StackStub, DynamicType.Unloaded<RuntimeFunction>> {
     private final Class<R> returnType;
     private final Class<?>[] parameterTypes;
-    private final List<DynamicType.Unloaded<BaseFunction>> lambdas = new ArrayList<>();
+    private final List<DynamicType.Unloaded<RuntimeFunction>> lambdas = new ArrayList<>();
 
     public BytebuddyFunctionAssembler(Class<R> returnType, Class<?>[] parameterTypes) {
         this.returnType = returnType;
         this.parameterTypes = parameterTypes;
     }
 
-    protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<BaseFunction> getDynamicBuilder() {
+    protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<RuntimeFunction> getDynamicBuilder() {
         List<TypeDescription> lambdaTypeDescriptions = lambdas.stream()
                 .map(DynamicType::getTypeDescription)
                 .collect(Collectors.toList());
 
-        DynamicType.Builder<BaseFunction> builder = new ByteBuddy()
-                .subclass(BaseFunction.class);
+        DynamicType.Builder<RuntimeFunction> builder = new ByteBuddy()
+                .subclass(RuntimeFunction.class);
 
         for (TypeDescription lambdaTypeDescription : lambdaTypeDescriptions) {
             builder = builder.defineField(
@@ -73,10 +72,6 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
                 .withParameters((Type[]) parameterTypes);
     }
 
-    protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<BaseFunction> getImplementationDefinition() {
-        return getDynamicBuilder();
-    }
-
     private StackStub createLambdaInitializer(TypeDescription typeDescription) {
         return new StackStub.Compound(
                 new StackStub.Simple(MethodVariableAccess.REFERENCE.loadOffset(0)),  // this
@@ -92,8 +87,8 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     }
 
     @Override
-    public DynamicType.Unloaded<BaseFunction> assemble(StackStub expr) {
-        DynamicType.Unloaded<BaseFunction> dynamicType = getImplementationDefinition()
+    public DynamicType.Unloaded<RuntimeFunction> assemble(StackStub expr) {
+        DynamicType.Unloaded<RuntimeFunction> dynamicType = getDynamicBuilder()
                 .intercept(new StackStub.Compound(expr, getMethodReturn()))
                 .make();
 
@@ -115,7 +110,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     }
 
     @Override
-    public StackStub lambda(DynamicType.Unloaded<BaseFunction> function) {
+    public StackStub lambda(DynamicType.Unloaded<RuntimeFunction> function) {
         lambdas.add(function);
         TypeDescription typeDescription = function.getTypeDescription();
 
@@ -135,7 +130,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     }
 
     @Override
-    public Evaluable<R> toEvaluable(DynamicType.Unloaded<BaseFunction> function) {
+    public Evaluable<R> toEvaluable(DynamicType.Unloaded<RuntimeFunction> function) {
         MethodDescription evalMethod = function.getTypeDescription()
                 .getDeclaredMethods().filter(ElementMatchers.named("applyExpr")).getOnly();
 
@@ -215,20 +210,16 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         }
 
         @Override
-        protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<BaseFunction> getImplementationDefinition() {
-            return getDynamicBuilder()
+        protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<RuntimeFunction> getDynamicBuilder() {
+            /*
+             * Makes the "applyExpr" method simply delegate to the method implementing the interface.
+             * The former is likely not used anyway.
+             */
+            return super.getDynamicBuilder()
                     .intercept(MethodCall.invoke(method).withAllArguments()
                             .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
                     .implement(methodInterface)
                     .method(is(method));
-        }
-    }
-
-    public static abstract class BaseFunction {
-        public final Runtime runtime;
-
-        public BaseFunction(Runtime runtime) {
-            this.runtime = runtime;
         }
     }
 

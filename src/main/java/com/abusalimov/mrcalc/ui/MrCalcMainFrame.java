@@ -1,12 +1,11 @@
 package com.abusalimov.mrcalc.ui;
 
 import com.abusalimov.mrcalc.CalcExecutor;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import java.awt.*;
 
@@ -35,13 +34,6 @@ public class MrCalcMainFrame extends JFrame {
         messageList = new MessageList(codeTextPane);
         codeTextPane.setErrorListener(messageList::setMessages);
 
-        StyleContext style = StyleContext.getDefaultStyleContext();
-
-        AttributeSet defaultAttr = style
-                .addAttribute(style.getEmptySet(), StyleConstants.FontFamily, "Monospaced");
-        defaultAttr = style.addAttribute(defaultAttr, StyleConstants.FontSize, 16);
-
-        codeTextPane.setCharacterAttributes(defaultAttr, true);
         outputTextArea.setFont(new Font("Monospaced", Font.BOLD, 16));
         outputTextArea.setLineWrap(true);
         outputTextArea.setWrapStyleWord(true);
@@ -50,7 +42,7 @@ public class MrCalcMainFrame extends JFrame {
     }
 
     private void initLayout() {
-        JScrollPane codeScrollPane = new JScrollPane(codeTextPane);
+        RTextScrollPane codeScrollPane = new RTextScrollPane(codeTextPane);
 
         JPanel toolPanel = new JPanel();
         toolPanel.setBorder(new EmptyBorder(0,3,0,3));
@@ -62,10 +54,6 @@ public class MrCalcMainFrame extends JFrame {
         northToolPanel.add(parallelModeSwitcher);
         toolPanel.add(northToolPanel, BorderLayout.NORTH);
         toolPanel.add(interruptButton, BorderLayout.SOUTH);
-
-        TextLineNumber tln = new TextLineNumber(codeTextPane);
-        codeScrollPane.setRowHeaderView(tln);
-        codeScrollPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, 400));
 
         JPanel outputPanel = new JPanel();
         outputPanel.setLayout(new BoxLayout(outputPanel, BoxLayout.Y_AXIS));

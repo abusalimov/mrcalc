@@ -3,14 +3,14 @@ package com.abusalimov.mrcalc.ui;
 import com.abusalimov.mrcalc.CalcExecutor;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
 import com.abusalimov.mrcalc.diagnostic.DiagnosticException;
+import com.abusalimov.mrcalc.location.Location;
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.parser.*;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
-import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -18,42 +18,17 @@ import java.util.function.Consumer;
 /**
  * @author - Eldar Abusalimov
  */
-public class CodeTextPane extends JTextPane {
-    private static int squiggleSize = 2;
-    private static int squigglesAtEof = 2;
-
+public class CodeTextPane extends RSyntaxTextArea {
+    private final CalcExecutor calcExecutor;
     private final OutputTextArea outputTextArea;
     private Consumer<List<Diagnostic>> errorListener;
-    private List<Diagnostic> diagnostics = Collections.emptyList();
 
     public CodeTextPane(CalcExecutor calcExecutor, OutputTextArea outputTextArea) {
+        this.calcExecutor = calcExecutor;
         this.outputTextArea = outputTextArea;
-        getStyledDocument().addDocumentListener(new HighlightListener(calcExecutor));
-        ToolTipManager.sharedInstance().registerComponent(this);
         SwingUtilities.invokeLater(this::requestFocus);
-    }
-
-    @Override
-    public String getToolTipText(MouseEvent event) {
-        int offset = viewToModel(event.getPoint());
-        for (Diagnostic diagnostic : diagnostics) {
-            int startOffset = diagnostic.getLocation().getStartOffset();
-            int endOffset = diagnostic.getLocation().getEndOffset();
-
-            try {
-                if ((startOffset == endOffset || !onSameLine(startOffset, endOffset)) &&
-                    offset == startOffset &&
-                    modelToView(offset).x + squigglesAtEof * squiggleSize > event.getPoint().x)
-                    return diagnostic.getMessage();
-
-                if (offset >= startOffset && offset < endOffset)
-                    return diagnostic.getMessage();
-
-            } catch (BadLocationException e) {
-                e.printStackTrace();
-            }
-        }
-        return super.getToolTipText(event);
+        addParser(new CompileParser());
+        setParserDelay(250);
     }
 
     public void setErrorListener(Consumer<List<Diagnostic>> errorListener) {
@@ -62,95 +37,58 @@ public class CodeTextPane extends JTextPane {
 
     private void fireErrorListener(List<Diagnostic> diagnostics) {
         if (errorListener != null)
-            errorListener.accept(diagnostics);
+            errorListener.accept(new ArrayList<>(diagnostics));
     }
 
-    private boolean onSameLine(int startOffset, int endOffset) {
-        try {
-            return getDocument().getText(startOffset, endOffset - startOffset).indexOf('\n') == -1;
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private class HighlightListener implements DocumentListener {
-        private final SquigglePainter squigglePainter = new SquigglePainter(Color.RED, squiggleSize);
-        private final DefaultHighlighter.DefaultHighlightPainter defaultPainter =
-                new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 0, 0, 16));
-        private final SquigglePainter eofPainter = new SquigglePainter(Color.RED, squiggleSize) {
-            @Override
-            protected void paintSquiggles(Graphics g, Rectangle r) {
-                super.paintSquiggles(g, new Rectangle(r.x + r.width, r.y, squigglesAtEof *squiggle, r.height));
-            }
-        };
-
-        private final CalcExecutor calcExecutor;
-
-        public HighlightListener(CalcExecutor calcExecutor) {
-            this.calcExecutor = calcExecutor;
-        }
-
+    protected abstract class AbstractDiagnosticParser extends AbstractParser {
         @Override
-        public void insertUpdate(DocumentEvent e) {
-            handleEvent();
-        }
-
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            handleEvent();
-        }
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            /* do nothing */
-        }
-
-        private void handleEvent() {
-            clearHighlight();
-
+        public ParseResult parse(RSyntaxDocument doc, String style) {
+            DefaultParseResult result = new DefaultParseResult(this);
             try {
-                String sourceCodeText = getDocument().getText(0, getDocument().getLength());
-                calcExecutor.execute(sourceCodeText, outputTextArea::createStream, diagnostic ->
-                        SwingUtilities.invokeLater(() -> highlight(Collections.singletonList(diagnostic))));
-            } catch (BadLocationException e) {
-                e.printStackTrace();
+                exec();
             } catch (DiagnosticException e) {
-                SwingUtilities.invokeLater(() -> highlight(e.getDiagnostics()));
+                handleDiagnostics(result, e.getDiagnostics());
             }
+            return result;
         }
 
-        private void clearHighlight() {
-            diagnostics = Collections.emptyList();
-            getHighlighter().removeAllHighlights();
+        protected abstract void exec() throws DiagnosticException;
+
+        protected void handleDiagnostics(DefaultParseResult result, List<Diagnostic> diagnostics) {
+            for (Diagnostic diagnostic : diagnostics) {
+                addDiagnosticToResult(result, diagnostic);
+            }
             fireErrorListener(diagnostics);
         }
 
-        private void highlight(List<Diagnostic> diagnostics) {
-            if (!EventQueue.isDispatchThread())
-                throw new IllegalThreadStateException();
-
-            fireErrorListener(diagnostics);
-            diagnostics.forEach(this::highlight);
-            repaint();
+        protected void addDiagnosticToResult(DefaultParseResult parseResult, Diagnostic diagnostic) {
+            Location location = diagnostic.getLocation();
+            DefaultParserNotice notice = new DefaultParserNotice(AbstractDiagnosticParser.this,
+                    diagnostic.getMessage(),
+                    location.getLineNumber(),
+                    location.getStartOffset(),
+                    Math.max(1, location.getEndOffset() - location.getStartOffset()));
+            notice.setLevel(ParserNotice.Level.ERROR);
+            parseResult.addNotice(notice);
         }
+    }
 
-        private void highlight(Diagnostic diagnostic) {
-            int startOffset = diagnostic.getLocation().getStartOffset();
-            int endOffset = diagnostic.getLocation().getEndOffset();
+    private class CompileParser extends AbstractDiagnosticParser {
+        @Override
+        protected void exec() throws DiagnosticException {
+            fireErrorListener(Collections.emptyList());
+            outputTextArea.setText("");
 
+            String sourceCodeText;
             try {
-                if (startOffset == endOffset) {
-                    getHighlighter().addHighlight(startOffset, endOffset + 1, eofPainter);
-                } else if (!onSameLine(startOffset, endOffset)) {
-                    getHighlighter().addHighlight(startOffset, endOffset, eofPainter);
-                } else {
-                    getHighlighter().addHighlight(startOffset, endOffset, defaultPainter);
-                    getHighlighter().addHighlight(startOffset, endOffset, squigglePainter);
-                }
+                sourceCodeText = getDocument().getText(0, getDocument().getLength());
             } catch (BadLocationException e) {
                 e.printStackTrace();
+                return;
             }
+
+            calcExecutor.execute(sourceCodeText, outputTextArea::createStream);
+
         }
     }
 }

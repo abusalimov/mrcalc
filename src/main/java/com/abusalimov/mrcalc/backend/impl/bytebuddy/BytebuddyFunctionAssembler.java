@@ -163,7 +163,12 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
     public ArgumentLoad<StackStub> getArgumentLoad(Class<?> parameterType) {
         return slot -> (StackStub.ForMethod) instrumentedMethod -> {
             ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(slot);
-            return MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset());
+            return new StackManipulation.Compound(
+                    MethodVariableAccess.of(parameterDescription.getType())
+                            .loadOffset(parameterDescription.getOffset()),
+                    Assigner.DEFAULT.assign(parameterDescription.getType(),
+                            new TypeDescription.ForLoadedType(parameterType).asGenericType(),
+                            Assigner.Typing.STATIC));
         };
     }
 

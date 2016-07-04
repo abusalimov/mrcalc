@@ -9,13 +9,11 @@ import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
 import com.abusalimov.mrcalc.runtime.Runtime
 import com.abusalimov.mrcalc.runtime.impl.stream.StreamRuntime
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 import static groovy.test.GroovyAssert.shouldFail
-
 /**
  * Integration tests including tests for the Interpreter.
  *
@@ -106,9 +104,26 @@ class InterpreterTest {
         assert [2D, 4D, 6D, 8D, 10D, 12D, 14D, 16D, 18D] == eval("map(dSeq, x -> x + x)")
     }
 
-    @Ignore("NIY")
     @Test
-    void "calculates variables lazily"() {
-        assert 42L == eval("var fuuu = 1/0; 42")
+    void "supports variables of any type"() {
+        assert 2L == eval("var l = 1 + 1; l")
+        assert 3D == eval("var d = l + 1; d")
+
+        assert [0L, 1L, 2L] == eval("var lSeq = {0, l}; lSeq")
+        assert [1D, 2D, 3D] == eval("var dSeq = map(lSeq, x -> x + 1.0); dSeq")
+        assert [1D, 4D, 9D] == eval("map(dSeq, x -> x ^ 2)")
+
+        assert [[], [0L], [0L, 1L, 2L, 3L]] == eval("var lSeqSeq = map(lSeq, x -> {0, x^2 - 1}); lSeqSeq")
+        assert [[], [1D], [1D, 2D, 3D, 4D]] == eval("var dSeqSeq = map(lSeqSeq, xs -> map(xs, x -> x + 1.0)); dSeqSeq")
+
+        assert [0L, 0L, 6L] == eval("var lSumSeq = map(lSeqSeq, xs -> reduce(xs, 0, x y -> x+y)); lSumSeq")
+        assert [0D, 1D, 10D] == eval("var dSumSeq = map(dSeqSeq, xs -> reduce(xs, 0.0, x y -> x+y)); dSumSeq")
+
+        assert 6L == eval("reduce(lSumSeq, 0, x y -> x+y)")
+        assert 11D == eval("reduce(dSumSeq, 0.0, x y -> x+y)")
+
+        assert [6L] == eval("reduce(lSeqSeq, {0, 0}, xs ys -> {" +
+                "reduce(xs, 0, x y -> x+y) + reduce(ys, 0, x y -> x+y), " +
+                "reduce(xs, 0, x y -> x+y) + reduce(ys, 0, x y -> x+y)})")
     }
 }

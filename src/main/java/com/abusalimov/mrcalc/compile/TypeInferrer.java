@@ -240,7 +240,7 @@ public class TypeInferrer extends AbstractNodeDiagnosticEmitter implements NodeA
         /* Report each duplicate name only once, even if some of them occur three times or more. */
         for (String argName : duplicateArgNames) {
             emitNodeDiagnostic(lambda,
-                    String.format("Duplicate lambda argument '%s'", argName));
+                    String.format("Duplicate lambda parameter '%s'", argName));
         }
 
         return (argNames.size() == arity) && duplicateArgNames.isEmpty();

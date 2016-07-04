@@ -136,6 +136,16 @@ class TypeInferrerTest {
     }
 
     @Test
+    void "checks lambda parameters for duplicates"() {
+        assert shouldDiagnose("duplicate lambda parameter") { infer("map({1,2}, x x -> 1)") }
+        assert shouldDiagnose("duplicate lambda parameter") { infer("map({1,2}, x x x -> 1)") }
+
+        assert shouldDiagnose("duplicate lambda parameter") { infer("reduce({1,2}, 0, x x -> 1)") }
+        assert shouldDiagnose("duplicate lambda parameter") { infer("reduce({1,2}, 0, x x x -> 1)") }
+        assert shouldDiagnose("duplicate lambda parameter") { infer("reduce({1,2}, 0, y x x -> 1)") }
+    }
+
+    @Test
     void "checks sequence boundaries to be integers"() {
         assert shouldDiagnose("boundary") { infer("{1, 2.}") }
         /* shouldn't diagnose "boundary" */ infer("{9,0}")

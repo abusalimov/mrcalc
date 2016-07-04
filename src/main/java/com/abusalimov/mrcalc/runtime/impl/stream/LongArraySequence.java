@@ -35,13 +35,6 @@ public class LongArraySequence extends AbstractList<Long> implements Sequence.Of
     }
 
     @Override
-    public Long set(int index, Long element) {
-        Long oldValue = a[index];
-        a[index] = element;
-        return oldValue;
-    }
-
-    @Override
     public Spliterator.OfLong spliterator() {
         return Arrays.spliterator(a);
     }

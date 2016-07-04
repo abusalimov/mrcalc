@@ -35,13 +35,6 @@ public class DoubleArraySequence extends AbstractList<Double> implements Sequenc
     }
 
     @Override
-    public Double set(int index, Double element) {
-        Double oldValue = a[index];
-        a[index] = element;
-        return oldValue;
-    }
-
-    @Override
     public Spliterator.OfDouble spliterator() {
         return Arrays.spliterator(a);
     }

@@ -168,7 +168,7 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
                             .loadOffset(parameterDescription.getOffset()),
                     Assigner.DEFAULT.assign(parameterDescription.getType(),
                             new TypeDescription.ForLoadedType(parameterType).asGenericType(),
-                            Assigner.Typing.STATIC));
+                            Assigner.Typing.DYNAMIC));
         };
     }
 
@@ -207,9 +207,8 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         private final Class<?> methodInterface;
         private final Method method;
 
-        public ForInterface(Class<?> methodInterface, Method method) {
-            //noinspection unchecked
-            super((Class<R>) method.getReturnType(), method.getParameterTypes());
+        public ForInterface(Class<R> returnType, Class<?>[] parameterTypes, Class<?> methodInterface, Method method) {
+            super(returnType, parameterTypes);
 
             this.methodInterface = methodInterface;
             this.method = method;
@@ -218,7 +217,8 @@ public class BytebuddyFunctionAssembler<R> implements FunctionAssembler<R, Stack
         @Override
         protected DynamicType.Builder.MethodDefinition.ImplementationDefinition<BaseFunction> getImplementationDefinition() {
             return getDynamicBuilder()
-                    .intercept(MethodCall.invoke(method).withAllArguments())
+                    .intercept(MethodCall.invoke(method).withAllArguments()
+                            .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
                     .implement(methodInterface)
                     .method(is(method));
         }

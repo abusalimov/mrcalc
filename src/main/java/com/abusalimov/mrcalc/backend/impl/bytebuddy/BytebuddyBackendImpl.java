@@ -45,10 +45,25 @@ public class BytebuddyBackendImpl implements Backend<StackStub, DynamicType.Unlo
         }
     }
 
+    private static boolean isJavaAssignable(Class<?> to, Class<?> from) {
+        /*
+         * Refer to the JVM specification paragraph 4.10.1.2 Verification Type System:
+         *
+         *     For assignments, interfaces are treated like Object.
+         *     ...
+         *     Array types are subtypes of Object.
+         *     The intent is also that array types are subtypes of Cloneable and java.io.Serializable.
+         */
+        if (to.isInterface() && !from.isArray()) {
+            to = Object.class;
+        }
+        return to.isAssignableFrom(from);
+    }
+
     private static Method matchFunctionInterfaceMethod(Class<?> returnType, Class<?>... parameterTypes) {
         outer:
         for (Method method : functionInterfaceMethodMap.keySet()) {
-            if (!method.getReturnType().isAssignableFrom(returnType)) {
+            if (!isJavaAssignable(method.getReturnType(), returnType)) {
                 continue;
             }
             Class<?>[] methodParameterTypes = method.getParameterTypes();
@@ -56,7 +71,7 @@ public class BytebuddyBackendImpl implements Backend<StackStub, DynamicType.Unlo
                 continue;
             }
             for (int i = 0; i < parameterTypes.length; i++) {
-                if (!parameterTypes[i].isAssignableFrom(methodParameterTypes[i])) {
+                if (!isJavaAssignable(parameterTypes[i], methodParameterTypes[i])) {
                     continue outer;
                 }
             }
@@ -72,7 +87,8 @@ public class BytebuddyBackendImpl implements Backend<StackStub, DynamicType.Unlo
             Class<?>... parameterTypes) {
         Method method = matchFunctionInterfaceMethod(returnType, parameterTypes);
         if (method != null) {
-            return new BytebuddyFunctionAssembler.ForInterface<>(functionInterfaceMethodMap.get(method), method);
+            return new BytebuddyFunctionAssembler.ForInterface<>(returnType, parameterTypes,
+                    functionInterfaceMethodMap.get(method), method);
         } else {
             return new BytebuddyFunctionAssembler<>(returnType, parameterTypes);
         }

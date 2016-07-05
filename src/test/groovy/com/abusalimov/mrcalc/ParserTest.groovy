@@ -64,6 +64,16 @@ class ParserTest extends GroovyTestCase {
         shouldFail SyntaxErrorException, { parseOutStr '"\n"' }
     }
 
+    void testParsesOutStringEscapeSequences() {
+        assert '"' == parseOutStr('"\\""')
+        assert '"\taww\n\\www/"' == parseOutStr('"\\"\\taww\\n\\\\www/\\""')
+        assert "foobar" == parseOutStr('"foo\\\nbar"')
+
+        shouldFail SyntaxErrorException, { parseOutStr '\\"' }
+        shouldFail SyntaxErrorException, { parseOutStr '"\\"' }
+        shouldFail SyntaxErrorException, { parseOutStr '"\\\n' }
+    }
+
     void testParsesRanges() {
         assert null != parse("{1, 2}")
         assert null != parse("({(0),(0)})")

@@ -36,7 +36,7 @@ number returns [Number value]
                                                                     _ctx); }
 
 string returns [String value]
-    : token=STRING   {$value = $token.text.substring(1, $token.text.length() - 1);}
+    : token=STRING
     ;
 
 STMT_DELIM : [\r\n;] ;
@@ -71,4 +71,4 @@ R_BRACE : '}' ;
 COMMA : ',' ;
 ARROW : '->' ;
 
-STRING : '"' (~[\r\n])*? '"' ;
+STRING : '"' ('\\'[\r\n\\"rnt] | ~[\r\n\\"])*? '"' ;

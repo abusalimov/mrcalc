@@ -40,7 +40,9 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
 
     @Override
     public Node visitOutStmt(CalcParser.OutStmtContext ctx) {
-        return initLocation(ctx.string(), new OutStmtNode(ctx.string().value));
+        CalcParser.StringContext stringCtx = ctx.string();
+        visit(stringCtx);
+        return initLocation(stringCtx, new OutStmtNode(stringCtx.value));
     }
 
     @Override
@@ -107,6 +109,44 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
                 .map(terminalNode -> terminalNode.getSymbol().getText())
                 .collect(Collectors.toList());
         return initLocation(ctx, new LambdaNode(argNames, (ExprNode) visit(ctx.expr())));
+    }
+
+    @Override
+    public Node visitString(CalcParser.StringContext ctx) {
+        StringBuilder sb = new StringBuilder();
+        String text = ctx.getText();
+        for (int i = 1; i < text.length() - 1; i++) {
+            char ch = text.charAt(i);
+            if (ch == '\\') {
+                do {
+                    ch = translateBackslashEscape(text.charAt(++i));
+                } while (ch == '\0');
+            }
+            sb.append(ch);
+        }
+        ctx.value = sb.toString();
+        return super.visitString(ctx);
+    }
+
+    private char translateBackslashEscape(char ch) {
+        switch (ch) {
+            case 'r':
+                return '\r';
+            case 'n':
+                return '\n';
+            case 't':
+                return '\t';
+            case '\r':
+            case '\n':
+                // string literal continuation
+                return '\0';
+            case '"':
+            case '\\':
+                // just unescape it
+                // FALLTHROUGH
+            default:
+                return ch;
+        }
     }
 
     @Override

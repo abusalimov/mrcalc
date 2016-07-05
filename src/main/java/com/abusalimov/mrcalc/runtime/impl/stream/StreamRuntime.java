@@ -34,8 +34,8 @@ public class StreamRuntime implements Runtime {
     }
 
     @Override
-    public LongArraySequence createLongRange(long startInclusive, long endExclusive) {
-        return new LongArrayRange(startInclusive, endExclusive);
+    public LongRange createLongRange(long startInclusive, long endExclusive) {
+        return new LongRange(startInclusive, endExclusive);
     }
 
     @Override

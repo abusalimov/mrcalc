@@ -27,6 +27,11 @@ import java.util.function.Consumer;
  * @author - Eldar Abusalimov
  */
 public class CodeTextPane extends RSyntaxTextArea {
+    static {
+        AbstractTokenMakerFactory tFactory = (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
+        tFactory.putMapping("text/mrcalc", "com.abusalimov.mrcalc.ui.TokenMakerImpl");
+    }
+
     private final CalcExecutor calcExecutor;
     private final OutputTextArea outputTextArea;
     private Consumer<List<Diagnostic>> errorListener;
@@ -35,10 +40,14 @@ public class CodeTextPane extends RSyntaxTextArea {
     public CodeTextPane(CalcExecutor calcExecutor, OutputTextArea outputTextArea) {
         this.calcExecutor = calcExecutor;
         this.outputTextArea = outputTextArea;
-        SwingUtilities.invokeLater(this::requestFocus);
+
         addParser(new CompileParser());
         addParser(runtimeParser);
         setParserDelay(250);
+
+        setSyntaxEditingStyle("text/mrcalc");
+
+        SwingUtilities.invokeLater(this::requestFocus);
     }
 
     @Override

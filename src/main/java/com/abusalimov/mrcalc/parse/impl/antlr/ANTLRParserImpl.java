@@ -7,10 +7,13 @@ import com.abusalimov.mrcalc.location.Location;
 import com.abusalimov.mrcalc.location.RawLocation;
 import com.abusalimov.mrcalc.parse.Parser;
 import com.abusalimov.mrcalc.parse.SyntaxErrorException;
+import com.abusalimov.mrcalc.parse.TokenSpan;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eldar Abusalimov
@@ -21,6 +24,62 @@ public class ANTLRParserImpl extends AbstractDiagnosticEmitter implements Parser
 
     public ANTLRParserImpl() {
         astConstructor = new ASTConstructor();
+    }
+
+    @Override
+    public List<TokenSpan> tokenize(Reader reader) throws IOException {
+        Lexer lexer = new CalcLexer(new ANTLRInputStream(reader));
+        lexer.removeErrorListeners();
+        CommonTokenStream tokenStream = new CommonTokenStream(lexer);
+        tokenStream.fill();
+        List<Token> antlrTokens = tokenStream.getTokens();
+        List<TokenSpan> tokens = new ArrayList<>(antlrTokens.size());
+
+        for (Token antlrToken : antlrTokens) {
+            tokens.add(new TokenSpan.Simple(mapTokenKind(antlrToken.getType()), new TokenLocation(antlrToken)));
+        }
+
+        return tokens;
+    }
+
+    private TokenSpan.Kind mapTokenKind(int antlrTokenType) {
+        switch (antlrTokenType) {
+            case CalcLexer.WS:
+            case CalcLexer.STMT_DELIM:
+                return TokenSpan.Kind.WHITESPACE;
+            case CalcLexer.EQ_SIGN:
+            case CalcLexer.ADD_OP:
+            case CalcLexer.SUB_OP:
+            case CalcLexer.MUL_OP:
+            case CalcLexer.DIV_OP:
+            case CalcLexer.POW_OP:
+            case CalcLexer.L_PAREN:
+            case CalcLexer.R_PAREN:
+            case CalcLexer.L_BRACE:
+            case CalcLexer.R_BRACE:
+            case CalcLexer.COMMA:
+            case CalcLexer.ARROW:
+                return TokenSpan.Kind.PUNCTUATION;
+            case CalcLexer.VAR_KW:
+            case CalcLexer.PRINT_KW:
+            case CalcLexer.OUT_KW:
+                return TokenSpan.Kind.KEYWORD;
+            case CalcLexer.MAP_KW:
+            case CalcLexer.REDUCE_KW:
+                return TokenSpan.Kind.FUNCTION;
+            case CalcLexer.ID:
+                return TokenSpan.Kind.IDENTIFIER;
+            case CalcLexer.INT:
+                return TokenSpan.Kind.LITERAL_INTEGER;
+            case CalcLexer.FLOAT:
+                return TokenSpan.Kind.LITERAL_FLOAT;
+            case CalcLexer.STRING:
+                return TokenSpan.Kind.LITERAL_STRING;
+            case Lexer.EOF:
+                return TokenSpan.Kind.EOF;
+            default:
+                return TokenSpan.Kind.ERROR;
+        }
     }
 
     @Override

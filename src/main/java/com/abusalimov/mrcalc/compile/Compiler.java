@@ -4,13 +4,16 @@ import com.abusalimov.mrcalc.ast.ExprHolderNode;
 import com.abusalimov.mrcalc.ast.Node;
 import com.abusalimov.mrcalc.ast.NodeVisitor;
 import com.abusalimov.mrcalc.ast.ProgramNode;
+import com.abusalimov.mrcalc.ast.stmt.OutStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
 import com.abusalimov.mrcalc.backend.Backend;
+import com.abusalimov.mrcalc.compile.type.PrimitiveType;
 import com.abusalimov.mrcalc.runtime.Evaluable;
 import com.abusalimov.mrcalc.runtime.Runtime;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,6 +141,13 @@ public class Compiler extends AbstractNodeDiagnosticEmitter {
             @Override
             public Stmt doVisit(PrintStmtNode node) {
                 return compileInternal(node, nextSyntheticVariableName());
+            }
+
+            @Override
+            public Stmt doVisit(OutStmtNode node) {
+                String string = node.getString();
+                return new Stmt((runtime, args) -> string, Collections.emptyList(),
+                        new Variable(nextSyntheticVariableName(), PrimitiveType.UNKNOWN));
             }
 
             @Override

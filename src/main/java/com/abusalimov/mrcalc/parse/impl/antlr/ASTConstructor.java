@@ -6,6 +6,7 @@ import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.ast.expr.*;
 import com.abusalimov.mrcalc.ast.expr.literal.FloatLiteralNode;
 import com.abusalimov.mrcalc.ast.expr.literal.IntegerLiteralNode;
+import com.abusalimov.mrcalc.ast.stmt.OutStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.PrintStmtNode;
 import com.abusalimov.mrcalc.ast.stmt.StmtNode;
 import com.abusalimov.mrcalc.ast.stmt.VarDefStmtNode;
@@ -35,6 +36,11 @@ public class ASTConstructor extends CalcBaseVisitor<Node> {
         List<StmtNode> stmtNodes = ctx.stmt().stream()
                 .map((stmtContext) -> (StmtNode) visit(stmtContext)).collect(Collectors.toList());
         return initLocation(ctx, new ProgramNode(stmtNodes));
+    }
+
+    @Override
+    public Node visitOutStmt(CalcParser.OutStmtContext ctx) {
+        return initLocation(ctx.string(), new OutStmtNode(ctx.string().value));
     }
 
     @Override

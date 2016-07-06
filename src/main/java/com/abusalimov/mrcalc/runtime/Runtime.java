@@ -21,6 +21,17 @@ public interface Runtime {
     Sequence.OfLong createLongRange(long startInclusive, long endExclusive);
 
     /**
+     * Creates a new {@link Sequence.OfLong} filled by integers between the specified boundaries.
+     *
+     * @param startInclusive the start boundary of the range (inclusive)
+     * @param endInclusive   the end boundary of the range (inclusive)
+     * @return the new {@link Sequence.OfLong} instance
+     */
+    default Sequence.OfLong createLongRangeInclusive(long startInclusive, long endInclusive) {
+        return createLongRange(startInclusive, endInclusive + 1);
+    }
+
+    /**
      * Performs a reduction on the elements of the given sequence, using the provided identity value and an associative
      * accumulation function, and returns the reduced value.
      * <p>
@@ -172,4 +183,41 @@ public interface Runtime {
      * @return the sequence of primitive doubles
      */
     Sequence.OfDouble mapDoubleToDouble(Sequence.OfDouble sequence, DoubleUnaryOperator mapper);
+
+    /**
+     * Provides the power math operation methods required since Java doesn't have a builtin one.
+     */
+    final class Util {
+        /**
+         * The private constructor.
+         */
+        private Util() {
+        }
+
+        /**
+         * Computes the result of raising the first argument to the power of the second argument.
+         *
+         * @param a the base
+         * @param b the exponent
+         * @return a ^ b
+         */
+        public static long powLong(long a, long b) {
+            double ret = Math.pow(a, b);
+            if (!Double.isFinite(ret)) {
+                throw new ArithmeticException(a + " ^ " + b);
+            }
+            return (long) ret;
+        }
+
+        /**
+         * Computes the result of raising the first argument to the power of the second argument.
+         *
+         * @param a the base
+         * @param b the exponent
+         * @return a ^ b
+         */
+        public static double powDouble(double a, double b) {
+            return Math.pow(a, b);
+        }
+    }
 }

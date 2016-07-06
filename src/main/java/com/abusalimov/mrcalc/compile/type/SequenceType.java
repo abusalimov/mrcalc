@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc.compile.type;
 
+import com.abusalimov.mrcalc.runtime.Sequence;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;
@@ -13,14 +14,10 @@ public class SequenceType implements Type {
     private final PrimitiveType primitiveType;
     private final int sequenceDepth;
 
-    public SequenceType(PrimitiveType primitiveType) {
-        this(primitiveType, 1);
-    }
-
     /**
      * Creates a new instance with the specified underlying primitiveType at the given depth.
      *
-     * @param primitiveType     the underlying primitiveType
+     * @param primitiveType the underlying primitiveType
      * @param sequenceDepth the sequence dimension
      */
     private SequenceType(PrimitiveType primitiveType, int sequenceDepth) {
@@ -56,7 +53,18 @@ public class SequenceType implements Type {
 
     @Override
     public Class<?> getTypeClass() {
-        return Object.class;
+        if (sequenceDepth != 1) {
+            return Sequence.class;
+        }
+        switch (primitiveType) {
+            case INTEGER:
+                return Sequence.OfLong.class;
+            case FLOAT:
+                return Sequence.OfDouble.class;
+            case UNKNOWN:
+            default:
+                return null;
+        }
     }
 
     public int getSequenceDepth() {

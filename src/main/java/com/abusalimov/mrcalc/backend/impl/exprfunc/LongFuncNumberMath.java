@@ -1,6 +1,7 @@
 package com.abusalimov.mrcalc.backend.impl.exprfunc;
 
 import com.abusalimov.mrcalc.backend.NumberMath;
+import com.abusalimov.mrcalc.runtime.Runtime;
 
 /**
  * Implements numeric math on boxed {@link Long}s.
@@ -33,7 +34,8 @@ public class LongFuncNumberMath extends AbstractFuncNumberMath<Long>
 
     @Override
     public Func<Long> pow(Func<Long> leftOperand, Func<Long> rightOperand) {
-        return (runtime, args) -> (long) Math.pow(leftOperand.eval(runtime, args), rightOperand.eval(runtime, args));
+        return (runtime, args) -> Runtime.Util
+                .powLong(leftOperand.eval(runtime, args), rightOperand.eval(runtime, args));
     }
 
     @Override

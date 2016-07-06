@@ -9,7 +9,7 @@ import org.antlr.v4.runtime.Token;
  * <p>
  * <pre>{@code
  *
- *   Token:   |F I R S T  ...  L A S T|
+ *   TokenSpan:   |F I R S T  ...  L A S T|
  *            |                       |
  *            `- startOffset          `- stopOffset
  *

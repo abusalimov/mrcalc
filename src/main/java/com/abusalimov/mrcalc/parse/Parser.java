@@ -6,6 +6,8 @@ import com.abusalimov.mrcalc.diagnostic.DiagnosticEmitter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -36,6 +38,30 @@ public interface Parser extends DiagnosticEmitter {
             return parse(new StringReader(Objects.requireNonNull(s)));
         } catch (IOException e) {
             /* StringReader never throws for non-null strings, relax. */
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Tokenizes the input specified as a given reader and build the AST.
+     *
+     * @param reader the source code
+     * @return the AST root
+     * @throws IOException in case the specified reader encounters an error
+     */
+    default List<TokenSpan> tokenize(Reader reader) throws IOException {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Tokenizes a given string.
+     *
+     * @see #tokenize(Reader)
+     */
+    default List<TokenSpan> tokenize(String s) {
+        try {
+            return tokenize(new StringReader(Objects.requireNonNull(s)));
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

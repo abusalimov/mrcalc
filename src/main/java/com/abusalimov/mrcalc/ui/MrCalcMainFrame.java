@@ -1,11 +1,11 @@
 package com.abusalimov.mrcalc.ui;
 
 import com.abusalimov.mrcalc.CalcExecutor;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 import javax.swing.*;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 
 /**
@@ -14,37 +14,45 @@ import java.awt.*;
 public class MrCalcMainFrame extends JFrame {
     public static final int PREFERRED_WIDTH = 800;
 
-    private CodeTextPane codeTextPane;
-    private JTextArea outputTextArea;
-    private MessageList messageList;
+    private final BackendTypeSwitcher backendTypeSwitcher;
+    private final ParallelModeSwitcher parallelModeSwitcher;
+    private final InterruptButton interruptButton;
+    private final CodeTextPane codeTextPane;
+    private final OutputTextArea outputTextArea;
+    private final MessageList messageList;
 
     public MrCalcMainFrame(CalcExecutor calcExecutor) {
         super("MrCalc");
 
-        outputTextArea = new JTextArea();
+        backendTypeSwitcher = new BackendTypeSwitcher(calcExecutor);
+        parallelModeSwitcher = new ParallelModeSwitcher(calcExecutor);
+        interruptButton = new InterruptButton(calcExecutor);
+        outputTextArea = new OutputTextArea();
         outputTextArea.setEditable(false);
         codeTextPane = new CodeTextPane(calcExecutor, outputTextArea);
         messageList = new MessageList(codeTextPane);
-        codeTextPane.setErrorListener(errors -> messageList.setMessages(errors));
+        codeTextPane.setErrorListener(messageList::setMessages);
 
-        StyleContext style = StyleContext.getDefaultStyleContext();
-
-        AttributeSet defaultAttr = style
-                .addAttribute(style.getEmptySet(), StyleConstants.FontFamily, "Monospaced");
-        defaultAttr = style.addAttribute(defaultAttr, StyleConstants.FontSize, 16);
-
-        codeTextPane.setCharacterAttributes(defaultAttr, true);
-        outputTextArea.setFont(new Font("Monospaced", Font.BOLD, 16));
+        outputTextArea.setFont(new Font("Monospaced", Font.BOLD, 14));
+        outputTextArea.setLineWrap(true);
+        outputTextArea.setWrapStyleWord(true);
 
         initLayout();
     }
 
     private void initLayout() {
-        JScrollPane codeScrollPane = new JScrollPane(codeTextPane);
+        RTextScrollPane codeScrollPane = new RTextScrollPane(codeTextPane);
 
-        TextLineNumber tln = new TextLineNumber(codeTextPane);
-        codeScrollPane.setRowHeaderView(tln);
-        codeScrollPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, 400));
+        JPanel toolPanel = new JPanel();
+        toolPanel.setBorder(new EmptyBorder(0,3,0,3));
+        toolPanel.setLayout(new BorderLayout());
+        JPanel northToolPanel = new JPanel();
+        northToolPanel.setLayout(new BoxLayout(northToolPanel, BoxLayout.Y_AXIS));
+        backendTypeSwitcher.setBorder(new TitledBorder("Backend"));
+        northToolPanel.add(backendTypeSwitcher);
+        northToolPanel.add(parallelModeSwitcher);
+        toolPanel.add(northToolPanel, BorderLayout.NORTH);
+        toolPanel.add(interruptButton, BorderLayout.SOUTH);
 
         JPanel outputPanel = new JPanel();
         outputPanel.setLayout(new BoxLayout(outputPanel, BoxLayout.Y_AXIS));
@@ -63,14 +71,19 @@ public class MrCalcMainFrame extends JFrame {
         splitPane.setOneTouchExpandable(true);
         splitPane.setResizeWeight(0.3);
 
-        JSplitPane outerSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, codeScrollPane,
+        JPanel upperPanel = new JPanel(new BorderLayout());
+        upperPanel.setBorder(new EmptyBorder(3,3,3,3));
+        upperPanel.add(codeScrollPane, BorderLayout.CENTER);
+        upperPanel.add(toolPanel, BorderLayout.EAST);
+
+        JSplitPane outerSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, upperPanel,
                 splitPane);
         outerSplitPane.setOneTouchExpandable(true);
         outerSplitPane.setResizeWeight(1.);
 
         add(outerSplitPane);
 
-        setPreferredSize(new Dimension(PREFERRED_WIDTH, 600));
+        outerSplitPane.setPreferredSize(new Dimension(PREFERRED_WIDTH, 600));
         pack();
     }
 

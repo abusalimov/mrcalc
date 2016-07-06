@@ -2,56 +2,62 @@ package com.abusalimov.mrcalc.ui;
 
 import com.abusalimov.mrcalc.CalcExecutor;
 import com.abusalimov.mrcalc.diagnostic.Diagnostic;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticCollector;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticException;
+import com.abusalimov.mrcalc.diagnostic.DiagnosticListener;
+import com.abusalimov.mrcalc.location.Location;
+import com.abusalimov.mrcalc.runtime.RuntimeErrorException;
+import org.fife.ui.rsyntaxtextarea.*;
+import org.fife.ui.rsyntaxtextarea.parser.*;
+import org.fife.ui.rtextarea.RTextAreaUI;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.View;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
  * @author - Eldar Abusalimov
  */
-public class CodeTextPane extends JTextPane {
-    private static int squiggleSize = 2;
-    private static int squigglesAtEof = 2;
+public class CodeTextPane extends RSyntaxTextArea {
+    static {
+        AbstractTokenMakerFactory tFactory = (AbstractTokenMakerFactory) TokenMakerFactory.getDefaultInstance();
+        tFactory.putMapping("text/mrcalc", "com.abusalimov.mrcalc.ui.TokenMakerImpl");
+    }
 
-    private final JTextArea outputTextArea;
+    private final CalcExecutor calcExecutor;
+    private final OutputTextArea outputTextArea;
     private Consumer<List<Diagnostic>> errorListener;
-    private List<Diagnostic> diagnostics = Collections.emptyList();
+    private RuntimeParser runtimeParser = new RuntimeParser();
 
-    public CodeTextPane(CalcExecutor calcExecutor, JTextArea outputTextArea) {
+    public CodeTextPane(CalcExecutor calcExecutor, OutputTextArea outputTextArea) {
+        this.calcExecutor = calcExecutor;
         this.outputTextArea = outputTextArea;
-        getStyledDocument().addDocumentListener(new HighlightListener(calcExecutor));
-        ToolTipManager.sharedInstance().registerComponent(this);
+
+        addParser(new CompileParser());
+        addParser(runtimeParser);
+        setParserDelay(250);
+
+        setSyntaxEditingStyle("text/mrcalc");
+
+        SwingUtilities.invokeLater(this::requestFocus);
     }
 
     @Override
-    public String getToolTipText(MouseEvent event) {
-        int offset = viewToModel(event.getPoint());
-        for (Diagnostic diagnostic : diagnostics) {
-            int startOffset = diagnostic.getLocation().getStartOffset();
-            int endOffset = diagnostic.getLocation().getEndOffset();
-
-            try {
-                if ((startOffset == endOffset || !onSameLine(startOffset, endOffset)) &&
-                    offset == startOffset &&
-                    modelToView(offset).x + squigglesAtEof * squiggleSize > event.getPoint().x)
-                    return diagnostic.getMessage();
-
-                if (offset >= startOffset && offset < endOffset)
-                    return diagnostic.getMessage();
-
-            } catch (BadLocationException e) {
-                e.printStackTrace();
+    protected RTextAreaUI createRTextAreaUI() {
+        return new RSyntaxTextAreaUI(this) {
+            @Override
+            protected Highlighter createHighlighter() {
+                return new EOFAwareHighlighter();
             }
-        }
-        return super.getToolTipText(event);
+        };
     }
 
     public void setErrorListener(Consumer<List<Diagnostic>> errorListener) {
@@ -60,93 +66,139 @@ public class CodeTextPane extends JTextPane {
 
     private void fireErrorListener(List<Diagnostic> diagnostics) {
         if (errorListener != null)
-            errorListener.accept(diagnostics);
+            errorListener.accept(new ArrayList<>(diagnostics));
     }
 
-    private boolean onSameLine(int startOffset, int endOffset) {
-        try {
-            return getDocument().getText(startOffset, endOffset - startOffset).indexOf('\n') == -1;
-        } catch (BadLocationException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+    protected static class EOFAwareHighlighter extends RSyntaxTextAreaHighlighter {
+        private final HighlightPainter highlightPainter = new SquiggleUnderlineHighlightPainter(Color.RED) {
+            private static final int AMT = 2;
 
-    private class HighlightListener implements DocumentListener {
-        private final SquigglePainter squigglePainter = new SquigglePainter(Color.RED, squiggleSize);
-        private final DefaultHighlighter.DefaultHighlightPainter defaultPainter =
-                new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 0, 0, 16));
-        private final SquigglePainter eofPainter = new SquigglePainter(Color.RED, squiggleSize) {
             @Override
-            protected void paintSquiggles(Graphics g, Rectangle r) {
-                super.paintSquiggles(g, new Rectangle(r.x + r.width, r.y, squigglesAtEof *squiggle, r.height));
+            protected void paintSquiggle(Graphics g, Rectangle r) {
+                /*
+                 * Fixup zero-width highlights to make at least on wave: ^v
+                 */
+                if (r.width <= AMT) {
+                    r = new Rectangle(r);
+                    r.width = AMT * 3;
+                }
+                super.paintSquiggle(g, r);
             }
         };
 
-        private final CalcExecutor calcExecutor;
-
-        public HighlightListener(CalcExecutor calcExecutor) {
-            this.calcExecutor = calcExecutor;
-            calcExecutor.setCallback(diagnostics -> SwingUtilities.invokeLater(() -> highlight(diagnostics)));
-        }
-
         @Override
-        public void insertUpdate(DocumentEvent e) {
-            handleEvent();
-        }
-
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-            handleEvent();
-        }
-
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-            /* do nothing */
-        }
-
-        private void handleEvent() {
-            clearHighlight();
-            outputTextArea.setText("");
-            try {
-                String sourceCodeText = getDocument().getText(0, getDocument().getLength());
-                calcExecutor.execute(sourceCodeText, new TextAreaStream(outputTextArea));
-            } catch (BadLocationException e) {
-                e.printStackTrace();
-            }
-        }
-
-        private void clearHighlight() {
-            diagnostics = Collections.emptyList();
-            getHighlighter().removeAllHighlights();
-            fireErrorListener(diagnostics);
-        }
-
-        private void highlight(List<Diagnostic> diagnostics) {
-            if (!EventQueue.isDispatchThread())
-                throw new IllegalThreadStateException();
-
-            fireErrorListener(diagnostics);
-            diagnostics.forEach(this::highlight);
-            repaint();
-        }
-
-        private void highlight(Diagnostic diagnostic) {
-            int startOffset = diagnostic.getLocation().getStartOffset();
-            int endOffset = diagnostic.getLocation().getEndOffset();
-
-            try {
-                if (startOffset == endOffset) {
-                    getHighlighter().addHighlight(startOffset, endOffset + 1, eofPainter);
-                } else if (!onSameLine(startOffset, endOffset)) {
-                    getHighlighter().addHighlight(startOffset, endOffset, eofPainter);
-                } else {
-                    getHighlighter().addHighlight(startOffset, endOffset, defaultPainter);
-                    getHighlighter().addHighlight(startOffset, endOffset, squigglePainter);
+        protected void paintListLayered(Graphics g, int lineStart, int lineEnd, Shape viewBounds,
+                                        JTextComponent editor, View view,
+                                        List<? extends HighlightInfo> highlights) {
+            for (int i = highlights.size() - 1; i >= 0; i--) {
+                HighlightInfo tag = highlights.get(i);
+                if (tag instanceof HighlightInfoImpl) {
+                    HighlightInfoImpl hii = (HighlightInfoImpl) tag;
+                    if (hii.getPainter() instanceof SquiggleUnderlineHighlightPainter) {
+                        hii.setPainter(highlightPainter);
+                    }
                 }
-            } catch (BadLocationException e) {
-                e.printStackTrace();
+
+                if (tag instanceof LayeredHighlightInfo) {
+                    LayeredHighlightInfo lhi = (LayeredHighlightInfo) tag;
+                    int highlightStart = lhi.getStartOffset();
+                    int highlightEnd = lhi.getEndOffset() + 1;
+                    /*
+                     * Allow highlight to span one char past EOL.
+                     */
+                    if ((lineStart < highlightStart && highlightStart <= lineEnd) ||  // <- here is what we patch
+                        (highlightStart <= lineStart && lineStart < highlightEnd)) {
+                        lhi.paintLayeredHighlights(g, lineStart, lineEnd, viewBounds, editor, view);
+                    }
+                }
             }
         }
+    }
+
+    protected abstract class AbstractDiagnosticParser extends AbstractParser {
+        @Override
+        public ParseResult parse(RSyntaxDocument doc, String style) {
+            DefaultParseResult result = new DefaultParseResult(this);
+            try {
+                exec();
+            } catch (DiagnosticException e) {
+                handleDiagnostics(result, e.getDiagnostics());
+            }
+            return result;
+        }
+
+        protected abstract void exec() throws DiagnosticException;
+
+        protected void handleDiagnostics(DefaultParseResult result, List<Diagnostic> diagnostics) {
+            for (Diagnostic diagnostic : diagnostics) {
+                addDiagnosticToResult(result, diagnostic);
+            }
+            fireErrorListener(diagnostics);
+        }
+
+        protected void addDiagnosticToResult(DefaultParseResult parseResult, Diagnostic diagnostic) {
+            Location location = diagnostic.getLocation();
+            DefaultParserNotice notice = new DefaultParserNotice(AbstractDiagnosticParser.this,
+                    diagnostic.getMessage(),
+                    location.getLineNumber(),
+                    location.getStartOffset(),
+                    Math.max(1, location.getEndOffset() - location.getStartOffset()));
+            notice.setLevel(ParserNotice.Level.ERROR);
+            parseResult.addNotice(notice);
+        }
+    }
+
+    private class CompileParser extends AbstractDiagnosticParser {
+        @Override
+        protected void exec() throws DiagnosticException {
+            fireErrorListener(Collections.emptyList());
+            outputTextArea.setText("");
+
+            String sourceCodeText;
+            try {
+                sourceCodeText = getDocument().getText(0, getDocument().getLength());
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            DiagnosticListener runtimeDiagnosticCollector = runtimeParser.newDiagnosticCollector();
+
+            calcExecutor.execute(sourceCodeText, outputTextArea::createStream, diagnostic ->
+                    SwingUtilities.invokeLater(() -> {
+                        runtimeDiagnosticCollector.report(diagnostic);
+
+                        /* Hook the parser only once. */
+                        runtimeParser.setEnabled(true);
+                        forceReparsing(runtimeParser);
+                        runtimeParser.setEnabled(false);
+                    }));
+
+        }
+    }
+
+    private class RuntimeParser extends AbstractDiagnosticParser {
+        private DiagnosticCollector diagnosticCollector;
+
+        public DiagnosticListener newDiagnosticCollector() {
+            /*
+             * It's OK to use CoW list since we usually have at most one runtime diagnostic.
+             */
+            return diagnosticCollector = new DiagnosticCollector(new CopyOnWriteArrayList<>());
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return diagnosticCollector != null && !diagnosticCollector.getDiagnostics().isEmpty() && super.isEnabled();
+        }
+
+        @Override
+        protected void exec() throws DiagnosticException {
+            if (diagnosticCollector != null && !diagnosticCollector.getDiagnostics().isEmpty()) {
+                throw new RuntimeErrorException(diagnosticCollector.getDiagnostics());
+            }
+            diagnosticCollector = null;
+        }
+
     }
 }

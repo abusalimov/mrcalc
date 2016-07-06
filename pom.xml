@@ -75,6 +75,13 @@
             <artifactId>byte-buddy</artifactId>
             <version>1.4.3</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.fifesoft/rsyntaxtextarea -->
+        <dependency>
+            <groupId>com.fifesoft</groupId>
+            <artifactId>rsyntaxtextarea</artifactId>
+            <version>2.5.8</version>
+        </dependency>
     </dependencies>
 
     <build>

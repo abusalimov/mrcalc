@@ -4,6 +4,21 @@ MapReduce calculator [![Build Status][travis-image]][travis-url]
 MrCalc is a simple calculator application supporting basic arithmetic operations on numbers and
 [MapReduce](https://en.wikipedia.org/wiki/MapReduce) functions on sequences.
 
+![screenshot](https://cloud.githubusercontent.com/assets/530396/16604589/27f50a40-4327-11e6-8756-422647306c3b.png)
+
+Download
+--------
+MrCalc uses the standard Maven build suite and requires Java 8 runtime.
+
+```console
+$ git clone https://github.com/abusalimov/mrcalc.git mrcalc
+$ cd mrcalc
+$ mvn package
+$ java -jar mrcalc-<VERSION>-jar-with-dependencies.jar
+```
+
+Also the latest release is available for downloading [here](https://github.com/abusalimov/mrcalc/releases/latest).
+
 Language grammar
 ----------------
 ```py

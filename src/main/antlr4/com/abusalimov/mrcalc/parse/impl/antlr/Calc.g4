@@ -41,7 +41,7 @@ string returns [String value]
 
 STMT_DELIM : [\r\n;] ;
 
-WS : [ \t]+ -> skip ;
+WS : [ \t]+ -> channel(HIDDEN) ;
 
 ADD_OP : '+' ;
 SUB_OP : '-' ;
@@ -72,3 +72,5 @@ COMMA : ',' ;
 ARROW : '->' ;
 
 STRING : '"' ('\\'[\r\n\\"rnt] | ~[\r\n\\"])*? '"' ;
+
+INVALID: .;

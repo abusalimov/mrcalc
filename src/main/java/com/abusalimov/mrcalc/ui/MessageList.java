@@ -15,7 +15,7 @@ import java.util.List;
  * @author - Eldar Abusalimov
  */
 public class MessageList extends JList<Diagnostic> {
-    public MessageList(final JTextPane textPane) {
+    public MessageList(final JTextArea textPane) {
         ((DefaultCaret)textPane.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
         addMouseListener(new MouseAdapter() {
             @Override
@@ -34,7 +34,7 @@ public class MessageList extends JList<Diagnostic> {
         });
     }
 
-    private void goToError(JTextPane textPane) {
+    private void goToError(JTextArea textPane) {
         Location messageLocation = getSelectedValue().getLocation();
         textPane.setCaretPosition(messageLocation.getEndOffset());
         textPane.requestFocusInWindow();

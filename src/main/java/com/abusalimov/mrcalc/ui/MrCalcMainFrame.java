@@ -6,7 +6,6 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.text.StyleContext;
 import java.awt.*;
 
 /**
@@ -34,7 +33,7 @@ public class MrCalcMainFrame extends JFrame {
         messageList = new MessageList(codeTextPane);
         codeTextPane.setErrorListener(messageList::setMessages);
 
-        outputTextArea.setFont(new Font("Monospaced", Font.BOLD, 16));
+        outputTextArea.setFont(new Font("Monospaced", Font.BOLD, 14));
         outputTextArea.setLineWrap(true);
         outputTextArea.setWrapStyleWord(true);
 

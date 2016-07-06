@@ -6,7 +6,7 @@
 
     <groupId>com.abusalimov.mrcalc</groupId>
     <artifactId>mrcalc</artifactId>
-    <version>0.2</version>
+    <version>0.2.1</version>
 
     <name>MrCalc</name>
     <description>MapReduce Calculator</description>

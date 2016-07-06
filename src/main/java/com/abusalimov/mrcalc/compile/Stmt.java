@@ -1,7 +1,10 @@
 package com.abusalimov.mrcalc.compile;
 
+import com.abusalimov.mrcalc.diagnostic.Diagnostic;
+import com.abusalimov.mrcalc.location.Location;
 import com.abusalimov.mrcalc.runtime.Evaluable;
 import com.abusalimov.mrcalc.runtime.Runtime;
+import com.abusalimov.mrcalc.runtime.RuntimeErrorException;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +20,7 @@ public class Stmt {
     private final Evaluable<?> exprFunction;
     private final List<Variable> inputVariables;
     private final Variable outputVariable;
+    private final Location location;
 
     /**
      * Creates a new instance with given callable (which might be {@code null} for {@link #isComplete() incomplete
@@ -27,9 +31,23 @@ public class Stmt {
      * @param outputVariable the variable, to which to assign the result of calling the function
      */
     public Stmt(Evaluable<?> exprFunction, List<Variable> inputVariables, Variable outputVariable) {
+        this(exprFunction, inputVariables, outputVariable, Location.UNKNOWN_LOCATION);
+    }
+
+    /**
+     * Creates a new instance with given callable (which might be {@code null} for {@link #isComplete() incomplete
+     * statements}), input and output variables.
+     *
+     * @param exprFunction   the callable to execute passing the input variable values to it
+     * @param inputVariables the list of global variables referenced from within the statement
+     * @param outputVariable the variable, to which to assign the result of calling the function
+     * @param location       the location of the statement in the source code
+     */
+    public Stmt(Evaluable<?> exprFunction, List<Variable> inputVariables, Variable outputVariable, Location location) {
         this.exprFunction = exprFunction;
         this.inputVariables = Objects.requireNonNull(inputVariables);
         this.outputVariable = Objects.requireNonNull(outputVariable);
+        this.location = Objects.requireNonNull(location);
     }
 
     /**
@@ -39,13 +57,19 @@ public class Stmt {
      * @param runtime the {@link Runtime} to use
      * @param memory  the variables-to-values mapping representing the "memory"
      * @return the result
+     * @throws RuntimeErrorException in case of a runtime error
      */
-    public Object exec(Runtime runtime, Map<Variable, Object> memory) {
+    public Object exec(Runtime runtime, Map<Variable, Object> memory) throws RuntimeErrorException {
         if (!isComplete()) {
             throw new UnsupportedOperationException("Incomplete statement");
         }
         Object[] args = bindVariables(memory);
-        Object result = exprFunction.eval(runtime, args);
+        Object result;
+        try {
+            result = exprFunction.eval(runtime, args);
+        } catch (RuntimeException e) {
+            throw new RuntimeErrorException(new Diagnostic(location, e.toString()), e);
+        }
         memory.put(outputVariable, result);
         return result;
     }
@@ -79,6 +103,10 @@ public class Stmt {
 
     public Variable getOutputVariable() {
         return outputVariable;
+    }
+
+    public Location getLocation() {
+        return location;
     }
 
     public boolean shouldPrintResult() {

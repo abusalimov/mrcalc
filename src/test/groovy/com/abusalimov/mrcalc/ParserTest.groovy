@@ -1,5 +1,6 @@
 package com.abusalimov.mrcalc
 
+import com.abusalimov.mrcalc.ast.stmt.OutStmtNode
 import com.abusalimov.mrcalc.parse.Parser
 import com.abusalimov.mrcalc.parse.SyntaxErrorException
 import com.abusalimov.mrcalc.parse.impl.antlr.ANTLRParserImpl
@@ -19,11 +20,19 @@ class ParserTest extends GroovyTestCase {
         parser.parse s
     }
 
+    def parseOutStr(String s) {
+        def node = parser.parse("out $s")
+        def outStmt = node.getStmts().get(0) as OutStmtNode
+        outStmt.string
+    }
+
     void testParsesValidInput() {
         assert null != parse("0")
         assert null != parse("(1)")
         assert null != parse("(  (2 ))")
         assert null != parse(" ( ( ( 3 ) ) ) ")
+        assert null != parse("0000000000000000000000000000000000000000000000")
+
     }
 
     void testParsesValidOpExpressions() {
@@ -43,6 +52,26 @@ class ParserTest extends GroovyTestCase {
         assert null != parse("print 0")
         assert null != parse("print(1+2)")
         assert null != parse("print foo/bar")
+    }
+
+    void testParsesOutStrings() {
+        assert "" == parseOutStr('""')
+        assert " " == parseOutStr('" "')
+        assert "foo" == parseOutStr('"foo"')
+
+        shouldFail SyntaxErrorException, { parseOutStr '"' }
+        shouldFail SyntaxErrorException, { parseOutStr '"""' }
+        shouldFail SyntaxErrorException, { parseOutStr '"\n"' }
+    }
+
+    void testParsesOutStringEscapeSequences() {
+        assert '"' == parseOutStr('"\\""')
+        assert '"\taww\n\\www/"' == parseOutStr('"\\"\\taww\\n\\\\www/\\""')
+        assert "foobar" == parseOutStr('"foo\\\nbar"')
+
+        shouldFail SyntaxErrorException, { parseOutStr '\\"' }
+        shouldFail SyntaxErrorException, { parseOutStr '"\\"' }
+        shouldFail SyntaxErrorException, { parseOutStr '"\\\n' }
     }
 
     void testParsesRanges() {
@@ -73,5 +102,6 @@ class ParserTest extends GroovyTestCase {
         shouldFail SyntaxErrorException, { parse "***" }
 
         shouldFail SyntaxErrorException, { parse "print" }
+        shouldFail SyntaxErrorException, { parse "1111111111111111111111111111111111111111111111" }
     }
 }

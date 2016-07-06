@@ -46,4 +46,9 @@ public class DiagnosticException extends Exception {
     public List<Diagnostic> getDiagnostics() {
         return Collections.unmodifiableList(diagnostics);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s {diagnostics=%s}", super.toString(), diagnostics);
+    }
 }

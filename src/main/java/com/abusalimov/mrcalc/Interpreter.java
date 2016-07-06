@@ -4,6 +4,7 @@ import com.abusalimov.mrcalc.ast.ProgramNode;
 import com.abusalimov.mrcalc.compile.Stmt;
 import com.abusalimov.mrcalc.compile.Variable;
 import com.abusalimov.mrcalc.runtime.Runtime;
+import com.abusalimov.mrcalc.runtime.RuntimeErrorException;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -31,7 +32,7 @@ public class Interpreter {
         this.out = out;
     }
 
-    public Object exec(Stmt... stmts) {
+    public Object exec(Stmt... stmts) throws RuntimeErrorException {
         return exec(Arrays.asList(stmts));
     }
 
@@ -45,8 +46,9 @@ public class Interpreter {
      * @param stmts a list of statements to execute, as returned by {@link
      *              com.abusalimov.mrcalc.compile.Compiler#compile(ProgramNode)}
      * @return the result of executing the last statement, if any {@code null} otherwise
+     * @throws RuntimeErrorException in case of a runtime error
      */
-    public Object exec(List<Stmt> stmts) {
+    public Object exec(List<Stmt> stmts) throws RuntimeErrorException {
         Object result = null;
 
         for (Stmt stmt : stmts) {

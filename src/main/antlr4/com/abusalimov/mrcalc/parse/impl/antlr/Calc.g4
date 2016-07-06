@@ -5,6 +5,7 @@ program: (STMT_DELIM* stmt (STMT_DELIM+ stmt)*)? STMT_DELIM* EOF ;
 stmt
     : 'var' name=ID '=' expr      # varDefStmt
     | ('print')? expr             # printStmt
+    | 'out' string                # outStmt
     ;
 
 expr
@@ -28,6 +29,15 @@ number returns [Number value]
     : token=INT   {$value = Long.decode($token.text);}
     | token=FLOAT {$value = Double.valueOf($token.text);}
     ;
+    catch[NumberFormatException e] { throw new NoViableAltException(this, getInputStream(),
+                                                                    getInputStream().LT(-1),
+                                                                    getInputStream().LT(-1),
+                                                                    null,
+                                                                    _ctx); }
+
+string returns [String value]
+    : token=STRING
+    ;
 
 STMT_DELIM : [\r\n;] ;
 
@@ -39,8 +49,11 @@ MUL_OP : '*' ;
 DIV_OP : '/' ;
 POW_OP : '^' ;
 
+EQ_SIGN : '=' ;
+
 VAR_KW    : 'var' ;
 PRINT_KW  : 'print' ;
+OUT_KW    : 'out' ;
 MAP_KW    : 'map' ;
 REDUCE_KW : 'reduce' ;
 
@@ -57,3 +70,5 @@ R_BRACE : '}' ;
 
 COMMA : ',' ;
 ARROW : '->' ;
+
+STRING : '"' ('\\'[\r\n\\"rnt] | ~[\r\n\\"])*? '"' ;

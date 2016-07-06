@@ -30,13 +30,6 @@ public class ObjectArraySequence<E> extends AbstractList<E> implements Sequence<
     }
 
     @Override
-    public E set(int index, E element) {
-        E oldValue = a[index];
-        a[index] = element;
-        return oldValue;
-    }
-
-    @Override
     public Spliterator<E> spliterator() {
         return Arrays.spliterator(a);
     }

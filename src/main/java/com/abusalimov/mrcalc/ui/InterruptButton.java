@@ -11,6 +11,6 @@ public class InterruptButton extends JButton {
     public InterruptButton(CalcExecutor calcExecutor) {
         super("Interrupt");
         addActionListener(e -> calcExecutor.cancel());
-        calcExecutor.addAndFireExecutionLister(this::setEnabled);
+        calcExecutor.addAndFireExecutionListener(this::setEnabled);
     }
 }

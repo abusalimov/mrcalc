@@ -123,12 +123,12 @@ public class CalcExecutor {
         }
     }
 
-    public void addAndFireExecutionLister(Consumer<Boolean> listener) {
+    public synchronized void addAndFireExecutionListener(Consumer<Boolean> listener) {
         listeners.add(listener);
         listener.accept(executionInProgress);
     }
 
-    protected void fireExecutionListeners(boolean executionInProgress) {
+    protected synchronized void fireExecutionListeners(boolean executionInProgress) {
         this.executionInProgress = executionInProgress;
         listeners.forEach(listener -> listener.accept(executionInProgress));
     }

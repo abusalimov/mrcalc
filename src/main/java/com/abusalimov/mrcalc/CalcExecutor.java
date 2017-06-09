@@ -112,7 +112,13 @@ public class CalcExecutor {
                     throw new RuntimeErrorException(new Diagnostic(stmt.getLocation(),
                             new CancellationException().toString()));
                 }
-                interpreter.exec(stmt);
+                try {
+                    interpreter.exec(stmt);
+                } catch (RuntimeErrorException e) {
+                    throw e;
+                } catch (Throwable e) {
+                    throw new RuntimeErrorException(new Diagnostic(stmt.getLocation(), e.toString()));
+                }
             }
         } catch (RuntimeErrorException e) {
             if (diagnosticListener != null) {
